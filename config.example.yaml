@@ -1,0 +1,24 @@
+env: "local"
+name: "rathalos-kit"
+
+request:
+  timeout: 10000
+
+server:
+  rest:
+    port: 8080
+  web:
+    port: 8081
+
+database:
+  driver: "postgres"
+  host: "localhost"
+  port: 5432
+  user: "postgres"
+  password: "password"
+  name: "mydb_local"
+
+log:
+  level: "debug"
+  requestId:
+    driver: "default"
