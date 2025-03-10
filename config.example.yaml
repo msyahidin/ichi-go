@@ -1,8 +1,10 @@
 env: "local"
 name: "rathalos-kit"
 
-request:
+http:
   timeout: 10000
+  cors:
+    allowedOrigins: ["*"]
 
 server:
   rest:

@@ -10,12 +10,13 @@ import (
 	"github.com/google/wire"
 	"rathalos-kit/internal/applications/user/repository"
 	"rathalos-kit/internal/applications/user/service"
+	"rathalos-kit/internal/infrastructure/database/ent"
 )
 
 // Injectors from user_injector.go:
 
-func InitializedService() *service.UserServiceImpl {
-	userRepositoryImpl := repository.NewUserRepository()
+func InitializedService(dbConnection *ent.Client) *service.UserServiceImpl {
+	userRepositoryImpl := repository.NewUserRepository(dbConnection)
 	userServiceImpl := service.NewUserService(userRepositoryImpl)
 	return userServiceImpl
 }

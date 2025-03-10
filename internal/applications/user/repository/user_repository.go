@@ -1,7 +1,10 @@
 package repository
 
-import "context"
+import (
+	"context"
+	"rathalos-kit/internal/infrastructure/database/ent"
+)
 
 type UserRepository interface {
-	GetById(ctx context.Context, id uint32) (string, error)
+	GetById(ctx context.Context, id uint64) (*ent.User, error)
 }

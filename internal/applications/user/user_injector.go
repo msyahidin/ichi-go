@@ -7,6 +7,7 @@ import (
 	"github.com/google/wire"
 	"rathalos-kit/internal/applications/user/repository"
 	"rathalos-kit/internal/applications/user/service"
+	"rathalos-kit/internal/infrastructure/database/ent"
 )
 
 var UserSet = wire.NewSet(
@@ -16,7 +17,7 @@ var UserSet = wire.NewSet(
 	wire.Bind(new(service.UserService), new(*service.UserServiceImpl)),
 )
 
-func InitializedService() *service.UserServiceImpl {
+func InitializedService(dbConnection *ent.Client) *service.UserServiceImpl {
 	wire.Build(UserSet)
 	return nil
 }

@@ -7,9 +7,10 @@ import (
 	"os/signal"
 	"rathalos-kit/cmd/server"
 	"rathalos-kit/config"
-	"rathalos-kit/internal/logger"
+	"rathalos-kit/internal/infrastructure/database"
+	"rathalos-kit/internal/infrastructure/database/ent"
 	"rathalos-kit/internal/middlewares"
-	"syscall"
+	"rathalos-kit/pkg/logger"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -22,30 +23,38 @@ func main() {
 	e := echo.New()
 	middlewares.Init(e)
 
-	server.SetupRestRoutes(e)
+	dbConnection := database.NewEntClient()
+	logger.Log.Debug().Any("initialized database configuration=", dbConnection)
+
+	//from docs define close on this function, but will impact cant create DB session on repository:
+	defer func(dbConnection *ent.Client) {
+		err := dbConnection.Close()
+		if err != nil {
+			logger.Log.Fatal().Err(err).Msg("error initialized database configuration")
+		}
+	}(dbConnection)
+
+	server.SetupRestRoutes(e, dbConnection)
 	server.SetupWebRoutes(e)
 
+	for _, route := range e.Routes() {
+		logger.Log.Debug().Msgf("Routes Mapped: %s %s", route.Method, route.Path)
+	}
+
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+
+	// Start the server
 	go func() {
-		address := fmt.Sprintf(":%d", config.AppConfig.Server.Rest.Port)
+		address := fmt.Sprintf(":%d", config.Cfg.Http.Port)
 		e.Logger.Info("REST API server running on", address)
 		if err := e.Start(address); err != nil {
 			e.Logger.Fatal("shutting down the rest server")
 		}
 	}()
-	//
-	//go func() {
-	//	address := fmt.Sprintf(":%d", config.AppConfig.Server.Web.Port)
-	//	e.Logger.Info("Web Server running on", address)
-	//	if err := e.Start(address); err != nil {
-	//		e.Logger.Fatal("shutting down the web server")
-	//	}
-	//}()
 
 	// Wait for interrupt signal to gracefully shut down the server with a timeout of 10 seconds.
-	// Use a buffered channel to avoid missing signals as recommended for signal.Notify
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
+	<-ctx.Done()
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	if err := e.Shutdown(ctx); err != nil {

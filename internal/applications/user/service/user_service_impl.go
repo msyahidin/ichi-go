@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"rathalos-kit/internal/applications/user/repository"
+	"rathalos-kit/internal/infrastructure/database/ent"
 )
 
 type UserServiceImpl struct {
@@ -13,6 +14,6 @@ func NewUserService(repo repository.UserRepository) *UserServiceImpl {
 	return &UserServiceImpl{repo: repo}
 }
 
-func (s *UserServiceImpl) GetById(ctx context.Context, id uint32) (string, error) {
-	return s.repo.GetById(ctx, id)
+func (s *UserServiceImpl) GetById(ctx context.Context, id uint32) (*ent.User, error) {
+	return s.repo.GetById(ctx, uint64(id))
 }

@@ -16,7 +16,7 @@ func (t *TemplateRenderer) Render(w http.ResponseWriter, name string, data inter
 }
 
 func SetupWebRoutes(e *echo.Echo) {
-	g := e.Group(config.AppConfig.Name)
+	g := e.Group(config.Cfg.App.Name)
 	g.GET("", func(c echo.Context) error {
 		return c.HTML(http.StatusOK, "<strong>Hello, World!</strong>")
 	})

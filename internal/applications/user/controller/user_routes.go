@@ -1,6 +1,8 @@
 package controller
 
-import "github.com/labstack/echo/v4"
+import (
+	"github.com/labstack/echo/v4"
+)
 
 var domain = "users"
 
