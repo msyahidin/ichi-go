@@ -1,24 +1,26 @@
-env: "local"
-name: "rathalos-kit"
+app:
+  env: "local"
+  name: "ichi-go"
 
 http:
   timeout: 10000
+  port: 8080
   cors:
     allowedOrigins: ["*"]
 
-server:
-  rest:
-    port: 8080
-  web:
-    port: 8081
+web:
+  port: 8081
 
 database:
-  driver: "postgres"
+  driver: "mysql"
   host: "localhost"
-  port: 5432
-  user: "postgres"
+  port: 3306
+  user: "root"
   password: "password"
-  name: "mydb_local"
+  name: "mydb"
+  maxIdleConns: 10
+  maxOpenConns: 100
+  maxLifetime: 3600
 
 log:
   level: "debug"
