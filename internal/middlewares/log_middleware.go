@@ -3,8 +3,8 @@ package middlewares
 import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"rathalos-kit/config"
-	"rathalos-kit/pkg/logger"
+	"ichi-go/config"
+	"ichi-go/pkg/logger"
 )
 
 func Logger() echo.MiddlewareFunc {

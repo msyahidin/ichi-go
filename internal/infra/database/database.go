@@ -5,10 +5,10 @@ import (
 	entSql "entgo.io/ent/dialect/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
+	"ichi-go/config"
+	"ichi-go/internal/infra/database/ent"
+	"ichi-go/internal/infra/database/ent/hook"
 	"log"
-	"rathalos-kit/config"
-	"rathalos-kit/internal/infrastructure/database/ent"
-	"rathalos-kit/internal/infrastructure/database/ent/hook"
 	"strconv"
 	"time"
 )

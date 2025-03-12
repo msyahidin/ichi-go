@@ -4,7 +4,7 @@ package ent
 
 import (
 	"fmt"
-	"rathalos-kit/internal/infrastructure/database/ent/todo"
+	"ichi-go/internal/infra/database/ent/todo"
 	"strings"
 
 	"entgo.io/ent"

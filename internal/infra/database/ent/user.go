@@ -4,7 +4,7 @@ package ent
 
 import (
 	"fmt"
-	"rathalos-kit/internal/infrastructure/database/ent/user"
+	"ichi-go/internal/infra/database/ent/user"
 	"strings"
 	"time"
 

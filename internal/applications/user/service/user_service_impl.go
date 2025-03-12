@@ -2,8 +2,8 @@ package service
 
 import (
 	"context"
-	"rathalos-kit/internal/applications/user/repository"
-	"rathalos-kit/internal/infrastructure/database/ent"
+	"ichi-go/internal/applications/user/repository"
+	"ichi-go/internal/infra/database/ent"
 )
 
 type UserServiceImpl struct {

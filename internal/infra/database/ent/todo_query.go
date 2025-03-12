@@ -6,8 +6,8 @@ import (
 	"context"
 	"fmt"
 	"math"
-	"rathalos-kit/internal/infrastructure/database/ent/predicate"
-	"rathalos-kit/internal/infrastructure/database/ent/todo"
+	"ichi-go/internal/infra/database/ent/predicate"
+	"ichi-go/internal/infra/database/ent/todo"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"

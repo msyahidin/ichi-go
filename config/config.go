@@ -2,13 +2,13 @@ package config
 
 import (
 	"fmt"
+	appConfig "ichi-go/config/app"
+	cacheConfig "ichi-go/config/cache"
+	dbConfig "ichi-go/config/database"
+	httpConfig "ichi-go/config/http"
+	logConfig "ichi-go/config/log"
 	"log"
 	"os"
-	appConfig "rathalos-kit/config/app"
-	cacheConfig "rathalos-kit/config/cache"
-	dbConfig "rathalos-kit/config/database"
-	httpConfig "rathalos-kit/config/http"
-	logConfig "rathalos-kit/config/log"
 
 	"github.com/spf13/viper"
 )

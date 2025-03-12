@@ -3,7 +3,7 @@
 package user
 
 import (
-	"rathalos-kit/internal/infrastructure/database/ent/predicate"
+	"ichi-go/internal/infra/database/ent/predicate"
 	"time"
 
 	"entgo.io/ent/dialect/sql"

@@ -3,8 +3,8 @@ package middlewares
 import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"ichi-go/config"
 	"net/http"
-	"rathalos-kit/config"
 )
 
 func GetCorsConfig() middleware.CORSConfig {

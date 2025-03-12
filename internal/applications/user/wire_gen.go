@@ -8,9 +8,9 @@ package user
 
 import (
 	"github.com/google/wire"
-	"rathalos-kit/internal/applications/user/repository"
-	"rathalos-kit/internal/applications/user/service"
-	"rathalos-kit/internal/infrastructure/database/ent"
+	"ichi-go/internal/applications/user/repository"
+	"ichi-go/internal/applications/user/service"
+	"ichi-go/internal/infra/database/ent"
 )
 
 // Injectors from user_injector.go:

@@ -2,7 +2,7 @@ package repository
 
 import (
 	"context"
-	"rathalos-kit/internal/infrastructure/database/ent"
+	"ichi-go/internal/infra/database/ent"
 )
 
 type UserRepository interface {

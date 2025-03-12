@@ -5,11 +5,11 @@ package enttest
 import (
 	"context"
 
-	"rathalos-kit/internal/infrastructure/database/ent"
+	"ichi-go/internal/infra/database/ent"
 	// required by schema hooks.
-	_ "rathalos-kit/internal/infrastructure/database/ent/runtime"
+	_ "ichi-go/internal/infra/database/ent/runtime"
 
-	"rathalos-kit/internal/infrastructure/database/ent/migrate"
+	"ichi-go/internal/infra/database/ent/migrate"
 
 	"entgo.io/ent/dialect/sql/schema"
 )

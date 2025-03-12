@@ -3,8 +3,8 @@ package repository
 import (
 	"context"
 	"errors"
-	"rathalos-kit/internal/infrastructure/database/ent"
-	"rathalos-kit/internal/infrastructure/database/ent/user"
+	"ichi-go/internal/infra/database/ent"
+	"ichi-go/internal/infra/database/ent/user"
 )
 
 type UserRepositoryImpl struct {

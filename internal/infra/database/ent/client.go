@@ -9,10 +9,10 @@ import (
 	"log"
 	"reflect"
 
-	"rathalos-kit/internal/infrastructure/database/ent/migrate"
+	"ichi-go/internal/infra/database/ent/migrate"
 
-	"rathalos-kit/internal/infrastructure/database/ent/todo"
-	"rathalos-kit/internal/infrastructure/database/ent/user"
+	"ichi-go/internal/infra/database/ent/todo"
+	"ichi-go/internal/infra/database/ent/user"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"

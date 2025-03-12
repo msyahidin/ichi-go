@@ -3,8 +3,8 @@ package server
 import (
 	"github.com/labstack/echo/v4"
 	"html/template"
+	"ichi-go/config"
 	"net/http"
-	"rathalos-kit/config"
 )
 
 type TemplateRenderer struct {

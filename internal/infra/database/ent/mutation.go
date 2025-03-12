@@ -6,8 +6,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"rathalos-kit/internal/infrastructure/database/ent/predicate"
-	"rathalos-kit/internal/infrastructure/database/ent/user"
+	"ichi-go/internal/infra/database/ent/predicate"
+	"ichi-go/internal/infra/database/ent/user"
 	"sync"
 	"time"
 

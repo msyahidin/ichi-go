@@ -2,8 +2,8 @@ package logger
 
 import (
 	"github.com/rs/zerolog"
+	"ichi-go/config"
 	"os"
-	"rathalos-kit/config"
 	"time"
 )
 

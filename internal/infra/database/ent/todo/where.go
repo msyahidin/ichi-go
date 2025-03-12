@@ -3,7 +3,7 @@
 package todo
 
 import (
-	"rathalos-kit/internal/infrastructure/database/ent/predicate"
+	"ichi-go/internal/infra/database/ent/predicate"
 
 	"entgo.io/ent/dialect/sql"
 )

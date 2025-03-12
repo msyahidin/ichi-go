@@ -6,7 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"rathalos-kit/internal/infrastructure/database/ent/user"
+	"ichi-go/internal/infra/database/ent/user"
 	"time"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"

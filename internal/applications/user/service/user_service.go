@@ -2,7 +2,7 @@ package service
 
 import (
 	"context"
-	"rathalos-kit/internal/infrastructure/database/ent"
+	"ichi-go/internal/infra/database/ent"
 )
 
 type UserService interface {

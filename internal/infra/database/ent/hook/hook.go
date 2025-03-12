@@ -5,7 +5,7 @@ package hook
 import (
 	"context"
 	"fmt"
-	"rathalos-kit/internal/infrastructure/database/ent"
+	"ichi-go/internal/infra/database/ent"
 )
 
 // The TodoFunc type is an adapter to allow the use of ordinary

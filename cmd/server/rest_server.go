@@ -3,10 +3,10 @@ package server
 import (
 	"encoding/json"
 	"github.com/labstack/echo/v4"
+	"ichi-go/config"
+	"ichi-go/internal/applications/user"
+	"ichi-go/internal/infra/database/ent"
 	"os"
-	"rathalos-kit/config"
-	"rathalos-kit/internal/applications/user"
-	"rathalos-kit/internal/infrastructure/database/ent"
 )
 
 func SetupRestRoutes(e *echo.Echo, dbClient *ent.Client) {
