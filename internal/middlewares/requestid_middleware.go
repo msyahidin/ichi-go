@@ -8,6 +8,7 @@ import (
 )
 
 func AppRequestID() echo.MiddlewareFunc {
+
 	return middleware.RequestIDWithConfig(middleware.RequestIDConfig{
 		Generator: RequestIDGenerator,
 	})

@@ -30,7 +30,7 @@ func Init() {
 
 func WithContext(ctx context.Context) zerolog.Logger {
 	if reqID, ok := ctx.Value(echo.HeaderXRequestID).(string); ok {
-		return Log.With().Str("request_id", reqID).Logger()
+		return Log.With().Str(echo.HeaderXRequestID, reqID).Logger()
 	}
 	return Log
 }
