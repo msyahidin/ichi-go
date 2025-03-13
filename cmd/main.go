@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"ichi-go/cmd/server"
 	"ichi-go/config"
+	"ichi-go/internal/infra/cache"
 	"ichi-go/internal/infra/database"
 	"ichi-go/internal/infra/database/ent"
 	"ichi-go/internal/middlewares"
@@ -34,7 +35,9 @@ func main() {
 		}
 	}(dbConnection)
 
-	server.SetupRestRoutes(e, dbConnection)
+	cacheConnection := cache.New()
+
+	server.SetupRestRoutes(e, dbConnection, cacheConnection)
 	server.SetupWebRoutes(e)
 
 	for _, route := range e.Routes() {

@@ -42,7 +42,7 @@ func LoadConfig() {
 	viper.AddConfigPath(".")
 
 	viper.AutomaticEnv()
-	setDefault()
+	//setDefault()
 
 	if err := viper.ReadInConfig(); err != nil {
 		log.Fatalf("Error reading config file: %v", err)
