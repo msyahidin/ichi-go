@@ -13,13 +13,13 @@ func SetupRestRoutes(e *echo.Echo, dbClient *ent.Client) {
 	user.Register(GetServiceName(), e, dbClient)
 
 	// Please register new domain routes before this line
-	if config.Cfg.App.Env == "local" {
+	if config.App().Env == "local" {
 		generateRouteList(e)
 	}
 }
 
 func GetServiceName() string {
-	return config.Cfg.App.Name
+	return config.App().Name
 }
 
 func generateRouteList(e *echo.Echo) {
