@@ -3,14 +3,16 @@ package config
 import "github.com/spf13/viper"
 
 type CacheConfig struct {
-	Driver   string `mapstructure:"driver"`
-	Host     string `mapstructure:"host"`
-	Port     int    `mapstructure:"port"`
-	Password string `mapstructure:"password"`
-	Username string `mapstructure:"username"`
-	Db       int    `mapstructure:"db"`
-	PoolSize int    `mapstructure:"pool_size"`
-	Timeout  int    `mapstructure:"timeout"`
+	Driver     string `mapstructure:"driver"`
+	Host       string `mapstructure:"host"`
+	Port       int    `mapstructure:"port"`
+	Password   string `mapstructure:"password"`
+	Username   string `mapstructure:"username"`
+	Db         int    `mapstructure:"db"`
+	PoolSize   int    `mapstructure:"pool_size"`
+	Timeout    int    `mapstructure:"timeout"`
+	UseTLS     bool   `mapstructure:"use_tls"`
+	SkipVerify bool   `mapstructure:"skip_verify"`
 }
 
 func SetDefault() {
@@ -21,5 +23,7 @@ func SetDefault() {
 	viper.SetDefault("cache.password", "")
 	viper.SetDefault("cache.db", 0)
 	viper.SetDefault("cache.pool_size", 10)
+	viper.SetDefault("cache.use_tls", false)
+	viper.SetDefault("cache.skip_verify", false)
 	viper.SetDefault("cache.timeout", 30)
 }

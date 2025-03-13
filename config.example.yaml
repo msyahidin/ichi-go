@@ -7,7 +7,7 @@ http:
   timeout: 10000
   port: 8080
   cors:
-    allowedOrigins: ["*"]
+    allow_origins: ["*"]
 
 web:
   port: 8081
@@ -19,9 +19,9 @@ database:
   user: "root"
   password: "password"
   name: "oauth"
-  maxIdleConns: 10
-  maxOpenConns: 100
-  maxLifetime: 3600
+  max_idle_conns: 10
+  max_open_conns: 100
+  max_conn_life_time: 3600
 
 cache:
   driver: "redis"
@@ -30,8 +30,10 @@ cache:
   password: ""
   username: ""
   db: 0
-  poolSize: 10
+  pool_size: 20
   timeout: 10000
+  use_tls: false
+  skip_verify: false
 
 log:
   level: "debug"
