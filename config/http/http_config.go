@@ -1,5 +1,7 @@
 package http
 
+import "github.com/spf13/viper"
+
 type CorsConfig struct {
 	AllowOrigins []string `mapstructure:"allow_origins"`
 }
@@ -10,14 +12,8 @@ type HttpConfig struct {
 	Port    int        `mapstructure:"port"`
 }
 
-type ServerConfig struct {
-	Rest RestConfig `mapstructure:"rest"`
-	Web  WebConfig  `mapstructure:"web"`
-}
-
-type RestConfig struct {
-	Port int `mapstructure:"port"`
-}
-type WebConfig struct {
-	Port int `mapstructure:"port"`
+func SetDefault() {
+	viper.SetDefault("http.port", 8080)
+	viper.SetDefault("http.timeout", 30)
+	viper.SetDefault("http.cors.allow_origins", []string{"*"})
 }

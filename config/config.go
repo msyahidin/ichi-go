@@ -21,7 +21,15 @@ type Config struct {
 	Http     httpConfig.HttpConfig
 }
 
-var Cfg Config
+var Cfg *Config
+
+func setDefault() {
+	appConfig.SetDefault()
+	dbConfig.SetDefault()
+	cacheConfig.SetDefault()
+	logConfig.SetDefault()
+	httpConfig.SetDefault()
+}
 
 func LoadConfig() {
 	env := os.Getenv("APP_ENV")
@@ -34,15 +42,19 @@ func LoadConfig() {
 	viper.AddConfigPath(".")
 
 	viper.AutomaticEnv()
+	setDefault()
 
 	if err := viper.ReadInConfig(); err != nil {
 		log.Fatalf("Error reading config file: %v", err)
 	}
 
-	err := viper.Unmarshal(&Cfg)
+	var cfg Config
+	err := viper.Unmarshal(&cfg)
 	if err != nil {
 		log.Fatalf("Error parsing config: %v", err)
 	}
+	Cfg = &cfg
 
 	log.Printf("Configuration loaded successfully for environment: %s", env)
+	log.Printf("Loaded Config: %+v", *Cfg)
 }
