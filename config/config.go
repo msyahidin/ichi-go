@@ -14,11 +14,12 @@ import (
 )
 
 type Config struct {
-	App      appConfig.AppConfig
-	Database dbConfig.DatabaseConfig
-	Cache    cacheConfig.CacheConfig
-	Log      logConfig.LogConfig
-	Http     httpConfig.HttpConfig
+	App        appConfig.AppConfig
+	Database   dbConfig.DatabaseConfig
+	Cache      cacheConfig.CacheConfig
+	Log        logConfig.LogConfig
+	Http       httpConfig.HttpConfig
+	HttpClient httpConfig.ClientConfig
 }
 
 var Cfg *Config
@@ -73,6 +74,9 @@ func Cache() cacheConfig.CacheConfig {
 
 func Http() httpConfig.HttpConfig {
 	return Cfg.Http
+}
+func HttpClient() httpConfig.ClientConfig {
+	return Cfg.HttpClient
 }
 
 func Log() logConfig.LogConfig {
