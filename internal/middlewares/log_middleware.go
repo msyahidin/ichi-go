@@ -5,6 +5,7 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"ichi-go/config"
 	"ichi-go/pkg/logger"
+	"net/http"
 )
 
 func Logger() echo.MiddlewareFunc {
@@ -19,9 +20,10 @@ func Logger() echo.MiddlewareFunc {
 				Int("status", c.Response().Status).
 				Str("ip", c.RealIP()).
 				Str("user_agent", c.Request().UserAgent()).
-				Str("request_id", c.Response().Header().Get(echo.HeaderXRequestID)).
+				Str(echo.HeaderXRequestID, c.Response().Header().Get(echo.HeaderXRequestID)).
 				Str("service", config.Cfg.App.Name).
-				Msg("request completed")
+				Str("domain", c.Request().Header.Get("domain")).
+				Msg(http.StatusText(c.Response().Status))
 			return nil
 		},
 	})

@@ -41,6 +41,9 @@ func main() {
 	server.SetupWebRoutes(e)
 
 	for _, route := range e.Routes() {
+		if route.Method == "" && route.Path == "" {
+			continue
+		}
 		logger.Debugf("Routes Mapped: %s %s", route.Method, route.Path)
 	}
 
@@ -49,7 +52,7 @@ func main() {
 
 	// Start the server
 	go func() {
-		address := fmt.Sprintf(":%d", config.Cfg.Http.Port)
+		address := fmt.Sprintf(":%d", config.Http().Port)
 		logger.Infof("starting http server at %s", address)
 		if err := e.Start(address); err != nil {
 			logger.Fatalf("shutting down the rest server")

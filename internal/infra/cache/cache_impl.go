@@ -34,7 +34,7 @@ type Options struct {
 func (c *CacheImpl) Set(ctx context.Context, key string, data interface{}, options Options) (bool, error) {
 	serializedData, err := msgpack.Marshal(&data)
 	if err != nil {
-		if err == redis.Nil {
+		if errors.Is(redis.Nil, err) {
 			return false, nil
 		}
 
@@ -63,10 +63,9 @@ func (c *CacheImpl) Get(ctx context.Context, key string, data interface{}) (inte
 
 	redisData, err := c.redisClient.Get(ctx, key).Bytes()
 	if err != nil {
-		if err == redis.Nil {
+		if errors.Is(redis.Nil, err) {
 			return nil, nil
 		}
-
 		logger.Log.Error().Msgf("Failed get data from Redis:", err)
 		return nil, err
 	}
