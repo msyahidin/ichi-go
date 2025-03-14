@@ -25,13 +25,13 @@ func main() {
 	middlewares.Init(e)
 
 	dbConnection := database.NewEntClient()
-	logger.Log.Debug().Any("initialized database configuration=", dbConnection)
+	logger.Debugf("initialized database configuration = %v", dbConnection)
 
 	//from docs define close on this function, but will impact cant create DB session on repository:
 	defer func(dbConnection *ent.Client) {
 		err := dbConnection.Close()
 		if err != nil {
-			logger.Log.Fatal().Err(err).Msg("error initialized database configuration")
+			logger.Fatalf("error initialized database configuration = %v", err)
 		}
 	}(dbConnection)
 
@@ -41,7 +41,10 @@ func main() {
 	server.SetupWebRoutes(e)
 
 	for _, route := range e.Routes() {
-		logger.Log.Debug().Msgf("Routes Mapped: %s %s", route.Method, route.Path)
+		if route.Method == "" && route.Path == "" {
+			continue
+		}
+		logger.Debugf("Routes Mapped: %s %s", route.Method, route.Path)
 	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
@@ -49,10 +52,10 @@ func main() {
 
 	// Start the server
 	go func() {
-		address := fmt.Sprintf(":%d", config.Cfg.Http.Port)
-		e.Logger.Info("REST API server running on", address)
+		address := fmt.Sprintf(":%d", config.Http().Port)
+		logger.Infof("starting http server at %s", address)
 		if err := e.Start(address); err != nil {
-			e.Logger.Fatal("shutting down the rest server")
+			logger.Fatalf("shutting down the rest server")
 		}
 	}()
 
@@ -61,6 +64,6 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	if err := e.Shutdown(ctx); err != nil {
-		e.Logger.Fatal(err)
+		logger.Fatalf("shutting down the rest server: %v", err)
 	}
 }

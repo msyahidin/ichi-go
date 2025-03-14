@@ -2,12 +2,14 @@ package controller
 
 import (
 	"github.com/labstack/echo/v4"
+	"ichi-go/internal/middlewares"
 )
 
 var domain = "users"
 
 func (c *UserController) httpRoutes(serviceName string, e *echo.Echo) {
 	group := e.Group("/" + serviceName + "/api/" + domain)
+	group.Use(middlewares.RequestInjector(middlewares.RequestFields{Domain: domain}))
 	group.GET("/:id", c.GetUser)
 }
 

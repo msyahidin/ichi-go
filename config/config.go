@@ -7,7 +7,7 @@ import (
 	dbConfig "ichi-go/config/database"
 	httpConfig "ichi-go/config/http"
 	logConfig "ichi-go/config/log"
-	"log"
+	"ichi-go/pkg/logger"
 	"os"
 
 	"github.com/spf13/viper"
@@ -45,16 +45,36 @@ func LoadConfig() {
 	//setDefault()
 
 	if err := viper.ReadInConfig(); err != nil {
-		log.Fatalf("Error reading config file: %v", err)
+		logger.Fatalf("Error reading config file: %v", err)
 	}
 
 	var cfg Config
 	err := viper.Unmarshal(&cfg)
 	if err != nil {
-		log.Fatalf("Error parsing config: %v", err)
+		logger.Fatalf("Error parsing config: %v", err)
 	}
 	Cfg = &cfg
 
-	log.Printf("Configuration loaded successfully for environment: %s", env)
-	log.Printf("Loaded Config: %+v", *Cfg)
+	logger.Printf("Configuration loaded successfully for environment: %s", env)
+	logger.Printf("Loaded Config: %+v", *Cfg)
+}
+
+func App() appConfig.AppConfig {
+	return Cfg.App
+}
+
+func Database() dbConfig.DatabaseConfig {
+	return Cfg.Database
+}
+
+func Cache() cacheConfig.CacheConfig {
+	return Cfg.Cache
+}
+
+func Http() httpConfig.HttpConfig {
+	return Cfg.Http
+}
+
+func Log() logConfig.LogConfig {
+	return Cfg.Log
 }
