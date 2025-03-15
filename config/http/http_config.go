@@ -15,11 +15,11 @@ type HttpConfig struct {
 }
 
 type ClientConfig struct {
-	Timeout       int  `yaml:"timeout"`         // request timeout (per call)
-	RetryCount    int  `yaml:"retry_count"`     // total max retries
-	RetryWaitTime int  `yaml:"retry_wait_time"` // delay between retries
-	RetryMaxWait  int  `yaml:"retry_max_wait"`  // total max backoff wait
-	LoggerEnabled bool `yaml:"logger_enabled"`  // enable/disable http log
+	Timeout       int  `mapstructure:"timeout"`         // request timeout (per call)
+	RetryCount    int  `mapstructure:"retry_count"`     // total max retries
+	RetryWaitTime int  `mapstructure:"retry_wait_time"` // delay between retries
+	RetryMaxWait  int  `mapstructure:"retry_max_wait"`  // total max backoff wait
+	LoggerEnabled bool `mapstructure:"logger_enabled"`  // enable/disable http log
 }
 
 func SetDefault() {

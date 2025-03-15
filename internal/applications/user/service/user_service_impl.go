@@ -6,16 +6,20 @@ import (
 	"ichi-go/internal/applications/user/repository"
 	"ichi-go/internal/infra/cache"
 	"ichi-go/internal/infra/database/ent"
+	"ichi-go/internal/infra/external/pokemon_api"
+	"ichi-go/internal/infra/external/pokemon_api/dto"
 	"time"
 )
 
 type UserServiceImpl struct {
-	repo  repository.UserRepository
-	cache cache.Cache
+	repo       repository.UserRepository
+	cache      cache.Cache
+	pokeClient pokemon_api.PokemonClient
 }
 
 func NewUserService(repo repository.UserRepository, cache cache.Cache) *UserServiceImpl {
-	return &UserServiceImpl{repo: repo, cache: cache}
+	pokeClient := pokemon_api.NewPokemonClientImpl()
+	return &UserServiceImpl{repo: repo, cache: cache, pokeClient: pokeClient}
 }
 
 func (s *UserServiceImpl) GetById(ctx context.Context, id uint32) (*ent.User, error) {
@@ -39,4 +43,8 @@ func (s *UserServiceImpl) GetById(ctx context.Context, id uint32) (*ent.User, er
 		_, _ = s.cache.Set(ctx, cacheKey, user, option)
 	}
 	return user, nil
+}
+
+func (s *UserServiceImpl) GetPokemon(ctx context.Context, name string) (*dto.PokemonGetResponseDto, error) {
+	return s.pokeClient.GetDetail(ctx, name)
 }

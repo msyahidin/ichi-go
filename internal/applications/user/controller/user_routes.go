@@ -11,6 +11,7 @@ func (c *UserController) httpRoutes(serviceName string, e *echo.Echo) {
 	group := e.Group("/" + serviceName + "/api/" + domain)
 	group.Use(middlewares.RequestInjector(middlewares.RequestFields{Domain: domain}))
 	group.GET("/:id", c.GetUser)
+	group.GET("/pokemon/:name", c.GetPokemon)
 }
 
 func (c *UserController) webRoutes(serviceName string, e *echo.Echo) {
