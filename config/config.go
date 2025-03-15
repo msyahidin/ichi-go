@@ -5,6 +5,7 @@ import (
 	appConfig "ichi-go/config/app"
 	cacheConfig "ichi-go/config/cache"
 	dbConfig "ichi-go/config/database"
+	externalConfig "ichi-go/config/external"
 	httpConfig "ichi-go/config/http"
 	logConfig "ichi-go/config/log"
 	"ichi-go/pkg/logger"
@@ -14,11 +15,13 @@ import (
 )
 
 type Config struct {
-	App      appConfig.AppConfig
-	Database dbConfig.DatabaseConfig
-	Cache    cacheConfig.CacheConfig
-	Log      logConfig.LogConfig
-	Http     httpConfig.HttpConfig
+	App        appConfig.AppConfig
+	Database   dbConfig.DatabaseConfig
+	Cache      cacheConfig.CacheConfig
+	Log        logConfig.LogConfig
+	Http       httpConfig.HttpConfig
+	HttpClient httpConfig.ClientConfig
+	External   externalConfig.External
 }
 
 var Cfg *Config
@@ -74,7 +77,14 @@ func Cache() cacheConfig.CacheConfig {
 func Http() httpConfig.HttpConfig {
 	return Cfg.Http
 }
+func HttpClient() httpConfig.ClientConfig {
+	return Cfg.HttpClient
+}
 
 func Log() logConfig.LogConfig {
 	return Cfg.Log
+}
+
+func External() externalConfig.External {
+	return Cfg.External
 }

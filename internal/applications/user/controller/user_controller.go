@@ -5,6 +5,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"ichi-go/internal/applications/user/dto"
 	"ichi-go/internal/applications/user/service"
+	pokeDto "ichi-go/internal/infra/external/pokemon_api/dto"
 	"ichi-go/pkg/utils/response"
 	"net/http"
 	"strconv"
@@ -42,4 +43,15 @@ func (c *UserController) GetUser(eCtx echo.Context) error {
 
 func (c *UserController) GetUserPage(eCtx echo.Context) error {
 	return eCtx.HTML(http.StatusOK, "<h1>This is User Page</h1>")
+}
+
+func (c *UserController) GetPokemon(eCtx echo.Context) error {
+	name := eCtx.Param("name")
+	var pokemonGetResponseDto pokeDto.PokemonGetResponseDto
+	result, err := c.service.GetPokemon(eCtx.Request().Context(), name)
+	if err != nil {
+		return response.Error(eCtx, http.StatusInternalServerError, err)
+	}
+	err = dtoMapper.Map(&pokemonGetResponseDto, result)
+	return response.Success(eCtx, pokemonGetResponseDto)
 }
