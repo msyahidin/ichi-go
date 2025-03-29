@@ -5,9 +5,9 @@ import (
 	appConfig "ichi-go/config/app"
 	cacheConfig "ichi-go/config/cache"
 	dbConfig "ichi-go/config/database"
-	externalConfig "ichi-go/config/external"
 	httpConfig "ichi-go/config/http"
 	logConfig "ichi-go/config/log"
+	pkgClientConfig "ichi-go/config/pkgclient"
 	"ichi-go/pkg/logger"
 	"os"
 
@@ -21,7 +21,7 @@ type Config struct {
 	Log        logConfig.LogConfig
 	Http       httpConfig.HttpConfig
 	HttpClient httpConfig.ClientConfig
-	External   externalConfig.External
+	PkgClient  pkgClientConfig.PkgClient
 }
 
 var Cfg *Config
@@ -45,7 +45,7 @@ func LoadConfig() {
 	viper.AddConfigPath(".")
 
 	viper.AutomaticEnv()
-	//setDefault()
+	setDefault()
 
 	if err := viper.ReadInConfig(); err != nil {
 		logger.Fatalf("Error reading config file: %v", err)
@@ -85,6 +85,6 @@ func Log() logConfig.LogConfig {
 	return Cfg.Log
 }
 
-func External() externalConfig.External {
-	return Cfg.External
+func PkgClient() pkgClientConfig.PkgClient {
+	return Cfg.PkgClient
 }
