@@ -1,8 +1,8 @@
-package pokemon_api
+package pokemonapi
 
 import (
 	"context"
-	"ichi-go/internal/infra/external/pokemon_api/dto"
+	"ichi-go/pkg/clients/pokemonapi/dto"
 )
 
 type PokemonClient interface {

@@ -9,6 +9,13 @@ http:
   cors:
     allow_origins: ["*"]
 
+http-client:
+  timeout: 10000
+  retry_count: 10
+  retry_wait_time: 20000
+  retry_max_wait: 60000
+  logger_enabled: false
+
 web:
   port: 8081
 
@@ -39,3 +46,9 @@ log:
   level: "debug"
   requestId:
     driver: "default"
+
+pkgclient:
+  pokemon_api:
+    base_url: "https://pokeapi.co/api/v2"
+    timeout: 10000
+    retry: 3

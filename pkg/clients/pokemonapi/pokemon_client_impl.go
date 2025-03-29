@@ -1,11 +1,11 @@
-package pokemon_api
+package pokemonapi
 
 import (
 	"context"
 	"fmt"
 	"ichi-go/config"
-	"ichi-go/internal/infra/external/pokemon_api/dto"
 	"ichi-go/internal/infra/http"
+	"ichi-go/pkg/clients/pokemonapi/dto"
 	"resty.dev/v3"
 	"time"
 )
@@ -16,9 +16,9 @@ type PokemonClientImpl struct {
 
 func NewPokemonClientImpl() *PokemonClientImpl {
 	httpClient := http.New()
-	httpClient.SetBaseURL(config.External().PokemonAPI.BaseURL)
-	httpClient.SetTimeout(time.Duration(config.External().PokemonAPI.Timeout))
-	httpClient.SetRetryCount(config.External().PokemonAPI.RetryCount)
+	httpClient.SetBaseURL(config.PkgClient().PokemonAPI.BaseURL)
+	httpClient.SetTimeout(time.Duration(config.PkgClient().PokemonAPI.Timeout))
+	httpClient.SetRetryCount(config.PkgClient().PokemonAPI.RetryCount)
 
 	return &PokemonClientImpl{
 		httpClient: httpClient,

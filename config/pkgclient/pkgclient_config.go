@@ -1,6 +1,6 @@
-package external
+package pkgclient
 
-type External struct {
+type PkgClient struct {
 	PokemonAPI PokemonAPIConfig `mapstructure:"pokemon_api"`
 }
 

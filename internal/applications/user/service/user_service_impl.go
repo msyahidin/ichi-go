@@ -6,19 +6,19 @@ import (
 	"ichi-go/internal/applications/user/repository"
 	"ichi-go/internal/infra/cache"
 	"ichi-go/internal/infra/database/ent"
-	"ichi-go/internal/infra/external/pokemon_api"
-	"ichi-go/internal/infra/external/pokemon_api/dto"
+	"ichi-go/pkg/clients/pokemonapi"
+	"ichi-go/pkg/clients/pokemonapi/dto"
 	"time"
 )
 
 type UserServiceImpl struct {
 	repo       repository.UserRepository
 	cache      cache.Cache
-	pokeClient pokemon_api.PokemonClient
+	pokeClient pokemonapi.PokemonClient
 }
 
 func NewUserService(repo repository.UserRepository, cache cache.Cache) *UserServiceImpl {
-	pokeClient := pokemon_api.NewPokemonClientImpl()
+	pokeClient := pokemonapi.NewPokemonClientImpl()
 	return &UserServiceImpl{repo: repo, cache: cache, pokeClient: pokeClient}
 }
 

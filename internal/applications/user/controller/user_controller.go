@@ -5,7 +5,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"ichi-go/internal/applications/user/dto"
 	"ichi-go/internal/applications/user/service"
-	pokeDto "ichi-go/internal/infra/external/pokemon_api/dto"
+	pokeDto "ichi-go/pkg/clients/pokemonapi/dto"
 	"ichi-go/pkg/utils/response"
 	"net/http"
 	"strconv"
