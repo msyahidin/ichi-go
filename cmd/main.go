@@ -18,7 +18,7 @@ import (
 )
 
 func main() {
-	//config.LoadConfig()
+	config.LoadConfig()
 	logger.Init()
 
 	e := echo.New()
