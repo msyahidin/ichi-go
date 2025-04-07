@@ -23,3 +23,59 @@ schema-import:
 	fi;
 	@echo "Creating ent schema and generating ent code at $$ENT_DIR/$$schema";
 	go run ariga.io/entimport/cmd/entimport -dsn "mysql://root:password@tcp(localhost:3306)/oauth" -tables $$schema -schema-path $$ENT_DIR
+
+migration-build:
+	@echo "Warning this action will build unix executable file "
+	go build -v -o migration db/cmd/main.go
+
+migration-create:
+	@if [ -z "$(name)" ]; then \
+		echo "Error: You must provide 'name' arguments."; \
+		echo "Sample: make migration-create name=create_users_table type=sql"; \
+		exit 1; \
+	fi
+	@if [ ! -f "./migration" ]; then \
+		$(MAKE) migration-build; \
+	fi
+	@echo "🛠️  Creating migration: $(name) [$(type)]"
+	@./migration mysql create $(name) $(type)
+
+migration-up:
+	@if [ ! -f "./migration" ]; then \
+		$(MAKE) migration-build; \
+    fi
+	./migration mysql up
+
+migration-down:
+	@if [ ! -f "./migration" ]; then \
+		$(MAKE) migration-build; \
+    fi
+	./migration mysql down
+
+migration-down-to:
+	@if [ ! -f "./migration" ]; then \
+		$(MAKE) migration-build; \
+    fi
+	@if [ -z "$(version)" ]; then \
+		echo "Error: Version cannot be empty."; \
+		exit 1; \
+	elif ! [[ "$(version)" =~ ^[0-9]+$$ ]]; then \
+		echo "Error: Version must be a positive integer."; \
+		exit 1; \
+	elif [ "$(version)" = "0" ]; then \
+		echo "Error: Version 0 is not allowed."; \
+		exit 1; \
+	elif ./migration mysql status | grep -q "Current: $(version)"; then \
+		echo "Error: Version $(version) is the current version or higher."; \
+		exit 1; \
+	else \
+		echo "Warning: This action will rollback to version $(version)"; \
+		go build -v -o migration migrations/cmd/main.go; \
+		./migration mysql down-to $(version); \
+	fi
+
+migration-status:
+	@if [ ! -f "./migration" ]; then \
+  		$(MAKE) migration-build; \
+    fi
+	./migration mysql status
