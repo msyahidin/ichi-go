@@ -13,13 +13,19 @@ import (
 	"time"
 )
 
-func NewEntClient() *ent.Client {
+func GetDsn() string {
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true",
 		config.Database().User,
 		config.Database().Password,
 		config.Database().Host,
 		strconv.Itoa(config.Database().Port),
 		config.Database().Name)
+
+	return dsn
+}
+
+func NewEntClient() *ent.Client {
+	dsn := GetDsn()
 
 	db, err := sql.Open(config.Database().Driver, dsn)
 	if err != nil {
