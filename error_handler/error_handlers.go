@@ -9,7 +9,7 @@ func (h ErrorHandlers) Handle(err error, ctx echo.Context) error {
 	for _, handler := range h {
 
 		if handler.Handle(err, ctx) == nil {
-			break
+			return nil
 		}
 	}
 
