@@ -14,7 +14,7 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.16
 	github.com/pierrec/lz4/v4 v4.1.22
 	github.com/pressly/goose/v3 v3.24.2
-	github.com/redis/go-redis/v9 v9.7.1
+	github.com/redis/go-redis/v9 v9.7.3
 	github.com/rs/zerolog v1.33.0
 	github.com/spf13/viper v1.19.0
 	github.com/vmihailenco/msgpack/v4 v4.3.13
