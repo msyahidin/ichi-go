@@ -7,7 +7,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"ichi-go/config"
 	"ichi-go/internal/infra/database/ent"
-	"ichi-go/internal/infra/database/ent/hook"
+	"ichi-go/internal/infra/database/enthook"
 	"ichi-go/pkg/logger"
 	"strconv"
 	"time"
@@ -61,7 +61,7 @@ func NewEntClient() *ent.Client {
 
 	//setup hooks
 	//SetupHooks(client)
-	client.Use(hook.VersionHook())
+	client.Use(enthook.VersionHook())
 	//client.Intercept(intercept.NewRelicSegmentDb())
 	//log.Info("initialized SetupHooks configuration=")
 

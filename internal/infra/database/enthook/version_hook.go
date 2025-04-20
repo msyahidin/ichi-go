@@ -1,4 +1,4 @@
-package hook
+package enthook
 
 import (
 	"context"

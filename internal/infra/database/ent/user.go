@@ -17,20 +17,26 @@ type User struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID uint64 `json:"id,omitempty"`
+	// Versions holds the value of the "versions" field.
+	Versions int `json:"versions,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// Email holds the value of the "email" field.
 	Email string `json:"email,omitempty"`
-	// EmailVerifiedAt holds the value of the "email_verified_at" field.
-	EmailVerifiedAt time.Time `json:"email_verified_at,omitempty"`
 	// Password holds the value of the "password" field.
 	Password string `json:"password,omitempty"`
-	// RememberToken holds the value of the "remember_token" field.
-	RememberToken string `json:"remember_token,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
+	// CreatedBy holds the value of the "created_by" field.
+	CreatedBy uint64 `json:"created_by,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
-	UpdatedAt    time.Time `json:"updated_at,omitempty"`
+	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	// UpdatedBy holds the value of the "updated_by" field.
+	UpdatedBy uint64 `json:"updated_by,omitempty"`
+	// DeletedAt holds the value of the "deleted_at" field.
+	DeletedAt time.Time `json:"deleted_at,omitempty"`
+	// DeletedBy holds the value of the "deleted_by" field.
+	DeletedBy    uint64 `json:"deleted_by,omitempty"`
 	selectValues sql.SelectValues
 }
 
@@ -39,11 +45,11 @@ func (*User) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case user.FieldID:
+		case user.FieldID, user.FieldVersions, user.FieldCreatedBy, user.FieldUpdatedBy, user.FieldDeletedBy:
 			values[i] = new(sql.NullInt64)
-		case user.FieldName, user.FieldEmail, user.FieldPassword, user.FieldRememberToken:
+		case user.FieldName, user.FieldEmail, user.FieldPassword:
 			values[i] = new(sql.NullString)
-		case user.FieldEmailVerifiedAt, user.FieldCreatedAt, user.FieldUpdatedAt:
+		case user.FieldCreatedAt, user.FieldUpdatedAt, user.FieldDeletedAt:
 			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -66,6 +72,12 @@ func (u *User) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			u.ID = uint64(value.Int64)
+		case user.FieldVersions:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field versions", values[i])
+			} else if value.Valid {
+				u.Versions = int(value.Int64)
+			}
 		case user.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field name", values[i])
@@ -78,23 +90,11 @@ func (u *User) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				u.Email = value.String
 			}
-		case user.FieldEmailVerifiedAt:
-			if value, ok := values[i].(*sql.NullTime); !ok {
-				return fmt.Errorf("unexpected type %T for field email_verified_at", values[i])
-			} else if value.Valid {
-				u.EmailVerifiedAt = value.Time
-			}
 		case user.FieldPassword:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field password", values[i])
 			} else if value.Valid {
 				u.Password = value.String
-			}
-		case user.FieldRememberToken:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field remember_token", values[i])
-			} else if value.Valid {
-				u.RememberToken = value.String
 			}
 		case user.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -102,11 +102,35 @@ func (u *User) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				u.CreatedAt = value.Time
 			}
+		case user.FieldCreatedBy:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field created_by", values[i])
+			} else if value.Valid {
+				u.CreatedBy = uint64(value.Int64)
+			}
 		case user.FieldUpdatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
 				u.UpdatedAt = value.Time
+			}
+		case user.FieldUpdatedBy:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field updated_by", values[i])
+			} else if value.Valid {
+				u.UpdatedBy = uint64(value.Int64)
+			}
+		case user.FieldDeletedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field deleted_at", values[i])
+			} else if value.Valid {
+				u.DeletedAt = value.Time
+			}
+		case user.FieldDeletedBy:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field deleted_by", values[i])
+			} else if value.Valid {
+				u.DeletedBy = uint64(value.Int64)
 			}
 		default:
 			u.selectValues.Set(columns[i], values[i])
@@ -144,26 +168,35 @@ func (u *User) String() string {
 	var builder strings.Builder
 	builder.WriteString("User(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", u.ID))
+	builder.WriteString("versions=")
+	builder.WriteString(fmt.Sprintf("%v", u.Versions))
+	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(u.Name)
 	builder.WriteString(", ")
 	builder.WriteString("email=")
 	builder.WriteString(u.Email)
 	builder.WriteString(", ")
-	builder.WriteString("email_verified_at=")
-	builder.WriteString(u.EmailVerifiedAt.Format(time.ANSIC))
-	builder.WriteString(", ")
 	builder.WriteString("password=")
 	builder.WriteString(u.Password)
-	builder.WriteString(", ")
-	builder.WriteString("remember_token=")
-	builder.WriteString(u.RememberToken)
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(u.CreatedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
+	builder.WriteString("created_by=")
+	builder.WriteString(fmt.Sprintf("%v", u.CreatedBy))
+	builder.WriteString(", ")
 	builder.WriteString("updated_at=")
 	builder.WriteString(u.UpdatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("updated_by=")
+	builder.WriteString(fmt.Sprintf("%v", u.UpdatedBy))
+	builder.WriteString(", ")
+	builder.WriteString("deleted_at=")
+	builder.WriteString(u.DeletedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("deleted_by=")
+	builder.WriteString(fmt.Sprintf("%v", u.DeletedBy))
 	builder.WriteByte(')')
 	return builder.String()
 }

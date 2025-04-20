@@ -20,6 +20,12 @@ type UserCreate struct {
 	hooks    []Hook
 }
 
+// SetVersions sets the "versions" field.
+func (uc *UserCreate) SetVersions(i int) *UserCreate {
+	uc.mutation.SetVersions(i)
+	return uc
+}
+
 // SetName sets the "name" field.
 func (uc *UserCreate) SetName(s string) *UserCreate {
 	uc.mutation.SetName(s)
@@ -32,37 +38,9 @@ func (uc *UserCreate) SetEmail(s string) *UserCreate {
 	return uc
 }
 
-// SetEmailVerifiedAt sets the "email_verified_at" field.
-func (uc *UserCreate) SetEmailVerifiedAt(t time.Time) *UserCreate {
-	uc.mutation.SetEmailVerifiedAt(t)
-	return uc
-}
-
-// SetNillableEmailVerifiedAt sets the "email_verified_at" field if the given value is not nil.
-func (uc *UserCreate) SetNillableEmailVerifiedAt(t *time.Time) *UserCreate {
-	if t != nil {
-		uc.SetEmailVerifiedAt(*t)
-	}
-	return uc
-}
-
 // SetPassword sets the "password" field.
 func (uc *UserCreate) SetPassword(s string) *UserCreate {
 	uc.mutation.SetPassword(s)
-	return uc
-}
-
-// SetRememberToken sets the "remember_token" field.
-func (uc *UserCreate) SetRememberToken(s string) *UserCreate {
-	uc.mutation.SetRememberToken(s)
-	return uc
-}
-
-// SetNillableRememberToken sets the "remember_token" field if the given value is not nil.
-func (uc *UserCreate) SetNillableRememberToken(s *string) *UserCreate {
-	if s != nil {
-		uc.SetRememberToken(*s)
-	}
 	return uc
 }
 
@@ -80,6 +58,20 @@ func (uc *UserCreate) SetNillableCreatedAt(t *time.Time) *UserCreate {
 	return uc
 }
 
+// SetCreatedBy sets the "created_by" field.
+func (uc *UserCreate) SetCreatedBy(u uint64) *UserCreate {
+	uc.mutation.SetCreatedBy(u)
+	return uc
+}
+
+// SetNillableCreatedBy sets the "created_by" field if the given value is not nil.
+func (uc *UserCreate) SetNillableCreatedBy(u *uint64) *UserCreate {
+	if u != nil {
+		uc.SetCreatedBy(*u)
+	}
+	return uc
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (uc *UserCreate) SetUpdatedAt(t time.Time) *UserCreate {
 	uc.mutation.SetUpdatedAt(t)
@@ -90,6 +82,48 @@ func (uc *UserCreate) SetUpdatedAt(t time.Time) *UserCreate {
 func (uc *UserCreate) SetNillableUpdatedAt(t *time.Time) *UserCreate {
 	if t != nil {
 		uc.SetUpdatedAt(*t)
+	}
+	return uc
+}
+
+// SetUpdatedBy sets the "updated_by" field.
+func (uc *UserCreate) SetUpdatedBy(u uint64) *UserCreate {
+	uc.mutation.SetUpdatedBy(u)
+	return uc
+}
+
+// SetNillableUpdatedBy sets the "updated_by" field if the given value is not nil.
+func (uc *UserCreate) SetNillableUpdatedBy(u *uint64) *UserCreate {
+	if u != nil {
+		uc.SetUpdatedBy(*u)
+	}
+	return uc
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (uc *UserCreate) SetDeletedAt(t time.Time) *UserCreate {
+	uc.mutation.SetDeletedAt(t)
+	return uc
+}
+
+// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
+func (uc *UserCreate) SetNillableDeletedAt(t *time.Time) *UserCreate {
+	if t != nil {
+		uc.SetDeletedAt(*t)
+	}
+	return uc
+}
+
+// SetDeletedBy sets the "deleted_by" field.
+func (uc *UserCreate) SetDeletedBy(u uint64) *UserCreate {
+	uc.mutation.SetDeletedBy(u)
+	return uc
+}
+
+// SetNillableDeletedBy sets the "deleted_by" field if the given value is not nil.
+func (uc *UserCreate) SetNillableDeletedBy(u *uint64) *UserCreate {
+	if u != nil {
+		uc.SetDeletedBy(*u)
 	}
 	return uc
 }
@@ -134,6 +168,9 @@ func (uc *UserCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (uc *UserCreate) check() error {
+	if _, ok := uc.mutation.Versions(); !ok {
+		return &ValidationError{Name: "versions", err: errors.New(`ent: missing required field "User.versions"`)}
+	}
 	if _, ok := uc.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "User.name"`)}
 	}
@@ -175,6 +212,10 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		_node.ID = id
 		_spec.ID.Value = id
 	}
+	if value, ok := uc.mutation.Versions(); ok {
+		_spec.SetField(user.FieldVersions, field.TypeInt, value)
+		_node.Versions = value
+	}
 	if value, ok := uc.mutation.Name(); ok {
 		_spec.SetField(user.FieldName, field.TypeString, value)
 		_node.Name = value
@@ -183,25 +224,33 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		_spec.SetField(user.FieldEmail, field.TypeString, value)
 		_node.Email = value
 	}
-	if value, ok := uc.mutation.EmailVerifiedAt(); ok {
-		_spec.SetField(user.FieldEmailVerifiedAt, field.TypeTime, value)
-		_node.EmailVerifiedAt = value
-	}
 	if value, ok := uc.mutation.Password(); ok {
 		_spec.SetField(user.FieldPassword, field.TypeString, value)
 		_node.Password = value
-	}
-	if value, ok := uc.mutation.RememberToken(); ok {
-		_spec.SetField(user.FieldRememberToken, field.TypeString, value)
-		_node.RememberToken = value
 	}
 	if value, ok := uc.mutation.CreatedAt(); ok {
 		_spec.SetField(user.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
 	}
+	if value, ok := uc.mutation.CreatedBy(); ok {
+		_spec.SetField(user.FieldCreatedBy, field.TypeUint64, value)
+		_node.CreatedBy = value
+	}
 	if value, ok := uc.mutation.UpdatedAt(); ok {
 		_spec.SetField(user.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if value, ok := uc.mutation.UpdatedBy(); ok {
+		_spec.SetField(user.FieldUpdatedBy, field.TypeUint64, value)
+		_node.UpdatedBy = value
+	}
+	if value, ok := uc.mutation.DeletedAt(); ok {
+		_spec.SetField(user.FieldDeletedAt, field.TypeTime, value)
+		_node.DeletedAt = value
+	}
+	if value, ok := uc.mutation.DeletedBy(); ok {
+		_spec.SetField(user.FieldDeletedBy, field.TypeUint64, value)
+		_node.DeletedBy = value
 	}
 	return _node, _spec
 }

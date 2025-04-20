@@ -5,10 +5,10 @@ wire:
 	cd $(WIRE_DIR)/$$dir && wire
 
 
-ENT_DIR := $(shell pwd)/internal/infrastructure/database/ent
+ENT_DIR := $(shell pwd)/internal/infra/database/ent
 # Generate ent models
 schema:
-	go generate ./internal/infrastructure/database/ent
+	go generate ./internal/infra/database/ent
 
 schema-advance:
 	@echo "*****\n Advance mode will granted you a super power, use it wisely\n [Generate with entgo feature sql/modifier,sql/execquery]\n*****";
@@ -22,7 +22,7 @@ schema-import:
 		exit 1; \
 	fi;
 	@echo "Creating ent schema and generating ent code at $$ENT_DIR/$$schema";
-	go run ariga.io/entimport/cmd/entimport -dsn "mysql://root:password@tcp(localhost:3306)/oauth" -tables $$schema -schema-path $$ENT_DIR
+	go run ariga.io/entimport/cmd/entimport -dsn "mysql://root:password@tcp(localhost:3306)/ichigo_db" -tables $$schema -schema-path $$ENT_DIR
 
 migration-build:
 	@echo "Warning this action will build unix executable file "

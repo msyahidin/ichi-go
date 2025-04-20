@@ -11,20 +11,26 @@ const (
 	Label = "user"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldVersions holds the string denoting the versions field in the database.
+	FieldVersions = "versions"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
 	// FieldEmail holds the string denoting the email field in the database.
 	FieldEmail = "email"
-	// FieldEmailVerifiedAt holds the string denoting the email_verified_at field in the database.
-	FieldEmailVerifiedAt = "email_verified_at"
 	// FieldPassword holds the string denoting the password field in the database.
 	FieldPassword = "password"
-	// FieldRememberToken holds the string denoting the remember_token field in the database.
-	FieldRememberToken = "remember_token"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
+	// FieldCreatedBy holds the string denoting the created_by field in the database.
+	FieldCreatedBy = "created_by"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
 	FieldUpdatedAt = "updated_at"
+	// FieldUpdatedBy holds the string denoting the updated_by field in the database.
+	FieldUpdatedBy = "updated_by"
+	// FieldDeletedAt holds the string denoting the deleted_at field in the database.
+	FieldDeletedAt = "deleted_at"
+	// FieldDeletedBy holds the string denoting the deleted_by field in the database.
+	FieldDeletedBy = "deleted_by"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 )
@@ -32,13 +38,16 @@ const (
 // Columns holds all SQL columns for user fields.
 var Columns = []string{
 	FieldID,
+	FieldVersions,
 	FieldName,
 	FieldEmail,
-	FieldEmailVerifiedAt,
 	FieldPassword,
-	FieldRememberToken,
 	FieldCreatedAt,
+	FieldCreatedBy,
 	FieldUpdatedAt,
+	FieldUpdatedBy,
+	FieldDeletedAt,
+	FieldDeletedBy,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -59,6 +68,11 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
 }
 
+// ByVersions orders the results by the versions field.
+func ByVersions(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldVersions, opts...).ToFunc()
+}
+
 // ByName orders the results by the name field.
 func ByName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldName, opts...).ToFunc()
@@ -69,19 +83,9 @@ func ByEmail(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldEmail, opts...).ToFunc()
 }
 
-// ByEmailVerifiedAt orders the results by the email_verified_at field.
-func ByEmailVerifiedAt(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldEmailVerifiedAt, opts...).ToFunc()
-}
-
 // ByPassword orders the results by the password field.
 func ByPassword(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldPassword, opts...).ToFunc()
-}
-
-// ByRememberToken orders the results by the remember_token field.
-func ByRememberToken(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldRememberToken, opts...).ToFunc()
 }
 
 // ByCreatedAt orders the results by the created_at field.
@@ -89,7 +93,27 @@ func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCreatedAt, opts...).ToFunc()
 }
 
+// ByCreatedBy orders the results by the created_by field.
+func ByCreatedBy(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCreatedBy, opts...).ToFunc()
+}
+
 // ByUpdatedAt orders the results by the updated_at field.
 func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
+}
+
+// ByUpdatedBy orders the results by the updated_by field.
+func ByUpdatedBy(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldUpdatedBy, opts...).ToFunc()
+}
+
+// ByDeletedAt orders the results by the deleted_at field.
+func ByDeletedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDeletedAt, opts...).ToFunc()
+}
+
+// ByDeletedBy orders the results by the deleted_by field.
+func ByDeletedBy(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDeletedBy, opts...).ToFunc()
 }

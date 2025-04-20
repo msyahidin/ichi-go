@@ -21,13 +21,16 @@ var (
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUint64, Increment: true},
+		{Name: "versions", Type: field.TypeInt},
 		{Name: "name", Type: field.TypeString},
 		{Name: "email", Type: field.TypeString, Unique: true},
-		{Name: "email_verified_at", Type: field.TypeTime, Nullable: true},
 		{Name: "password", Type: field.TypeString},
-		{Name: "remember_token", Type: field.TypeString, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime, Nullable: true},
+		{Name: "created_by", Type: field.TypeUint64, Nullable: true},
 		{Name: "updated_at", Type: field.TypeTime, Nullable: true},
+		{Name: "updated_by", Type: field.TypeUint64, Nullable: true},
+		{Name: "deleted_at", Type: field.TypeTime, Nullable: true},
+		{Name: "deleted_by", Type: field.TypeUint64, Nullable: true},
 	}
 	// UsersTable holds the schema information for the "users" table.
 	UsersTable = &schema.Table{
