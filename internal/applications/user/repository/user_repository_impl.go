@@ -65,7 +65,7 @@ func (r *UserRepositoryImpl) UpdateTx(ctx context.Context, txClient *ent.Client,
 	}
 
 	if affected < 1 {
-		logger.Errorf("ID %s no records were updated in database", updateUser.ID)
+		logger.Errorf("ID %d no records were updated in database", updateUser.ID)
 		return nil, errors.New("no records were updated in database")
 	}
 

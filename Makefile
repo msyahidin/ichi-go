@@ -4,6 +4,16 @@ wire:
 	echo "Accessing directory and wire all DI $(WIRE_DIR)/$$dir"; \
 	cd $(WIRE_DIR)/$$dir && wire
 
+# Build the project
+build: test
+	@echo "Building the project..."
+	go build -o main cmd/main.go
+	@echo "Build complete! Executable file: main"
+
+# Run tests and generate coverage report
+test:
+	go test -coverprofile=coverage.out ./...
+	go tool cover -html=coverage.out -o coverage.html
 
 ENT_DIR := $(shell pwd)/internal/infra/database/ent
 # Generate ent models
