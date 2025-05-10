@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"ichi-go/cmd/server"
 	"ichi-go/config"
+	"ichi-go/error_handler"
 	"ichi-go/internal/infra/cache"
 	"ichi-go/internal/infra/database"
 	"ichi-go/internal/infra/database/ent"
@@ -46,6 +47,14 @@ func main() {
 		}
 		logger.Debugf("Routes Mapped: %s %s", route.Method, route.Path)
 	}
+
+	// definition can be moved somewhere else
+	errorHandlers := error_handler.ErrorHandlers{
+		error_handler.NewEnt(),
+		error_handler.NewEcho(),
+		error_handler.NewGeneric(),
+	}
+	e.HTTPErrorHandler = errorHandlers.EchoHandler
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
