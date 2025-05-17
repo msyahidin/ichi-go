@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"ichi-go/cmd/server"
 	"ichi-go/config"
-	"ichi-go/error_handler"
 	"ichi-go/internal/infra/cache"
 	"ichi-go/internal/infra/database"
 	"ichi-go/internal/infra/database/ent"
 	"ichi-go/internal/middlewares"
+	error_handler2 "ichi-go/pkg/error_handler"
 	"ichi-go/pkg/logger"
 	"os"
 	"os/signal"
@@ -40,6 +40,7 @@ func main() {
 
 	server.SetupRestRoutes(e, dbConnection, cacheConnection)
 	server.SetupWebRoutes(e)
+	error_handler2.SetupErrorHandler(e)
 
 	for _, route := range e.Routes() {
 		if route.Method == "" && route.Path == "" {
@@ -47,14 +48,6 @@ func main() {
 		}
 		logger.Debugf("Routes Mapped: %s %s", route.Method, route.Path)
 	}
-
-	// definition can be moved somewhere else
-	errorHandlers := error_handler.ErrorHandlers{
-		error_handler.NewEnt(),
-		error_handler.NewEcho(),
-		error_handler.NewGeneric(),
-	}
-	e.HTTPErrorHandler = errorHandlers.EchoHandler
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
