@@ -9,6 +9,7 @@ import (
 	"ichi-go/internal/infra/database"
 	"ichi-go/internal/infra/database/ent"
 	"ichi-go/internal/middlewares"
+	error_handler2 "ichi-go/pkg/error_handler"
 	"ichi-go/pkg/logger"
 	"os"
 	"os/signal"
@@ -39,6 +40,7 @@ func main() {
 
 	server.SetupRestRoutes(e, dbConnection, cacheConnection)
 	server.SetupWebRoutes(e)
+	error_handler2.SetupErrorHandler(e)
 
 	for _, route := range e.Routes() {
 		if route.Method == "" && route.Path == "" {
