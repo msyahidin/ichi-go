@@ -40,7 +40,7 @@ func main() {
 
 	server.SetupRestRoutes(e, dbConnection, cacheConnection)
 	server.SetupWebRoutes(e)
-	error_handler2.SetupErrorHandler(e)
+	errorhandler.Setup(e)
 
 	for _, route := range e.Routes() {
 		if route.Method == "" && route.Path == "" {
