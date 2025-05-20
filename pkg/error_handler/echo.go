@@ -5,7 +5,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-type Echo struct {
+type EchoHandler struct {
 }
 
 func NewEcho() *Echo {
