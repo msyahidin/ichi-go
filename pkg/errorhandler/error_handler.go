@@ -1,13 +1,6 @@
-package error_handler
-
-import "github.com/labstack/echo/v4"
-
-type ErrorHandler interface {
-	Handle(err error, ctx echo.Context) error
 package errorhandler
 
 import "github.com/labstack/echo/v4"
-
 
 type ErrorHandler interface {
 	Handle(err error, ctx echo.Context) error
@@ -30,6 +23,6 @@ func (c Chain) Handle(err error, ctx echo.Context) error {
 
 func (c Chain) EchoHandler(err error, ctx echo.Context) {
 	if remaining := c.Handle(err, ctx); remaining != nil {
-		echo.DefaultHTTPErrorHandler(remaining, ctx)
+		NewGenericHandler().Handle(remaining, ctx)
 	}
 }

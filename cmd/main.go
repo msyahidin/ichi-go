@@ -9,7 +9,7 @@ import (
 	"ichi-go/internal/infra/database"
 	"ichi-go/internal/infra/database/ent"
 	"ichi-go/internal/middlewares"
-	errorhandler "ichi-go/pkg/errorhandler"
+	"ichi-go/pkg/errorhandler"
 	"ichi-go/pkg/logger"
 	"os"
 	"os/signal"
