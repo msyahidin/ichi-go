@@ -10,6 +10,8 @@ type EchoHandler struct {
 
 func NewEcho() *Echo {
 	return &Echo{}
+func NewEchoHandler() * EchoHandler {
+	return &EchoHandler{}
 }
 
 func (h *Echo) Handle(err error, ctx echo.Context) error {
