@@ -8,13 +8,13 @@ import (
 	"time"
 )
 
-func Init(e *echo.Echo) {
+func Init(e *echo.Echo, mainConfig *config.Config) {
 	if config.Cfg.Log.RequestIDConfig.Driver == "default" {
 		e.Use(middleware.RequestID())
 	} else {
 		e.Use(AppRequestID())
 	}
-	e.Use(Logger())
+	e.Use(Logger(mainConfig))
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	e.Use(middleware.Gzip())

@@ -2,13 +2,15 @@ package config
 
 import (
 	"fmt"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/gommon/log"
 	appConfig "ichi-go/config/app"
 	cacheConfig "ichi-go/config/cache"
 	dbConfig "ichi-go/config/database"
 	httpConfig "ichi-go/config/http"
 	logConfig "ichi-go/config/log"
+	msgConfig "ichi-go/config/message"
 	pkgClientConfig "ichi-go/config/pkgclient"
-	"ichi-go/pkg/logger"
 	"os"
 
 	"github.com/spf13/viper"
@@ -22,6 +24,7 @@ type Config struct {
 	Http       httpConfig.HttpConfig
 	HttpClient httpConfig.ClientConfig
 	PkgClient  pkgClientConfig.PkgClient
+	Messages   msgConfig.MessageConfig
 }
 
 var Cfg *Config
@@ -32,9 +35,10 @@ func setDefault() {
 	cacheConfig.SetDefault()
 	logConfig.SetDefault()
 	httpConfig.SetDefault()
+	msgConfig.SetDefault()
 }
 
-func LoadConfig() {
+func LoadConfig(e *echo.Echo) *Config {
 	env := os.Getenv("APP_ENV")
 	if env == "" {
 		env = "local"
@@ -45,25 +49,42 @@ func LoadConfig() {
 	viper.AddConfigPath(".")
 
 	viper.AutomaticEnv()
-	setDefault()
 
 	if err := viper.ReadInConfig(); err != nil {
-		logger.Fatalf("Error reading config file: %v", err)
+		log.Fatalf("Error reading config file: %v", err)
 	}
-
+	setDefault()
 	var cfg Config
 	err := viper.Unmarshal(&cfg)
 	if err != nil {
-		logger.Fatalf("Error parsing config: %v", err)
+		log.Fatalf("Error parsing config: %v", err)
 	}
 	Cfg = &cfg
-
-	logger.Printf("Configuration loaded successfully for environment: %s", env)
-	logger.Printf("Loaded Config: %+v", *Cfg)
+	SetDebugMode(e, Cfg.App.Debug)
+	if e.Debug {
+		log.SetLevel(log.DEBUG)
+		log.Debugf("Debugging enabled")
+		log.Debugf("Configuration loaded successfully for environment: %s", env)
+		log.Debugf("Loaded MessageConfig: %+v", *Cfg)
+	} else {
+		log.SetLevel(log.INFO)
+	}
+	return Cfg
 }
 
 func App() appConfig.AppConfig {
 	return Cfg.App
+}
+
+func SetDebugMode(e *echo.Echo, debug bool) {
+	Cfg.App.Debug = debug
+	e.Debug = debug
+	if debug {
+		log.SetLevel(log.DEBUG)
+	} else {
+		log.SetLevel(log.INFO)
+	}
+	log.Debugf("Debug mode set to %v", debug)
 }
 
 func Database() dbConfig.DatabaseConfig {
@@ -88,3 +109,5 @@ func Log() logConfig.LogConfig {
 func PkgClient() pkgClientConfig.PkgClient {
 	return Cfg.PkgClient
 }
+
+func Message() msgConfig.MessageConfig { return Cfg.Messages }

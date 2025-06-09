@@ -6,9 +6,12 @@ type AppConfig struct {
 	Env     string `mapstructure:"env"`
 	Name    string `mapstructure:"name"`
 	Version string `mapstructure:"version"`
+	Debug   bool   `mapstructure:"debug"`
 }
 
 func SetDefault() {
 	viper.SetDefault("app.name", "MyApp")
 	viper.SetDefault("app.version", "1.0.0")
+	viper.SetDefault("app.debug", false)
+	viper.SetDefault("app.env", "local")
 }

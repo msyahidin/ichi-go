@@ -5,7 +5,7 @@ import (
 	entSql "entgo.io/ent/dialect/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
-	"ichi-go/config"
+	dbConfig "ichi-go/config/database"
 	"ichi-go/internal/infra/database/ent"
 	"ichi-go/internal/infra/database/enthook"
 	"ichi-go/pkg/logger"
@@ -13,37 +13,36 @@ import (
 	"time"
 )
 
-func GetDsn() string {
+func GetDsn(dbConfig *dbConfig.DatabaseConfig) string {
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true",
-		config.Database().User,
-		config.Database().Password,
-		config.Database().Host,
-		strconv.Itoa(config.Database().Port),
-		config.Database().Name)
+		dbConfig.User,
+		dbConfig.Password,
+		dbConfig.Host,
+		strconv.Itoa(dbConfig.Port),
+		dbConfig.Name)
 
 	return dsn
 }
 
-func NewEntClient() *ent.Client {
-	dsn := GetDsn()
+func NewEntClient(dbConfig *dbConfig.DatabaseConfig, debug bool) *ent.Client {
+	dsn := GetDsn(dbConfig)
 
-	db, err := sql.Open(config.Database().Driver, dsn)
+	db, err := sql.Open(dbConfig.Driver, dsn)
 	if err != nil {
 		logger.Fatalf("failed to connect to database: %v", err)
 	}
 
-	db.SetMaxIdleConns(config.Database().MaxIdleConns)
-	db.SetMaxOpenConns(config.Database().MaxOPenConns)
-	db.SetConnMaxLifetime(time.Duration(config.Database().MaxConnLifeTime) * time.Second)
+	db.SetMaxIdleConns(dbConfig.MaxIdleConns)
+	db.SetMaxOpenConns(dbConfig.MaxOPenConns)
+	db.SetConnMaxLifetime(time.Duration(dbConfig.MaxConnLifeTime) * time.Second)
 
 	drv := entSql.OpenDB("mysql", db)
 
 	var client = &ent.Client{}
-	appMode := config.App().Env
-	if appMode == "prod" {
-		client = ent.NewClient(ent.Driver(drv))
-	} else {
+	if debug {
 		client = ent.NewClient(ent.Driver(drv), ent.Debug())
+	} else {
+		client = ent.NewClient(ent.Driver(drv))
 	}
 
 	if drv == nil || client == nil {

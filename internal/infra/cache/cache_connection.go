@@ -4,7 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"ichi-go/config"
+	cacheConfig "ichi-go/config/cache"
 	"sync"
 	"time"
 
@@ -16,8 +16,8 @@ var (
 	once   sync.Once
 )
 
-func New() *redis.Client {
-	cfg := config.Cfg.Cache
+func New(cacheConfig *cacheConfig.CacheConfig) *redis.Client {
+	cfg := cacheConfig
 	once.Do(func() {
 		options := &redis.Options{
 			Addr:     fmt.Sprintf("%s:%d", cfg.Host, cfg.Port),
