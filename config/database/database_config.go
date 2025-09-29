@@ -12,6 +12,7 @@ type DatabaseConfig struct {
 	MaxIdleConns    int    `mapstructure:"max_idle_conns"`
 	MaxOPenConns    int    `mapstructure:"max_open_conns"`
 	MaxConnLifeTime int    `mapstructure:"max_conn_life_time"`
+	Debug           bool   `mapstructure:"debug"`
 }
 
 func SetDefault() {
@@ -23,4 +24,5 @@ func SetDefault() {
 	viper.SetDefault("database.maxIdleConns", 10)
 	viper.SetDefault("database.maxOpenConns", 100)
 	viper.SetDefault("database.maxLifetime", 3600)
+	viper.SetDefault("database.debug", false)
 }

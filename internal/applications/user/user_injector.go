@@ -6,10 +6,10 @@ package user
 import (
 	"github.com/google/wire"
 	"github.com/redis/go-redis/v9"
+	"github.com/uptrace/bun"
 	"ichi-go/internal/applications/user/repository"
 	"ichi-go/internal/applications/user/service"
 	"ichi-go/internal/infra/cache"
-	"ichi-go/internal/infra/database/ent"
 )
 
 var UserSet = wire.NewSet(
@@ -22,7 +22,7 @@ var UserSet = wire.NewSet(
 	wire.Bind(new(cache.Cache), new(*cache.CacheImpl)),
 )
 
-func InitializedService(dbConnection *ent.Client, cacheConnection *redis.Client) *service.UserServiceImpl {
+func InitializedService(dbConnection *bun.DB, cacheConnection *redis.Client) *service.UserServiceImpl {
 	wire.Build(UserSet)
 	return nil
 }

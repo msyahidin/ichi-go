@@ -13,6 +13,10 @@ var Log zerolog.Logger
 
 func Init() {
 	logLevel := viper.GetString("log.level")
+	debug := viper.Get("app.debug")
+	if debug == true {
+		logLevel = "debug"
+	}
 	level, err := zerolog.ParseLevel(logLevel)
 	if err != nil {
 		level = zerolog.InfoLevel
@@ -26,6 +30,10 @@ func Init() {
 		Str("service", viper.GetString("app.name")).
 		Logger().
 		Level(level)
+
+	if level == zerolog.DebugLevel {
+		Log = Log.Output(zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339})
+	}
 }
 
 func WithContext(ctx context.Context) zerolog.Logger {

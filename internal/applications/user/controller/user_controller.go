@@ -27,7 +27,7 @@ func (c *UserController) GetUser(eCtx echo.Context) error {
 	}
 
 	idString, err := strconv.Atoi(userGetReq.ID)
-	user, err := c.service.GetById(eCtx.Request().Context(), uint32(idString))
+	user, err := c.service.BunGetById(eCtx.Request().Context(), uint32(idString))
 	if err != nil {
 		return response.Error(eCtx, http.StatusBadRequest, err)
 	}
