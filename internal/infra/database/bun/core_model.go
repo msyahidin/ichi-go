@@ -3,6 +3,8 @@ package bun
 import (
 	"context"
 	"github.com/uptrace/bun"
+	"ichi-go/internal/middlewares"
+	"strconv"
 	"time"
 )
 
@@ -44,22 +46,23 @@ func NewQueryBuilder(db *bun.DB, model interface{}) *QueryBuilder {
 }
 
 func (m *CoreModel) BeforeAppendModel(ctx context.Context, query bun.Query) error {
-	// TODO get user from context
-	//requestContext := ctx.Value("requestContext")
-	//if requestContext == nil {
-	//
-	//}
+	userId := ctx.Value(middlewares.ContextKeyUserID)
+	if v, ok := userId.(string); ok {
+		if v == "" || v == "0" {
+			userId = 0
+		}
+	}
 	switch query.(type) {
 	case *bun.InsertQuery:
 		m.CreatedAt = time.Now()
 		m.Version = time.Now().UnixNano()
-		m.CreatedBy = 0
+		m.CreatedBy, _ = strconv.ParseInt(userId.(string), 10, 64)
 	case *bun.UpdateQuery:
 		m.UpdatedAt = bun.NullTime{Time: time.Now()}
-		m.UpdatedBy = 0
+		m.UpdatedBy, _ = strconv.ParseInt(userId.(string), 10, 64)
 	case *bun.DeleteQuery:
 		m.DeletedAt = bun.NullTime{Time: time.Now()}
-		m.DeletedBy = 0
+		m.DeletedBy, _ = strconv.ParseInt(userId.(string), 10, 64)
 	default:
 		// Do nothing for other query types
 	}
@@ -80,9 +83,19 @@ func (m *CoreModel) BeforeUpdate(ctx context.Context, query *bun.UpdateQuery) er
 	if data == nil {
 		return nil
 	}
-	if core, ok := data.(Versioned); ok {
-		query.Where("versions = ?", core.GetVersion())
-		core.TouchVersion()
+
+	switch v := data.(type) {
+
+	case Versioned:
+		query.Where("versions = ?", v.GetVersion())
+		v.TouchVersion()
+
+	case []Versioned:
+		for _, model := range v {
+			model.TouchVersion()
+		}
+	default:
+		// Do nothing if not Versioned
 	}
 
 	return nil

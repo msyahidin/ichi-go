@@ -22,6 +22,7 @@ func Init(e *echo.Echo) {
 	e.Use(AppRequestTimeOut())
 	e.Use(Cors())
 	e.Use(copyRequestID)
+	e.Use(RequestContextMiddleware())
 }
 
 func copyRequestID(next echo.HandlerFunc) echo.HandlerFunc {
