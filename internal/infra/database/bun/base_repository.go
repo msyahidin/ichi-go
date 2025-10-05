@@ -116,7 +116,11 @@ func (r *BaseRepository[T]) Create(ctx context.Context, model *T) (*T, error) {
 
 // Update - update existing record
 func (r *BaseRepository[T]) Update(ctx context.Context, model *T) (*T, error) {
-	res, err := r.db.NewUpdate().Model(model).WherePK().Exec(ctx)
+	res, err := r.db.NewUpdate().
+		Model(model).
+		OmitZero().
+		WherePK().
+		Exec(ctx)
 	if err != nil {
 		logger.Errorf("Error user repo with  %+v, err: %+v", model, err)
 		return nil, err
@@ -140,6 +144,7 @@ func (r *BaseRepository[T]) SoftDelete(ctx context.Context, id int64) error {
 	_, err := r.db.NewUpdate().
 		Model(r.model).
 		Set("deleted_at = ?", time.Now()).
+		//Set("deleted_by", 0).
 		Where("id = ?", id).
 		Exec(ctx)
 	return err
@@ -150,6 +155,7 @@ func (r *BaseRepository[T]) Restore(ctx context.Context, id int64) error {
 	_, err := r.db.NewUpdate().
 		Model(r.model).
 		Set("deleted_at = NULL").
+		//Set("updated_by", 0).
 		Where("id = ?", id).
 		Exec(ctx)
 	return err

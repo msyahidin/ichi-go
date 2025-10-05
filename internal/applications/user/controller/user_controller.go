@@ -4,6 +4,7 @@ import (
 	dtoMapper "github.com/dranikpg/dto-mapper"
 	"github.com/labstack/echo/v4"
 	"ichi-go/internal/applications/user/dto"
+	"ichi-go/internal/applications/user/repository"
 	"ichi-go/internal/applications/user/service"
 	pokeDto "ichi-go/pkg/clients/pokemonapi/dto"
 	"ichi-go/pkg/utils/response"
@@ -27,7 +28,7 @@ func (c *UserController) GetUser(eCtx echo.Context) error {
 	}
 
 	idString, err := strconv.Atoi(userGetReq.ID)
-	user, err := c.service.BunGetById(eCtx.Request().Context(), uint32(idString))
+	user, err := c.service.GetById(eCtx.Request().Context(), uint32(idString))
 	if err != nil {
 		return response.Error(eCtx, http.StatusBadRequest, err)
 	}
@@ -39,6 +40,46 @@ func (c *UserController) GetUser(eCtx echo.Context) error {
 	}
 
 	return response.Success(eCtx, userGetResponseDto)
+}
+
+func (c *UserController) CreateUser(eCtx echo.Context) error {
+	var userCreateReq dto.UserCreateRequest
+	err := eCtx.Bind(&userCreateReq)
+	if err != nil {
+		return response.Error(eCtx, http.StatusBadRequest, err)
+	}
+
+	var userModel repository.UserModel
+	err = dtoMapper.Map(&userModel, userCreateReq)
+	if err != nil {
+		return response.Error(eCtx, http.StatusInternalServerError, err)
+	}
+	user, err := c.service.Create(eCtx.Request().Context(), userModel)
+	if err != nil {
+		return err
+	}
+
+	return response.Created(eCtx, map[string]interface{}{"new_user_id": user})
+}
+
+func (c *UserController) UpdateUser(eCtx echo.Context) error {
+	var userUpdateReq dto.UserUpdateRequest
+	err := eCtx.Bind(&userUpdateReq)
+	if err != nil {
+		return response.Error(eCtx, http.StatusBadRequest, err)
+	}
+
+	var userModel repository.UserModel
+	err = dtoMapper.Map(&userModel, userUpdateReq)
+	if err != nil {
+		return response.Error(eCtx, http.StatusInternalServerError, err)
+	}
+	user, err := c.service.Update(eCtx.Request().Context(), userModel)
+	if err != nil {
+		return err
+	}
+
+	return response.Success(eCtx, user)
 }
 
 func (c *UserController) GetUserPage(eCtx echo.Context) error {

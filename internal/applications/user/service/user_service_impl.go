@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"ichi-go/internal/applications/user/repository"
 	"ichi-go/internal/infra/cache"
-	"ichi-go/internal/infra/database/ent"
 	"ichi-go/pkg/clients/pokemonapi"
 	"ichi-go/pkg/clients/pokemonapi/dto"
 	"time"
@@ -22,42 +21,7 @@ func NewUserService(repo repository.UserRepository, cache cache.Cache) *UserServ
 	return &UserServiceImpl{repo: repo, cache: cache, pokeClient: pokeClient}
 }
 
-func (s *UserServiceImpl) GetById(ctx context.Context, id uint32) (*ent.User, error) {
-	user := ent.User{
-		ID:        0,
-		Versions:  0,
-		Name:      "",
-		Email:     "",
-		Password:  "",
-		CreatedAt: time.Time{},
-		CreatedBy: 0,
-		UpdatedAt: time.Time{},
-		UpdatedBy: 0,
-		DeletedAt: time.Time{},
-		DeletedBy: 0,
-	}
-	//cacheKey := fmt.Sprintf("user:%d", id)
-	//cachedData, err := s.cache.Get(ctx, cacheKey, &ent.User{})
-	//if err == nil && cachedData != nil {
-	//	return cachedData.(*ent.User), nil
-	//}
-	//
-	//user, err := s.repo.GetById(ctx, uint64(id))
-	//if err != nil {
-	//	return nil, err
-	//}
-	//
-	//if err == nil {
-	//	option := cache.Options{
-	//		Expiration: time.Hour,
-	//		Compress:   true,
-	//	}
-	//	_, _ = s.cache.Set(ctx, cacheKey, user, option)
-	//}
-	return &user, nil
-}
-
-func (s *UserServiceImpl) BunGetById(ctx context.Context, id uint32) (*repository.UserModel, error) {
+func (s *UserServiceImpl) GetById(ctx context.Context, id uint32) (*repository.UserModel, error) {
 
 	cacheKey := fmt.Sprintf("user:%d", id)
 	cachedData, err := s.cache.Get(ctx, cacheKey, &repository.UserModel{})
@@ -78,6 +42,32 @@ func (s *UserServiceImpl) BunGetById(ctx context.Context, id uint32) (*repositor
 		_, _ = s.cache.Set(ctx, cacheKey, user, option)
 	}
 	return user, nil
+}
+
+func (s *UserServiceImpl) Create(ctx context.Context, newUser repository.UserModel) (int64, error) {
+	userId, err := s.repo.Create(ctx, newUser)
+	if err != nil {
+		return 0, err
+	}
+	return userId, nil
+}
+
+func (s *UserServiceImpl) Update(ctx context.Context, updateUser repository.UserModel) (int64, error) {
+	user, err := s.repo.GetById(ctx, uint64(updateUser.ID))
+	if err != nil {
+		return 0, err
+	}
+	if user == nil || user.ID == 0 {
+		return 0, fmt.Errorf("user with ID %d not found", updateUser.ID)
+	}
+
+	updatedId, err := s.repo.Update(ctx, *user)
+	if err != nil {
+		return 0, err
+	}
+	cacheKey := fmt.Sprintf("user:%d", updateUser.ID)
+	_, _ = s.cache.Delete(ctx, cacheKey)
+	return updatedId, nil
 }
 
 func (s *UserServiceImpl) GetPokemon(ctx context.Context, name string) (*dto.PokemonGetResponseDto, error) {
