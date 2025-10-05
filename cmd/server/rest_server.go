@@ -4,13 +4,13 @@ import (
 	"encoding/json"
 	"github.com/labstack/echo/v4"
 	"github.com/redis/go-redis/v9"
+	"github.com/uptrace/bun"
 	"ichi-go/config"
 	"ichi-go/internal/applications/user"
-	"ichi-go/internal/infra/database/ent"
 	"os"
 )
 
-func SetupRestRoutes(e *echo.Echo, dbClient *ent.Client, cacheClient *redis.Client) {
+func SetupRestRoutes(e *echo.Echo, dbClient *bun.DB, cacheClient *redis.Client) {
 	user.Register(GetServiceName(), e, dbClient, cacheClient)
 
 	// Please register new domain routes before this line

@@ -9,15 +9,15 @@ package user
 import (
 	"github.com/google/wire"
 	"github.com/redis/go-redis/v9"
+	"github.com/uptrace/bun"
 	"ichi-go/internal/applications/user/repository"
 	"ichi-go/internal/applications/user/service"
 	"ichi-go/internal/infra/cache"
-	"ichi-go/internal/infra/database/ent"
 )
 
 // Injectors from user_injector.go:
 
-func InitializedService(dbConnection *ent.Client, cacheConnection *redis.Client) *service.UserServiceImpl {
+func InitializedService(dbConnection *bun.DB, cacheConnection *redis.Client) *service.UserServiceImpl {
 	userRepositoryImpl := repository.NewUserRepository(dbConnection)
 	cacheImpl := cache.NewCache(cacheConnection)
 	userServiceImpl := service.NewUserService(userRepositoryImpl, cacheImpl)

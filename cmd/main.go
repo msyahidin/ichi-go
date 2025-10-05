@@ -3,11 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/uptrace/bun"
 	"ichi-go/cmd/server"
 	"ichi-go/config"
 	"ichi-go/internal/infra/cache"
 	"ichi-go/internal/infra/database"
-	"ichi-go/internal/infra/database/ent"
 	"ichi-go/internal/middlewares"
 	"ichi-go/pkg/errorhandler"
 	"ichi-go/pkg/logger"
@@ -25,11 +25,12 @@ func main() {
 	e := echo.New()
 	middlewares.Init(e)
 
-	dbConnection := database.NewEntClient()
+	//dbConnection := database.NewEntClient()
+	dbConnection := database.NewBunClient()
 	logger.Debugf("initialized database configuration = %v", dbConnection)
 
 	//from docs define close on this function, but will impact cant create DB session on repository:
-	defer func(dbConnection *ent.Client) {
+	defer func(dbConnection *bun.DB) {
 		err := dbConnection.Close()
 		if err != nil {
 			logger.Fatalf("error initialized database configuration = %v", err)

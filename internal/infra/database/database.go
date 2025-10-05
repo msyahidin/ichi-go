@@ -5,7 +5,10 @@ import (
 	entSql "entgo.io/ent/dialect/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
+	upbun "github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect/mysqldialect"
 	"ichi-go/config"
+	"ichi-go/internal/infra/database/bun"
 	"ichi-go/internal/infra/database/ent"
 	"ichi-go/internal/infra/database/enthook"
 	"ichi-go/pkg/logger"
@@ -66,4 +69,27 @@ func NewEntClient() *ent.Client {
 	//log.Info("initialized SetupHooks configuration=")
 
 	return client
+}
+
+func NewBunClient() *upbun.DB {
+	dsn := GetDsn()
+
+	sqldb, err := sql.Open(config.Database().Driver, dsn)
+	if err != nil {
+		logger.Fatalf("failed to connect to database: %v", err)
+	}
+
+	db := upbun.NewDB(sqldb, mysqldialect.New())
+
+	db.SetMaxIdleConns(config.Database().MaxIdleConns)
+	db.SetMaxOpenConns(config.Database().MaxOPenConns)
+	db.SetConnMaxLifetime(time.Duration(config.Database().MaxConnLifeTime) * time.Second)
+
+	if err != nil {
+		logger.Fatalf("failed opening connection to DB : driver or DB new client is null: %v", err)
+	}
+	if config.Database().Debug {
+		db.AddQueryHook(&bun.DebugHook{})
+	}
+	return db
 }
