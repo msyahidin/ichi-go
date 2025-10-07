@@ -7,6 +7,7 @@ import (
 	"ichi-go/internal/applications/user/repository"
 	"ichi-go/internal/applications/user/service"
 	pokeDto "ichi-go/pkg/clients/pokemonapi/dto"
+	mapper "ichi-go/pkg/utils/dto"
 	"ichi-go/pkg/utils/response"
 	"net/http"
 	"strconv"
@@ -32,14 +33,14 @@ func (c *UserController) GetUser(eCtx echo.Context) error {
 	if err != nil {
 		return response.Error(eCtx, http.StatusBadRequest, err)
 	}
-
 	var userGetResponseDto dto.UserGetResponse
-	err = dtoMapper.Map(&userGetResponseDto, user)
+	dtoMap := mapper.New()
+	err = dtoMap.SafeMap(&userGetResponseDto, user)
 	if err != nil {
 		return response.Error(eCtx, http.StatusInternalServerError, err)
 	}
 
-	return response.Success(eCtx, userGetResponseDto)
+	return response.Success(eCtx, user)
 }
 
 func (c *UserController) CreateUser(eCtx echo.Context) error {

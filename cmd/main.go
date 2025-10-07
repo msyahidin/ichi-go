@@ -23,6 +23,7 @@ func main() {
 	logger.Init()
 
 	e := echo.New()
+	e.Debug = config.App().Debug
 	middlewares.Init(e)
 
 	//dbConnection := database.NewEntClient()
