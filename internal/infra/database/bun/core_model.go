@@ -3,6 +3,8 @@ package bun
 import (
 	"context"
 	"github.com/uptrace/bun"
+	"ichi-go/pkg/requestctx"
+	"strconv"
 	"time"
 )
 
@@ -10,7 +12,7 @@ type CoreModel struct {
 	ID        int64        `bun:"id,pk,autoincrement"`
 	Version   int64        `bun:"versions,notnull,default:0"`
 	CreatedAt time.Time    `bun:"created_at,nullzero,notnull,default:current_timestamp"`
-	UpdatedAt bun.NullTime `bun:"updated_at,nullzero,notnull,default:current_timestamp"`
+	UpdatedAt bun.NullTime `bun:"updated_at,nullzero,default:current_timestamp"`
 	DeletedAt bun.NullTime `bun:"deleted_at,soft_delete,nullzero,default:null"`
 	CreatedBy int64        `bun:"created_by,notnull,default:0"`
 	UpdatedBy int64        `bun:"updated_by,notnull,default:0"`
@@ -44,22 +46,23 @@ func NewQueryBuilder(db *bun.DB, model interface{}) *QueryBuilder {
 }
 
 func (m *CoreModel) BeforeAppendModel(ctx context.Context, query bun.Query) error {
-	// TODO get user from context
-	//requestContext := ctx.Value("requestContext")
-	//if requestContext == nil {
-	//
-	//}
+	userIdStr := requestctx.GetUserID(ctx)
+	userId, _ := strconv.ParseInt(userIdStr, 10, 64)
+	if userIdStr == "" {
+		userId = 0
+	}
+
 	switch query.(type) {
 	case *bun.InsertQuery:
 		m.CreatedAt = time.Now()
 		m.Version = time.Now().UnixNano()
-		m.CreatedBy = 0
+		m.CreatedBy = userId
 	case *bun.UpdateQuery:
 		m.UpdatedAt = bun.NullTime{Time: time.Now()}
-		m.UpdatedBy = 0
+		m.UpdatedBy = userId
 	case *bun.DeleteQuery:
 		m.DeletedAt = bun.NullTime{Time: time.Now()}
-		m.DeletedBy = 0
+		m.DeletedBy = userId
 	default:
 		// Do nothing for other query types
 	}
@@ -80,9 +83,19 @@ func (m *CoreModel) BeforeUpdate(ctx context.Context, query *bun.UpdateQuery) er
 	if data == nil {
 		return nil
 	}
-	if core, ok := data.(Versioned); ok {
-		query.Where("versions = ?", core.GetVersion())
-		core.TouchVersion()
+
+	switch v := data.(type) {
+
+	case Versioned:
+		query.Where("versions = ?", v.GetVersion())
+		v.TouchVersion()
+
+	case []Versioned:
+		for _, model := range v {
+			model.TouchVersion()
+		}
+	default:
+		// Do nothing if not Versioned
 	}
 
 	return nil

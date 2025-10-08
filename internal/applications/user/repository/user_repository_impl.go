@@ -49,7 +49,7 @@ func (r *UserRepositoryImpl) Update(ctx context.Context, updateUser UserModel) (
 		return 0, err
 	}
 	data, err := r.DB().NewUpdate().
-		Model(&existingUser).
+		Model(existingUser).
 		Where("id = ?", updateUser.ID).
 		OmitZero().
 		Returning("id").
