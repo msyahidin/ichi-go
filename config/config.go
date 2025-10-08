@@ -48,13 +48,13 @@ func LoadConfig() {
 	setDefault()
 
 	if err := viper.ReadInConfig(); err != nil {
-		logger.Fatalf("Error reading config file: %v", err)
+		logger.Panicf("Error reading config file: %v", err)
 	}
 
 	var cfg Config
 	err := viper.Unmarshal(&cfg)
 	if err != nil {
-		logger.Fatalf("Error parsing config: %v", err)
+		logger.Panicf("Error parsing config: %v", err)
 	}
 	Cfg = &cfg
 
