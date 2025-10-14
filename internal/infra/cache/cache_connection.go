@@ -4,7 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"ichi-go/config"
+	cacheConfig "ichi-go/config/cache"
 	"sync"
 	"time"
 
@@ -16,20 +16,19 @@ var (
 	once   sync.Once
 )
 
-func New() *redis.Client {
-	cfg := config.Cfg.Cache
+func New(cacheConfig *cacheConfig.CacheConfig) *redis.Client {
 	once.Do(func() {
 		options := &redis.Options{
-			Addr:     fmt.Sprintf("%s:%d", cfg.Host, cfg.Port),
-			Username: cfg.Username,
-			Password: cfg.Password,
-			DB:       cfg.Db,
-			PoolSize: cfg.PoolSize,
+			Addr:     fmt.Sprintf("%s:%d", cacheConfig.Host, cacheConfig.Port),
+			Username: cacheConfig.Username,
+			Password: cacheConfig.Password,
+			DB:       cacheConfig.Db,
+			PoolSize: cacheConfig.PoolSize,
 		}
 
-		if cfg.UseTLS {
+		if cacheConfig.UseTLS {
 			options.TLSConfig = &tls.Config{
-				InsecureSkipVerify: cfg.SkipVerify,
+				InsecureSkipVerify: cacheConfig.SkipVerify,
 			}
 		}
 
