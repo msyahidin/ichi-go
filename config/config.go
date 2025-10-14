@@ -2,6 +2,8 @@ package config
 
 import (
 	"fmt"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/gommon/log"
 	appConfig "ichi-go/config/app"
 	cacheConfig "ichi-go/config/cache"
 	dbConfig "ichi-go/config/database"
@@ -34,7 +36,7 @@ func setDefault() {
 	httpConfig.SetDefault()
 }
 
-func LoadConfig() {
+func LoadConfig(e *echo.Echo) *Config {
 	env := os.Getenv("APP_ENV")
 	if env == "" {
 		env = "local"
@@ -45,12 +47,11 @@ func LoadConfig() {
 	viper.AddConfigPath(".")
 
 	viper.AutomaticEnv()
-	setDefault()
 
 	if err := viper.ReadInConfig(); err != nil {
 		logger.Panicf("Error reading config file: %v", err)
 	}
-
+	setDefault()
 	var cfg Config
 	err := viper.Unmarshal(&cfg)
 	if err != nil {
@@ -58,8 +59,16 @@ func LoadConfig() {
 	}
 	Cfg = &cfg
 
-	logger.Printf("Configuration loaded successfully for environment: %s", env)
-	logger.Printf("Loaded Config: %+v", *Cfg)
+	SetDebugMode(e, Cfg.App.Debug)
+	if e.Debug {
+		log.SetLevel(log.DEBUG)
+		log.Debugf("Debugging enabled")
+		log.Debugf("Configuration loaded successfully for environment: %s", env)
+		log.Debugf("Loaded MessageConfig: %+v", *Cfg)
+	} else {
+		log.SetLevel(log.INFO)
+	}
+	return Cfg
 }
 
 func App() appConfig.AppConfig {
@@ -68,6 +77,17 @@ func App() appConfig.AppConfig {
 
 func Database() dbConfig.DatabaseConfig {
 	return Cfg.Database
+}
+
+func SetDebugMode(e *echo.Echo, debug bool) {
+	Cfg.App.Debug = debug
+	e.Debug = debug
+	if debug {
+		log.SetLevel(log.DEBUG)
+	} else {
+		log.SetLevel(log.INFO)
+	}
+	log.Debugf("Debug mode set to %v", debug)
 }
 
 func Cache() cacheConfig.CacheConfig {

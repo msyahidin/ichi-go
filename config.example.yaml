@@ -2,6 +2,7 @@ app:
   env: "local"
   name: "ichi-go"
   version: "1.0.0"
+  debug: true
 
 http:
   timeout: 10000
@@ -25,10 +26,11 @@ database:
   port: 3306
   user: "root"
   password: "password"
-  name: "oauth"
+  name: "mydb"
   max_idle_conns: 10
   max_open_conns: 100
   max_conn_life_time: 3600
+  debug: true
 
 cache:
   driver: "redis"

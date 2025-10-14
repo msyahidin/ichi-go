@@ -6,12 +6,14 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/uptrace/bun"
 	"ichi-go/config"
+	appConfig "ichi-go/config/app"
 	"ichi-go/internal/applications/user"
+	"ichi-go/pkg/logger"
 	"os"
 )
 
-func SetupRestRoutes(e *echo.Echo, dbClient *bun.DB, cacheClient *redis.Client) {
-	user.Register(GetServiceName(), e, dbClient, cacheClient)
+func SetupRestRoutes(e *echo.Echo, mainConfig *config.Config, dbClient *bun.DB, cacheClient *redis.Client) {
+	user.Register(mainConfig.App.Name, e, dbClient, cacheClient)
 
 	// Please register new domain routes before this line
 	if config.App().Env == "local" {
@@ -19,8 +21,8 @@ func SetupRestRoutes(e *echo.Echo, dbClient *bun.DB, cacheClient *redis.Client) 
 	}
 }
 
-func GetServiceName() string {
-	return config.App().Name
+func GetServiceName(configApp *appConfig.AppConfig) string {
+	return configApp.Name
 }
 
 func generateRouteList(e *echo.Echo) {
@@ -28,5 +30,8 @@ func generateRouteList(e *echo.Echo) {
 	if err != nil {
 		panic(err)
 	}
-	os.WriteFile("routes.json", data, 0644)
+	err = os.WriteFile("routes.json", data, 0644)
+	if err != nil {
+		logger.Errorf("failed to write routes to file: %v", err)
+	}
 }

@@ -8,20 +8,21 @@ import (
 	"net/http"
 )
 
-func Logger() echo.MiddlewareFunc {
+func Logger(config *config.Config) echo.MiddlewareFunc {
 	return middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
 		LogRequestID: true,
 		LogURI:       true,
 		LogStatus:    true,
 		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
-			logger.Log.Info().
+			getLogger := logger.Log.GetLogger()
+			getLogger.Info().
 				Str("method", c.Request().Method).
 				Str("path", c.Request().URL.Path).
 				Int("status", c.Response().Status).
 				Str("ip", c.RealIP()).
 				Str("user_agent", c.Request().UserAgent()).
 				Str(echo.HeaderXRequestID, c.Response().Header().Get(echo.HeaderXRequestID)).
-				Str("service", config.Cfg.App.Name).
+				Str("service", config.App.Name).
 				Str("domain", c.Request().Header.Get("domain")).
 				Msg(http.StatusText(c.Response().Status))
 			return nil

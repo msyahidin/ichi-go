@@ -19,15 +19,15 @@ import (
 )
 
 func main() {
-	config.LoadConfig()
-	logger.Init()
 
 	e := echo.New()
+	mainConfig := config.LoadConfig(e)
 	e.Debug = config.App().Debug
-	middlewares.Init(e)
+	middlewares.Init(e, mainConfig)
+	logger.Init(e.Debug)
 
 	//dbConnection := database.NewEntClient()
-	dbConnection := database.NewBunClient()
+	dbConnection := database.NewBunClient(&mainConfig.Database)
 	logger.Debugf("initialized database configuration = %v", dbConnection)
 
 	//from docs define close on this function, but will impact cant create DB session on repository:
@@ -38,10 +38,10 @@ func main() {
 		}
 	}(dbConnection)
 
-	cacheConnection := cache.New()
+	cacheConnection := cache.New(&mainConfig.Cache)
 
-	server.SetupRestRoutes(e, dbConnection, cacheConnection)
-	server.SetupWebRoutes(e)
+	server.SetupRestRoutes(e, mainConfig, dbConnection, cacheConnection)
+	server.SetupWebRoutes(e, mainConfig)
 	errorhandler.Setup(e)
 
 	for _, route := range e.Routes() {
@@ -59,7 +59,7 @@ func main() {
 		address := fmt.Sprintf(":%d", config.Http().Port)
 		logger.Infof("starting http server at %s", address)
 		if err := e.Start(address); err != nil {
-			logger.Fatalf("shutting down the rest server")
+			logger.Fatalf("shutting down the rest server: %v", err)
 		}
 	}()
 
