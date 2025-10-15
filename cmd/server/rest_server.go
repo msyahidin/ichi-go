@@ -16,7 +16,7 @@ func SetupRestRoutes(e *echo.Echo, mainConfig *config.Config, dbClient *bun.DB, 
 	user.Register(mainConfig.App.Name, e, dbClient, cacheClient)
 
 	// Please register new domain routes before this line
-	if config.App().Env == "local" {
+	if mainConfig.App.Env == "local" {
 		generateRouteList(e)
 	}
 }
