@@ -7,7 +7,6 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	upbun "github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/mysqldialect"
-	"ichi-go/config"
 	dbConfig "ichi-go/config/database"
 	"ichi-go/internal/infra/database/bun"
 	"ichi-go/internal/infra/database/ent"
@@ -37,14 +36,13 @@ func NewEntClient(dbConfig *dbConfig.DatabaseConfig) *ent.Client {
 	}
 
 	db.SetMaxIdleConns(dbConfig.MaxIdleConns)
-	db.SetMaxOpenConns(dbConfig.MaxOPenConns)
+	db.SetMaxOpenConns(dbConfig.MaxOpenConns)
 	db.SetConnMaxLifetime(time.Duration(dbConfig.MaxConnLifeTime) * time.Second)
 
 	drv := entSql.OpenDB("mysql", db)
 
 	var client = &ent.Client{}
-	appMode := config.App().Env
-	if appMode == "prod" {
+	if !dbConfig.Debug {
 		client = ent.NewClient(ent.Driver(drv))
 	} else {
 		client = ent.NewClient(ent.Driver(drv), ent.Debug())
@@ -72,25 +70,36 @@ func NewEntClient(dbConfig *dbConfig.DatabaseConfig) *ent.Client {
 	return client
 }
 
-func NewBunClient(dbConfig *dbConfig.DatabaseConfig) *upbun.DB {
-	dsn := GetDsn(dbConfig)
+func NewBunClient(cfg dbConfig.DatabaseConfig) (*upbun.DB, error) {
+	dsn := GetDsn(&cfg)
 
-	sqldb, err := sql.Open(config.Database().Driver, dsn)
+	// Open connection
+	sqldb, err := sql.Open(cfg.Driver, dsn)
 	if err != nil {
-		logger.Fatalf("failed to connect to database: %v", err)
+		return nil, fmt.Errorf("failed to open database connection: %w", err)
 	}
 
+	// Test connection
+	if err := sqldb.Ping(); err != nil {
+		sqldb.Close()
+		return nil, fmt.Errorf("failed to ping database: %w", err)
+	}
+
+	// Create Bun DB
 	db := upbun.NewDB(sqldb, mysqldialect.New())
 
-	db.SetMaxIdleConns(dbConfig.MaxIdleConns)
-	db.SetMaxOpenConns(dbConfig.MaxOPenConns)
-	db.SetConnMaxLifetime(time.Duration(dbConfig.MaxConnLifeTime) * time.Second)
+	// Set connection pool settings
+	db.SetMaxIdleConns(cfg.MaxIdleConns)
+	db.SetMaxOpenConns(cfg.MaxOpenConns) // fixed typo
+	db.SetConnMaxLifetime(time.Duration(cfg.MaxConnLifeTime) * time.Second)
 
-	if err != nil {
-		logger.Fatalf("failed opening connection to DB : driver or DB new client is null: %v", err)
-	}
-	if dbConfig.Debug {
+	// Enable debug mode if configured
+	if cfg.Debug {
 		db.AddQueryHook(&bun.DebugHook{})
 	}
-	return db
+
+	logger.Debugf("Database connection established: driver=%s, maxIdle=%d, maxOpen=%d",
+		cfg.Driver, cfg.MaxIdleConns, cfg.MaxOpenConns)
+
+	return db, nil
 }

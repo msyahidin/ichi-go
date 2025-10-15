@@ -22,7 +22,7 @@ func Logger(config *config.Config) echo.MiddlewareFunc {
 				Str("ip", c.RealIP()).
 				Str("user_agent", c.Request().UserAgent()).
 				Str(echo.HeaderXRequestID, c.Response().Header().Get(echo.HeaderXRequestID)).
-				Str("service", config.App.Name).
+				Str("service", config.App().Name).
 				Str("domain", c.Request().Header.Get("domain")).
 				Msg(http.StatusText(c.Response().Status))
 			return nil

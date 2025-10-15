@@ -25,7 +25,7 @@ var (
 
 func main() {
 	ctx := context.Background()
-	config.LoadConfig()
+	mainConfig := config.LoadConfig()
 	flags.Usage = usage
 	err := flags.Parse(os.Args[1:])
 	if err != nil {
@@ -67,7 +67,7 @@ func main() {
 		log.Fatalf("%q driver not supported\n", driver)
 	}
 
-	dbSource := database.GetDsn()
+	dbSource := database.GetDsn(&mainConfig.Database)
 	db, err := sql.Open(driver, dbSource)
 	if err != nil {
 		log.Fatalf("-dbstring=%q: %v\n", dbSource, err)

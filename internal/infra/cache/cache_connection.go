@@ -16,7 +16,7 @@ var (
 	once   sync.Once
 )
 
-func New(cacheConfig *cacheConfig.CacheConfig) *redis.Client {
+func New(cacheConfig cacheConfig.CacheConfig) *redis.Client {
 	once.Do(func() {
 		options := &redis.Options{
 			Addr:     fmt.Sprintf("%s:%d", cacheConfig.Host, cacheConfig.Port),
