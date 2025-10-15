@@ -21,13 +21,17 @@ import (
 func main() {
 
 	e := echo.New()
-	mainConfig := config.LoadConfig(e)
-	e.Debug = config.App().Debug
-	middlewares.Init(e, mainConfig)
+	config.MustLoad()
+	cfg := config.Get()
+	if cfg == nil {
+		logger.Fatalf("failed to load configuration")
+	}
+	config.SetDebugMode(e, cfg.App().Debug)
+	middlewares.Init(e, cfg)
 	logger.Init(e.Debug)
 
 	//dbConnection := database.NewEntClient()
-	dbConnection := database.NewBunClient(&mainConfig.Database)
+	dbConnection, _ := database.NewBunClient(cfg.Database())
 	logger.Debugf("initialized database configuration = %v", dbConnection)
 
 	//from docs define close on this function, but will impact cant create DB session on repository:
@@ -38,10 +42,10 @@ func main() {
 		}
 	}(dbConnection)
 
-	cacheConnection := cache.New(&mainConfig.Cache)
+	cacheConnection := cache.New(cfg.Cache())
 
-	server.SetupRestRoutes(e, mainConfig, dbConnection, cacheConnection)
-	server.SetupWebRoutes(e, mainConfig)
+	server.SetupRestRoutes(e, cfg, dbConnection, cacheConnection)
+	server.SetupWebRoutes(e, cfg.Schema())
 	errorhandler.Setup(e)
 
 	for _, route := range e.Routes() {
@@ -56,7 +60,7 @@ func main() {
 
 	// Start the server
 	go func() {
-		address := fmt.Sprintf(":%d", config.Http().Port)
+		address := fmt.Sprintf(":%d", cfg.Http().Port)
 		logger.Infof("starting http server at %s", address)
 		if err := e.Start(address); err != nil {
 			logger.Fatalf("shutting down the rest server: %v", err)

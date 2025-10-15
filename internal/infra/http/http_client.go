@@ -10,14 +10,15 @@ import (
 func New() *resty.Client {
 	client := resty.New()
 	defer client.Close()
+	cfg := config.Get()
 
-	client.SetTimeout(time.Duration(config.HttpClient().Timeout) * time.Millisecond).
-		SetRetryCount(config.HttpClient().RetryCount).
-		SetRetryWaitTime(time.Duration(config.HttpClient().RetryWaitTime) * time.Millisecond).
-		SetRetryMaxWaitTime(time.Duration(config.HttpClient().RetryMaxWait) * time.Millisecond).
+	client.SetTimeout(time.Duration(cfg.HttpClient().Timeout) * time.Millisecond).
+		SetRetryCount(cfg.HttpClient().RetryCount).
+		SetRetryWaitTime(time.Duration(cfg.HttpClient().RetryWaitTime) * time.Millisecond).
+		SetRetryMaxWaitTime(time.Duration(cfg.HttpClient().RetryMaxWait) * time.Millisecond).
 		AddRetryConditions(retryWhenStatusCodeNotOk)
 
-	if config.HttpClient().LoggerEnabled {
+	if cfg.HttpClient().LoggerEnabled {
 		client.Logger()
 	}
 	return client

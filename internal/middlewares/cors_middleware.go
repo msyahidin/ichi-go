@@ -3,12 +3,12 @@ package middlewares
 import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"ichi-go/config"
+	httpConfig "ichi-go/config/http"
 	"net/http"
 )
 
-func GetCorsConfig() middleware.CORSConfig {
-	allowedOrigins := config.Cfg.Http.Cors.AllowOrigins
+func GetCorsConfig(configCors httpConfig.CorsConfig) middleware.CORSConfig {
+	allowedOrigins := configCors.AllowOrigins
 	return middleware.CORSConfig{
 		AllowOrigins: allowedOrigins,
 		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
@@ -16,6 +16,6 @@ func GetCorsConfig() middleware.CORSConfig {
 	}
 }
 
-func Cors() echo.MiddlewareFunc {
-	return middleware.CORSWithConfig(GetCorsConfig())
+func Cors(configCors httpConfig.CorsConfig) echo.MiddlewareFunc {
+	return middleware.CORSWithConfig(GetCorsConfig(configCors))
 }

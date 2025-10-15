@@ -10,7 +10,7 @@ type DatabaseConfig struct {
 	Password        string `mapstructure:"password"`
 	Name            string `mapstructure:"name"`
 	MaxIdleConns    int    `mapstructure:"max_idle_conns"`
-	MaxOPenConns    int    `mapstructure:"max_open_conns"`
+	MaxOpenConns    int    `mapstructure:"max_open_conns"`
 	MaxConnLifeTime int    `mapstructure:"max_conn_life_time"`
 	Debug           bool   `mapstructure:"debug"`
 }
