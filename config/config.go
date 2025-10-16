@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	messageConfig "ichi-go/config/messaging"
 	"os"
 	"sync"
 
@@ -26,6 +27,7 @@ type Schema struct {
 	Http       httpConfig.HttpConfig
 	HttpClient httpConfig.ClientConfig
 	PkgClient  pkgClientConfig.PkgClient
+	Messaging  messageConfig.MessagingConfig
 }
 
 type Config struct {
@@ -127,7 +129,11 @@ func (c *Config) PkgClient() pkgClientConfig.PkgClient {
 	return c.schema.PkgClient
 }
 
-// Private helpers
+func (c *Config) Messaging() messageConfig.MessagingConfig {
+	c.ensureLoaded()
+	return c.schema.Messaging
+}
+
 func (c *Config) ensureLoaded() {
 	if c == nil {
 		panic("config receiver is nil")
@@ -173,6 +179,7 @@ func setDefault() {
 	cacheConfig.SetDefault()
 	logConfig.SetDefault()
 	httpConfig.SetDefault()
+	messageConfig.SetDefault()
 }
 
 func configureLogging(cfg *Config, env string) {
