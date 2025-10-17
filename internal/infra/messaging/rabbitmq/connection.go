@@ -3,7 +3,7 @@ package rabbitmq
 import (
 	"fmt"
 	messagingConfig "ichi-go/config/messaging"
-	"log"
+	"ichi-go/pkg/logger"
 	"sync"
 	"time"
 
@@ -29,7 +29,7 @@ func NewConnection(config messagingConfig.MessagingConfig) (*Connection, error) 
 
 	go c.handleReconnect()
 
-	log.Printf("✅ RabbitMQ connected: %s:%d", c.config.Host, c.config.Port)
+	logger.Infof("RabbitMQ connected: %s:%d", c.config.Host, c.config.Port)
 	return c, nil
 }
 
@@ -57,7 +57,7 @@ func (c *Connection) handleReconnect() {
 			return
 		}
 
-		log.Printf("⚠️ Connection lost: %v. Reconnecting...", reason)
+		logger.Infof("Connection lost: %v. Reconnecting...", reason)
 
 		for attempt := 0; attempt < 10; attempt++ {
 			if c.closed {
@@ -67,11 +67,11 @@ func (c *Connection) handleReconnect() {
 			time.Sleep(time.Duration(attempt*2) * time.Second)
 
 			if err := c.connect(); err != nil {
-				log.Printf("Reconnect attempt %d failed: %v", attempt+1, err)
+				logger.Infof("Reconnect attempt %d failed: %v", attempt+1, err)
 				continue
 			}
 
-			log.Println("✅ Reconnected successfully")
+			logger.Infof("Reconnected successfully")
 			break
 		}
 	}

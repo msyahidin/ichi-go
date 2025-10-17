@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/uptrace/bun"
+	"ichi-go/cmd/consumer"
 	"ichi-go/cmd/server"
 	"ichi-go/config"
 	"ichi-go/internal/infra/cache"
@@ -28,8 +29,7 @@ func main() {
 	}
 	config.SetDebugMode(e, cfg.App().Debug)
 	middlewares.Init(e, cfg)
-	logger.Init(e.Debug)
-
+	logger.Init(e.Debug, cfg.App().Env == "local" || cfg.App().Env == "development")
 	//dbConnection := database.NewEntClient()
 	dbConnection, _ := database.NewBunClient(cfg.Database())
 	logger.Debugf("initialized database configuration = %v", dbConnection)
@@ -46,6 +46,9 @@ func main() {
 
 	server.SetupRestRoutes(e, cfg, dbConnection, cacheConnection)
 	server.SetupWebRoutes(e, cfg.Schema())
+	if cfg.Messaging().Enabled {
+		consumer.Start(cfg.Messaging())
+	}
 	errorhandler.Setup(e)
 
 	for _, route := range e.Routes() {

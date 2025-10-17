@@ -2,10 +2,14 @@ package logger
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/pkgerrors"
 	"github.com/spf13/viper"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -16,7 +20,7 @@ type Logger struct {
 var Log Logger
 var Debug = false
 
-func Init(debug bool) {
+func Init(debug bool, pretty bool) {
 	Debug = debug
 	logLevel := viper.GetString("log.level")
 	level, err := zerolog.ParseLevel(logLevel)
@@ -24,15 +28,75 @@ func Init(debug bool) {
 		level = zerolog.InfoLevel
 	}
 
-	zerolog.TimeFieldFormat = time.RFC3339
+	zerolog.TimeFieldFormat = "2006-01-02 15:04:05.00007Z07:00"
+	wd, _ := os.Getwd()
+	zerolog.CallerMarshalFunc = func(pc uintptr, file string, line int) string {
+		file = strings.TrimPrefix(file, wd+"/")
+		return fmt.Sprintf("%s:%d", file, line)
+	}
 
 	Log.log = zerolog.New(os.Stdout).
 		With().
 		Timestamp().
 		Str("service", viper.GetString("app.name")).
+		CallerWithSkipFrameCount(3).
 		Logger().
 		Level(level)
+	if Debug {
+		zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
+	}
+	if pretty {
+		Log.log = Log.log.
+			Output(zerolog.ConsoleWriter{Out: os.Stderr, NoColor: false,
+				TimeFormat: time.DateTime, // "2006-01-02 15:04:05"
+				FormatTimestamp: func(i interface{}) string {
+					return fmt.Sprintf("\x1b[36m%s\x1b[0m", i)
+				},
+				FormatLevel: func(i interface{}) string {
+					level := strings.ToUpper(fmt.Sprintf("%s", i))
+					switch level {
+					case "ERROR":
+						return fmt.Sprintf("\x1b[31m| %-5s |\x1b[0m", level)
+					case "WARN":
+						return fmt.Sprintf("\x1b[33m| %-5s |\x1b[0m", level)
+					case "DEBUG":
+						return fmt.Sprintf("\x1b[94m| %-5s |\x1b[0m", level)
+					case "INFO":
+						return fmt.Sprintf("\x1b[32m| %-5s |\x1b[0m", level)
+					default:
+						return fmt.Sprintf("| %-5s|", level)
+					}
+				},
+				FormatMessage: func(i interface{}) string {
+					return fmt.Sprintf("%s", i)
+				},
+				FormatFieldName: func(i interface{}) string {
+					return fmt.Sprintf("%s=", i)
+				},
+				FormatFieldValue: func(i interface{}) string {
+					return fmt.Sprintf("%v", i)
+				}})
+	}
+}
 
+func inner() error {
+	return errors.New("something went wrong")
+}
+
+func middle() error {
+	err := inner()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func outer() error {
+	err := middle()
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (l Logger) GetLogger() zerolog.Logger {
@@ -100,8 +164,11 @@ func (l Logger) Warn(v ...interface{}) {
 	l.log.Warn().Msgf("%v", v...)
 }
 
-func (l Logger) Error(v ...interface{}) {
-	l.log.Error().Msgf("%v", v...)
+func Error(err error, v ...interface{}) {
+	Log.log.Error().
+		Stack().
+		Err(err).
+		Msgf("%v", v...)
 }
 
 func (l Logger) Fatal(v ...interface{}) {
