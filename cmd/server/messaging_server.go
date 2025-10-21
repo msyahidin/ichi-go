@@ -1,7 +1,8 @@
-package consumer
+package server
 
 import (
 	"context"
+	"ichi-go/cmd/messaging"
 	config "ichi-go/config/messaging"
 	"ichi-go/internal/infra/messaging/rabbitmq"
 	"ichi-go/internal/infra/messaging/rabbitmq/interfaces"
@@ -12,14 +13,8 @@ import (
 	"syscall"
 )
 
-func Start(msgConfig config.MessagingConfig) {
+func StartConsumer(msgConfig config.MessagingConfig, conn *rabbitmq.Connection) {
 	logger.Infof("Starting consumer workers...")
-
-	conn, err := rabbitmq.NewConnection(msgConfig)
-	if err != nil {
-		logger.Fatalf("Failed to connect: %+v", err)
-	}
-	defer conn.Close()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -28,7 +23,7 @@ func Start(msgConfig config.MessagingConfig) {
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 
 	wg := sync.WaitGroup{}
-	consumers := RegisterConsumers()
+	consumers := messaging.GetRegisteredConsumers()
 
 	for _, c := range consumers {
 		consumerCfg, err := config.GetConsumerByName(&msgConfig.RabbitMQ, c.Name)

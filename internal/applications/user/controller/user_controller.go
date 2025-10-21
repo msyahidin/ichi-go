@@ -97,3 +97,20 @@ func (c *UserController) GetPokemon(eCtx echo.Context) error {
 	err = dtoMapper.Map(&pokemonGetResponseDto, result)
 	return response.Success(eCtx, pokemonGetResponseDto)
 }
+
+func (c *UserController) SendNotification(eCtx echo.Context) error {
+	var userGetReq dto.UserGetRequest
+	err := eCtx.Bind(&userGetReq)
+	if err != nil {
+		return response.Error(eCtx, http.StatusBadRequest, err)
+	}
+
+	idString, err := strconv.Atoi(userGetReq.ID)
+
+	err = c.service.SendNotification(eCtx.Request().Context(), uint32(idString))
+	if err != nil {
+		return response.Error(eCtx, http.StatusInternalServerError, err)
+	}
+
+	return response.Success(eCtx, idString)
+}

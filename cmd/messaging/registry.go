@@ -1,4 +1,4 @@
-package consumer
+package messaging
 
 import (
 	"ichi-go/internal/applications/order/handler"
@@ -10,7 +10,7 @@ type Registration struct {
 	Handler interfaces.MessageHandler
 }
 
-func RegisterConsumers() []Registration {
+func GetRegisteredConsumers() []Registration {
 	return []Registration{
 		//{"email_verifier", handler.NewEmailHandler().Handle},
 		{"payment_handler", handler.NewPaymentHandler().Handle},

@@ -48,7 +48,10 @@ func (p *Publisher) setup() error {
 			exchange.Name,
 			exchange.Type,
 			exchange.Durable,
-			false, false, false, nil,
+			exchange.AutoDelete,
+			exchange.Internal,
+			exchange.NoWait,
+			nil,
 		)
 		if err != nil {
 			return fmt.Errorf("failed to declare exchange %s: %w", exchange.Name, err)

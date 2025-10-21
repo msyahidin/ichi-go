@@ -9,4 +9,5 @@ type UserService interface {
 	GetById(ctx context.Context, id uint32) (*repository.UserModel, error)
 	Create(ctx context.Context, newUser repository.UserModel) (int64, error)
 	Update(ctx context.Context, updateUser repository.UserModel) (int64, error)
+	SendNotification(ctx context.Context, user repository.UserModel) error
 }

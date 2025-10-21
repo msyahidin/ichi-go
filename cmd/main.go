@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 	"github.com/uptrace/bun"
-	"ichi-go/cmd/consumer"
 	"ichi-go/cmd/server"
 	"ichi-go/config"
 	"ichi-go/internal/infra/cache"
 	"ichi-go/internal/infra/database"
+	"ichi-go/internal/infra/messaging/rabbitmq"
 	"ichi-go/internal/middlewares"
 	"ichi-go/pkg/errorhandler"
 	"ichi-go/pkg/logger"
@@ -22,8 +22,7 @@ import (
 func main() {
 
 	e := echo.New()
-	config.MustLoad()
-	cfg := config.Get()
+	cfg := config.MustLoad()
 	if cfg == nil {
 		logger.Fatalf("failed to load configuration")
 	}
@@ -44,11 +43,19 @@ func main() {
 
 	cacheConnection := cache.New(cfg.Cache())
 
-	server.SetupRestRoutes(e, cfg, dbConnection, cacheConnection)
-	server.SetupWebRoutes(e, cfg.Schema())
+	msgConnection, err := rabbitmq.NewConnection(cfg.Messaging())
+
 	if cfg.Messaging().Enabled {
-		consumer.Start(cfg.Messaging())
+		if err != nil {
+			logger.Fatalf("Failed to connect: %+v", err)
+		}
+		defer msgConnection.Close()
+
+		server.StartConsumer(cfg.Messaging(), msgConnection)
 	}
+
+	server.SetupRestRoutes(e, cfg, dbConnection, cacheConnection, msgConnection)
+	server.SetupWebRoutes(e, cfg.Schema())
 	errorhandler.Setup(e)
 
 	for _, route := range e.Routes() {

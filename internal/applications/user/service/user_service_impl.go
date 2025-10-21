@@ -2,9 +2,13 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"ichi-go/config"
+	dtoUser "ichi-go/internal/applications/user/dto"
 	"ichi-go/internal/applications/user/repository"
 	"ichi-go/internal/infra/cache"
+	"ichi-go/internal/infra/messaging/rabbitmq"
 	"ichi-go/pkg/clients/pokemonapi"
 	"ichi-go/pkg/clients/pokemonapi/dto"
 	"time"
@@ -14,11 +18,12 @@ type UserServiceImpl struct {
 	repo       repository.UserRepository
 	cache      cache.Cache
 	pokeClient pokemonapi.PokemonClient
+	mc         *rabbitmq.Connection
 }
 
-func NewUserService(repo repository.UserRepository, cache cache.Cache) *UserServiceImpl {
+func NewUserService(repo repository.UserRepository, cache cache.Cache, mc *rabbitmq.Connection) *UserServiceImpl {
 	pokeClient := pokemonapi.NewPokemonClientImpl()
-	return &UserServiceImpl{repo: repo, cache: cache, pokeClient: pokeClient}
+	return &UserServiceImpl{repo: repo, cache: cache, pokeClient: pokeClient, mc: mc}
 }
 
 func (s *UserServiceImpl) GetById(ctx context.Context, id uint32) (*repository.UserModel, error) {
@@ -72,4 +77,34 @@ func (s *UserServiceImpl) Update(ctx context.Context, updateUser repository.User
 
 func (s *UserServiceImpl) GetPokemon(ctx context.Context, name string) (*dto.PokemonGetResponseDto, error) {
 	return s.pokeClient.GetDetail(ctx, name)
+}
+
+func (s *UserServiceImpl) SendNotification(ctx context.Context, id uint32) error {
+	userModel, err := s.repo.GetById(ctx, uint64(id))
+	if err != nil {
+		return errors.New("failed to get user")
+	}
+	if s.mc == nil {
+		return errors.New("messaging connection is not initialized")
+	}
+
+	cfg := config.Get()
+
+	publisher, err := rabbitmq.NewPublisher(s.mc, cfg.Messaging().RabbitMQ)
+
+	if err != nil {
+		return err
+	}
+	msg := dtoUser.WelcomeNotificationMessage{
+		EventType: "user.welcome",
+		UserId:    fmt.Sprintf("%d", userModel.ID),
+		Email:     userModel.Email,
+		Text:      fmt.Sprintf("Welcome %s to Ichi-Go!", userModel.Name),
+	}
+
+	err = publisher.Publish(ctx, "user.welcome", msg)
+	if err != nil {
+		return err
+	}
+	return nil
 }
