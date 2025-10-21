@@ -8,6 +8,7 @@ import (
 	"ichi-go/config"
 	"ichi-go/internal/infra/cache"
 	"ichi-go/internal/infra/database"
+	"ichi-go/internal/infra/messaging/rabbitmq"
 	"ichi-go/internal/middlewares"
 	"ichi-go/pkg/errorhandler"
 	"ichi-go/pkg/logger"
@@ -21,15 +22,13 @@ import (
 func main() {
 
 	e := echo.New()
-	config.MustLoad()
-	cfg := config.Get()
+	cfg := config.MustLoad()
 	if cfg == nil {
 		logger.Fatalf("failed to load configuration")
 	}
 	config.SetDebugMode(e, cfg.App().Debug)
 	middlewares.Init(e, cfg)
-	logger.Init(e.Debug)
-
+	logger.Init(e.Debug, cfg.App().Env == "local" || cfg.App().Env == "development")
 	//dbConnection := database.NewEntClient()
 	dbConnection, _ := database.NewBunClient(cfg.Database())
 	logger.Debugf("initialized database configuration = %v", dbConnection)
@@ -44,7 +43,18 @@ func main() {
 
 	cacheConnection := cache.New(cfg.Cache())
 
-	server.SetupRestRoutes(e, cfg, dbConnection, cacheConnection)
+	msgConnection, err := rabbitmq.NewConnection(cfg.Messaging())
+
+	if cfg.Messaging().Enabled {
+		if err != nil {
+			logger.Fatalf("Failed to connect: %+v", err)
+		}
+		defer msgConnection.Close()
+
+		server.StartConsumer(cfg.Messaging(), msgConnection)
+	}
+
+	server.SetupRestRoutes(e, cfg, dbConnection, cacheConnection, msgConnection)
 	server.SetupWebRoutes(e, cfg.Schema())
 	errorhandler.Setup(e)
 

@@ -8,13 +8,13 @@ import (
 	"ichi-go/config"
 	appConfig "ichi-go/config/app"
 	"ichi-go/internal/applications/user"
+	"ichi-go/internal/infra/messaging/rabbitmq"
 	"ichi-go/pkg/logger"
 	"os"
 )
 
-func SetupRestRoutes(e *echo.Echo, mainConfig *config.Config, dbClient *bun.DB, cacheClient *redis.Client) {
-	user.Register(mainConfig.App().Name, e, dbClient, cacheClient)
-
+func SetupRestRoutes(e *echo.Echo, mainConfig *config.Config, dbClient *bun.DB, cacheClient *redis.Client, messagingConnection *rabbitmq.Connection) {
+	user.Register(mainConfig.App().Name, e, dbClient, cacheClient, messagingConnection)
 	// Please register new domain routes before this line
 	if mainConfig.App().Env == "local" {
 		generateRouteList(e)

@@ -13,14 +13,15 @@ import (
 	"ichi-go/internal/applications/user/repository"
 	"ichi-go/internal/applications/user/service"
 	"ichi-go/internal/infra/cache"
+	"ichi-go/internal/infra/messaging/rabbitmq"
 )
 
 // Injectors from user_injector.go:
 
-func InitializedService(dbConnection *bun.DB, cacheConnection *redis.Client) *service.UserServiceImpl {
+func InitializedService(dbConnection *bun.DB, cacheConnection *redis.Client, mc *rabbitmq.Connection) *service.UserServiceImpl {
 	userRepositoryImpl := repository.NewUserRepository(dbConnection)
 	cacheImpl := cache.NewCache(cacheConnection)
-	userServiceImpl := service.NewUserService(userRepositoryImpl, cacheImpl)
+	userServiceImpl := service.NewUserService(userRepositoryImpl, cacheImpl, mc)
 	return userServiceImpl
 }
 

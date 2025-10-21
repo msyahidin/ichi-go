@@ -2,12 +2,12 @@ package config
 
 import "github.com/spf13/viper"
 
-type MessageConfig struct {
+type MessagingConfig struct {
 	Enabled  bool           `mapstructure:"enabled"`
 	RabbitMQ RabbitMQConfig `mapstructure:"rabbitmq"`
 }
 
 func SetDefault() {
-	viper.SetDefault("messages.enabled", false)
+	viper.SetDefault("messaging.enabled", false)
 	RabbitMQSetDefault()
 }

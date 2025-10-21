@@ -10,6 +10,7 @@ import (
 	"ichi-go/internal/applications/user/repository"
 	"ichi-go/internal/applications/user/service"
 	"ichi-go/internal/infra/cache"
+	"ichi-go/internal/infra/messaging/rabbitmq"
 )
 
 var UserSet = wire.NewSet(
@@ -22,7 +23,7 @@ var UserSet = wire.NewSet(
 	wire.Bind(new(cache.Cache), new(*cache.CacheImpl)),
 )
 
-func InitializedService(dbConnection *bun.DB, cacheConnection *redis.Client) *service.UserServiceImpl {
+func InitializedService(dbConnection *bun.DB, cacheConnection *redis.Client, mc *rabbitmq.Connection) *service.UserServiceImpl {
 	wire.Build(UserSet)
 	return nil
 }
