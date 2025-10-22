@@ -12,13 +12,23 @@ import (
 )
 
 func Init(e *echo.Echo, mainConfig *config.Config) {
-	if mainConfig.Log().RequestIDConfig.Driver == "default" {
+	configLog := mainConfig.Log()
+	if configLog.RequestIDConfig.Driver == "builtin" {
 		e.Use(middleware.RequestID())
 	} else {
 		e.Use(AppRequestID())
 	}
-	e.Use(Logger(mainConfig))
-	e.Use(middleware.Logger())
+	if configLog.RequestLogging.Enabled {
+		switch configLog.RequestLogging.Driver {
+		case "builtin":
+			e.Use(middleware.Logger())
+		case "internal":
+			e.Use(Logger(mainConfig))
+		default:
+			// no request logging
+		}
+	}
+
 	e.Use(middleware.RecoverWithConfig(middleware.RecoverConfig{
 		LogLevel:          log.ERROR,
 		DisablePrintStack: !e.Debug,
@@ -28,6 +38,7 @@ func Init(e *echo.Echo, mainConfig *config.Config) {
 		},
 		DisableErrorHandler: true,
 	}))
+
 	e.Use(middleware.Gzip())
 	e.Use(middleware.Secure())
 	e.Use(AppRequestTimeOut(mainConfig.Http()))

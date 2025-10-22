@@ -28,7 +28,7 @@ func main() {
 	}
 	config.SetDebugMode(e, cfg.App().Debug)
 	middlewares.Init(e, cfg)
-	logger.Init(e.Debug, cfg.App().Env == "local" || cfg.App().Env == "development")
+	logger.GetInstance()
 	//dbConnection := database.NewEntClient()
 	dbConnection, _ := database.NewBunClient(cfg.Database())
 	logger.Debugf("initialized database configuration = %v", dbConnection)
