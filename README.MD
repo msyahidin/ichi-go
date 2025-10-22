@@ -1,14 +1,11 @@
-
-
 # ichi-go-template
 
 Boilerplate backend Go project based on clean architecture, built to accelerate backend service development with scalability, modularity, performance in mind, and DX (Developer Experience).
 
-> Optimized for REST API services with Ent ORM, Echo, Redis, and RabbitMQ integration.
+> Optimized for REST API services with Bun ORM, Echo, Redis, and RabbitMQ integration.
 
 ## Contents
 - [Getting Started](#getting-started)
-  - [Install & Generate Ent ORM](#install--generate-ent-orm)
   - [Generate Mocks with Mockery](#generate-mocks-with-mockery)
   - [Generate Dependency Injection](#generate-dependency-injection)
   - [Migration](#migration)
@@ -19,14 +16,6 @@ Boilerplate backend Go project based on clean architecture, built to accelerate 
 - [Features](#features)
 
 ## Getting Started
-
-### Install & Generate Ent ORM
-
-```bash
-go install entgo.io/ent/cmd/ent@latest
-go run entgo.io/ent/cmd/ent init User
-go generate ./internal/infra/database/ent
-```
 
 ### Generate Mocks with Mockery
 
@@ -72,14 +61,13 @@ make build
 ## Example Code
 
 - `/internal/applications/user`: Domain layer (controller, service, repository, DTO)
-- `/internal/infra/database/ent`: Ent schema and generated files
+- `/internal/infra/database/bun`: Bun as ORM layer
 - `/internal/infra/cache`: Redis implementation with LZ4 compression
 - `/internal/infra/rabbitmq`: RabbitMQ integration (via Watermill)
 - `/pkg/clients/pokemonapi`: External API client example
 
 ## References
 
-- [Ent ORM](https://entgo.io/)
 - [Echo Framework](https://echo.labstack.com/)
 - [Viper](https://github.com/spf13/viper)
 - [Google Wire](https://github.com/google/wire)
@@ -87,19 +75,21 @@ make build
 - [Mockery](https://github.com/vektra/mockery)
 - [Goose Migration](https://github.com/pressly/goose)
 - [Zerolog](https://github.com/rs/zerolog)
-- [Watermill](https://watermill.io/pubsubs/amqp/)
 
 ## Features
 
 - [x] Clean architecture folder structure
 - [x] REST API support with Echo
-- [x] Ent ORM with versioning and hook support
+- [x] Uptrace Bun ORM
 - [x] Redis cache with LZ4 compression
 - [x] Dependency injection with Google Wire
-- [x] Logging with Zerolog
+- [x] Contextual Logging with Zerolog
+- [X] Type safety configuration with Viper
 - [x] SQL-based migrations via Goose
 - [X] Live reload with Air
-- [ ] RabbitMQ pub/sub with Watermill (planned)
-- [ ] Swagger documentation (planned)
-- [ ] Interface mocking with Mockery (planned)
-- [ ] Docker support (planned)
+- [X] RabbitMQ as Messaging
+- [ ] Delay, DLQ, Retry pattern
+- [ ] Database Versioning with Retry
+- [ ] Swagger documentation
+- [ ] Interface mocking with Mockery
+- [ ] Docker support
