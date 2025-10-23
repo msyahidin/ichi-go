@@ -34,6 +34,7 @@ database:
 
 cache:
   driver: "redis"
+  client_name: "ichigo-cache"
   host: "localhost"
   port: 6379
   password: ""

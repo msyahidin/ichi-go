@@ -19,11 +19,12 @@ var (
 func New(cacheConfig cacheConfig.CacheConfig) *redis.Client {
 	once.Do(func() {
 		options := &redis.Options{
-			Addr:     fmt.Sprintf("%s:%d", cacheConfig.Host, cacheConfig.Port),
-			Username: cacheConfig.Username,
-			Password: cacheConfig.Password,
-			DB:       cacheConfig.Db,
-			PoolSize: cacheConfig.PoolSize,
+			Addr:       fmt.Sprintf("%s:%d", cacheConfig.Host, cacheConfig.Port),
+			Username:   cacheConfig.Username,
+			Password:   cacheConfig.Password,
+			DB:         cacheConfig.Db,
+			PoolSize:   cacheConfig.PoolSize,
+			ClientName: cacheConfig.ClientName,
 		}
 
 		if cacheConfig.UseTLS {

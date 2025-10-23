@@ -21,7 +21,7 @@ func SetupRestRoutes(e *echo.Echo, mainConfig *config.Config, dbClient *bun.DB, 
 	}
 }
 
-func GetServiceName(configApp *appConfig.AppConfig) string {
+func GetServiceName(configApp appConfig.AppConfig) string {
 	return configApp.Name
 }
 

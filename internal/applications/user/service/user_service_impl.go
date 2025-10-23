@@ -27,7 +27,6 @@ func NewUserService(repo repository.UserRepository, cache cache.Cache, mc *rabbi
 }
 
 func (s *UserServiceImpl) GetById(ctx context.Context, id uint32) (*repository.UserModel, error) {
-
 	cacheKey := fmt.Sprintf("user:%d", id)
 	cachedData, err := s.cache.Get(ctx, cacheKey, &repository.UserModel{})
 	if err == nil && cachedData != nil {

@@ -1,4 +1,4 @@
-package pkgclient
+package clients
 
 type PkgClient struct {
 	PokemonAPI PokemonAPIConfig `mapstructure:"pokemon_api"`

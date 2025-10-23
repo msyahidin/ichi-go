@@ -5,11 +5,11 @@ import (
 	"ichi-go/internal/middlewares"
 )
 
-var domain = "users"
+var Domain = "users"
 
 func (c *UserController) httpRoutes(serviceName string, e *echo.Echo) {
-	group := e.Group("/" + serviceName + "/api/" + domain)
-	group.Use(middlewares.RequestInjector(middlewares.RequestFields{Domain: domain}))
+	group := e.Group("/" + serviceName + "/api/" + Domain)
+	group.Use(middlewares.RequestInjector(middlewares.RequestFields{Domain: Domain}))
 	group.GET("/:id", c.GetUser)
 	group.GET("/:id/send-notification", c.SendNotification)
 	group.POST("", c.CreateUser)
@@ -18,7 +18,7 @@ func (c *UserController) httpRoutes(serviceName string, e *echo.Echo) {
 }
 
 func (c *UserController) webRoutes(serviceName string, e *echo.Echo) {
-	group := e.Group("/" + serviceName + "/" + domain)
+	group := e.Group("/" + serviceName + "/" + Domain)
 	group.GET("/:id", c.GetUserPage)
 }
 

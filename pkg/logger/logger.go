@@ -8,6 +8,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/pkgerrors"
 	"github.com/spf13/viper"
+	"io"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -50,7 +51,8 @@ func GetInstance() *Logger {
 			file = strings.TrimPrefix(file, wd+"/")
 			return fmt.Sprintf("%s:%d", file, line)
 		}
-		output := zerolog.ConsoleWriter{Out: os.Stdout, NoColor: false}
+		var output io.Writer
+		output = os.Stdout
 		if level == zerolog.DebugLevel {
 			zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
 		}
