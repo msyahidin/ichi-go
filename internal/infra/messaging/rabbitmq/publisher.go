@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	amqp "github.com/rabbitmq/amqp091-go"
-	config "ichi-go/config/messaging"
 	"ichi-go/internal/infra/messaging/rabbitmq/interfaces"
 	"sync"
 	"time"
@@ -13,13 +12,13 @@ import (
 
 type Publisher struct {
 	connection   *Connection
-	config       config.RabbitMQConfig
+	config       RabbitMQConfig
 	exchangeName string
 	channel      *amqp.Channel
 	mu           sync.Mutex
 }
 
-func NewPublisher(connection *Connection, config config.RabbitMQConfig) (interfaces.MessagePublisher, error) {
+func NewPublisher(connection *Connection, config RabbitMQConfig) (interfaces.MessagePublisher, error) {
 	p := &Publisher{
 		connection:   connection,
 		config:       config,

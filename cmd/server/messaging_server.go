@@ -26,7 +26,7 @@ func StartConsumer(msgConfig config.MessagingConfig, conn *rabbitmq.Connection) 
 	consumers := messaging.GetRegisteredConsumers()
 
 	for _, c := range consumers {
-		consumerCfg, err := config.GetConsumerByName(&msgConfig.RabbitMQ, c.Name)
+		consumerCfg, err := rabbitmq.GetConsumerByName(&msgConfig.RabbitMQ, c.Name)
 		if err != nil {
 			logger.Infof("Skipping %s: %v", c.Name, err)
 			continue
@@ -37,7 +37,7 @@ func StartConsumer(msgConfig config.MessagingConfig, conn *rabbitmq.Connection) 
 			continue
 		}
 
-		exchangeCfg, err := config.GetExchangeByName(&msgConfig.RabbitMQ, consumerCfg.ExchangeName)
+		exchangeCfg, err := rabbitmq.GetExchangeByName(&msgConfig.RabbitMQ, consumerCfg.ExchangeName)
 		if err != nil {
 			logger.Infof("Skipping %s: %v", c.Name, err)
 			continue

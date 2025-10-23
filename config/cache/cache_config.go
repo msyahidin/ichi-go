@@ -1,4 +1,4 @@
-package config
+package cache
 
 import "github.com/spf13/viper"
 
@@ -13,6 +13,7 @@ type CacheConfig struct {
 	Timeout    int    `mapstructure:"timeout"`
 	UseTLS     bool   `mapstructure:"use_tls"`
 	SkipVerify bool   `mapstructure:"skip_verify"`
+	ClientName string `mapstructure:"client_name"`
 }
 
 func SetDefault() {
@@ -26,4 +27,5 @@ func SetDefault() {
 	viper.SetDefault("cache.use_tls", false)
 	viper.SetDefault("cache.skip_verify", false)
 	viper.SetDefault("cache.timeout", 30)
+	viper.SetDefault("cache.client_name", "ichigo-cache")
 }

@@ -2,7 +2,6 @@ package rabbitmq
 
 import (
 	"fmt"
-	messagingConfig "ichi-go/config/messaging"
 	"ichi-go/pkg/logger"
 	"sync"
 	"time"
@@ -11,15 +10,15 @@ import (
 )
 
 type Connection struct {
-	config messagingConfig.RabbitConnectionConfig
+	config RabbitMQConfig
 	conn   *amqp.Connection
 	mu     sync.RWMutex
 	closed bool
 }
 
-func NewConnection(config messagingConfig.MessagingConfig) (*Connection, error) {
+func NewConnection(config RabbitMQConfig) (*Connection, error) {
 	c := &Connection{
-		config: config.RabbitMQ.Connection,
+		config: config,
 		closed: false,
 	}
 
@@ -29,7 +28,7 @@ func NewConnection(config messagingConfig.MessagingConfig) (*Connection, error) 
 
 	go c.handleReconnect()
 
-	logger.Infof("RabbitMQ connected: %s:%d", c.config.Host, c.config.Port)
+	logger.Infof("RabbitMQ connected: %s:%d", config.Connection.Host, config.Connection.Port)
 	return c, nil
 }
 
@@ -37,7 +36,7 @@ func (c *Connection) connect() error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	conn, err := amqp.Dial(messagingConfig.GetRabbitMQURI(c.config))
+	conn, err := amqp.Dial(GetRabbitMQURI(c.config.Connection))
 	if err != nil {
 		return err
 	}

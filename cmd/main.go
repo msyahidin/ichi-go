@@ -43,7 +43,7 @@ func main() {
 
 	cacheConnection := cache.New(cfg.Cache())
 
-	msgConnection, err := rabbitmq.NewConnection(cfg.Messaging())
+	msgConnection, err := rabbitmq.NewConnection(cfg.Messaging().RabbitMQ)
 
 	if cfg.Messaging().Enabled {
 		if err != nil {

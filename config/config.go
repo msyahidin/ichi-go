@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	messageConfig "ichi-go/config/messaging"
+	pkgClientConfig "ichi-go/pkg/clients"
 	"os"
 	"sync"
 
@@ -14,8 +15,6 @@ import (
 	cacheConfig "ichi-go/config/cache"
 	dbConfig "ichi-go/config/database"
 	httpConfig "ichi-go/config/http"
-	logConfig "ichi-go/config/log"
-	pkgClientConfig "ichi-go/config/pkgclient"
 	"ichi-go/pkg/logger"
 )
 
@@ -23,7 +22,7 @@ type Schema struct {
 	App        appConfig.AppConfig
 	Database   dbConfig.DatabaseConfig
 	Cache      cacheConfig.CacheConfig
-	Log        logConfig.LogConfig
+	Log        logger.LogConfig
 	Http       httpConfig.HttpConfig
 	HttpClient httpConfig.ClientConfig
 	PkgClient  pkgClientConfig.PkgClient
@@ -119,7 +118,7 @@ func (c *Config) HttpClient() httpConfig.ClientConfig {
 	return c.schema.HttpClient
 }
 
-func (c *Config) Log() logConfig.LogConfig {
+func (c *Config) Log() logger.LogConfig {
 	c.ensureLoaded()
 	return c.schema.Log
 }
@@ -177,7 +176,7 @@ func setDefault() {
 	appConfig.SetDefault()
 	dbConfig.SetDefault()
 	cacheConfig.SetDefault()
-	logConfig.SetDefault()
+	logger.SetDefault()
 	httpConfig.SetDefault()
 	messageConfig.SetDefault()
 }

@@ -3,7 +3,6 @@ package rabbitmq
 import (
 	"context"
 	"fmt"
-	config "ichi-go/config/messaging"
 	"ichi-go/internal/infra/messaging/rabbitmq/interfaces"
 	"ichi-go/pkg/logger"
 	"sync"
@@ -13,16 +12,16 @@ import (
 
 type Consumer struct {
 	connection     *Connection
-	consumerConfig config.ConsumerConfig
-	exchangeConfig config.ExchangeConfig
+	consumerConfig ConsumerConfig
+	exchangeConfig ExchangeConfig
 	channel        *amqp.Channel
 	mu             sync.Mutex
 }
 
 func NewConsumer(
 	connection *Connection,
-	consumerConfig config.ConsumerConfig,
-	exchangeConfig config.ExchangeConfig,
+	consumerConfig ConsumerConfig,
+	exchangeConfig ExchangeConfig,
 ) (interfaces.MessageConsumer, error) {
 	c := &Consumer{
 		connection:     connection,
