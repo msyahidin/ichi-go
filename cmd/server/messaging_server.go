@@ -5,7 +5,6 @@ import (
 	"ichi-go/cmd/messaging"
 	config "ichi-go/config/messaging"
 	"ichi-go/internal/infra/messaging/rabbitmq"
-	"ichi-go/internal/infra/messaging/rabbitmq/interfaces"
 	"ichi-go/pkg/logger"
 	"os"
 	"os/signal"
@@ -50,7 +49,7 @@ func StartConsumer(msgConfig config.MessagingConfig, conn *rabbitmq.Connection) 
 		}
 
 		wg.Add(1)
-		go func(name string, consumer interfaces.MessageConsumer, handler interfaces.MessageHandler) {
+		go func(name string, consumer rabbitmq.MessageConsumer, handler rabbitmq.MessageHandler) {
 			defer wg.Done()
 
 			if err := consumer.Consume(ctx, handler); err != nil {

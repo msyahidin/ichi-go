@@ -2,12 +2,12 @@ package messaging
 
 import (
 	"ichi-go/internal/applications/order/handler"
-	"ichi-go/internal/infra/messaging/rabbitmq/interfaces"
+	"ichi-go/internal/infra/messaging/rabbitmq"
 )
 
 type Registration struct {
 	Name    string
-	Handler interfaces.MessageHandler
+	Handler rabbitmq.MessageHandler
 }
 
 func GetRegisteredConsumers() []Registration {

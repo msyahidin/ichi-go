@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	amqp "github.com/rabbitmq/amqp091-go"
-	"ichi-go/internal/infra/messaging/rabbitmq/interfaces"
 	"sync"
 	"time"
 )
@@ -17,8 +16,12 @@ type Publisher struct {
 	channel      *amqp.Channel
 	mu           sync.Mutex
 }
+type PublishOptions struct {
+	Headers amqp.Table
+	Delay   time.Duration
+}
 
-func NewPublisher(connection *Connection, config RabbitMQConfig) (interfaces.MessagePublisher, error) {
+func NewPublisher(connection *Connection, config RabbitMQConfig) (MessagePublisher, error) {
 	p := &Publisher{
 		connection:   connection,
 		config:       config,
@@ -41,8 +44,12 @@ func (p *Publisher) setup() error {
 		return fmt.Errorf("failed to open channel: %w", err)
 	}
 
-	// Declare all exchanges from config
 	for _, exchange := range p.config.Exchanges {
+		args := amqp.Table{}
+
+		if exchange.Type == "x-delayed-message" {
+			args["x-delayed-type"] = exchange.Args["x-delayed-type"]
+		}
 		err = ch.ExchangeDeclare(
 			exchange.Name,
 			exchange.Type,
@@ -50,7 +57,7 @@ func (p *Publisher) setup() error {
 			exchange.AutoDelete,
 			exchange.Internal,
 			exchange.NoWait,
-			nil,
+			args,
 		)
 		if err != nil {
 			return fmt.Errorf("failed to declare exchange %s: %w", exchange.Name, err)
@@ -61,7 +68,7 @@ func (p *Publisher) setup() error {
 	return nil
 }
 
-func (p *Publisher) Publish(ctx context.Context, routingKey string, message interface{}) error {
+func (p *Publisher) Publish(ctx context.Context, routingKey string, message interface{}, opts PublishOptions) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
@@ -73,12 +80,20 @@ func (p *Publisher) Publish(ctx context.Context, routingKey string, message inte
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
+	if opts.Headers == nil {
+		opts.Headers = amqp.Table{}
+	}
+	if opts.Delay > 0 {
+		opts.Headers["x-delay"] = int32(opts.Delay.Milliseconds())
+	}
+
 	err = p.channel.PublishWithContext(ctx, p.exchangeName, routingKey, false, false,
 		amqp.Publishing{
 			ContentType:  "application/json",
 			Body:         body,
 			DeliveryMode: amqp.Persistent,
 			Timestamp:    time.Now(),
+			Headers:      opts.Headers,
 		},
 	)
 

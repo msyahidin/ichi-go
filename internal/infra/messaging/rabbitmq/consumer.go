@@ -3,7 +3,6 @@ package rabbitmq
 import (
 	"context"
 	"fmt"
-	"ichi-go/internal/infra/messaging/rabbitmq/interfaces"
 	"ichi-go/pkg/logger"
 	"sync"
 
@@ -22,7 +21,7 @@ func NewConsumer(
 	connection *Connection,
 	consumerConfig ConsumerConfig,
 	exchangeConfig ExchangeConfig,
-) (interfaces.MessageConsumer, error) {
+) (MessageConsumer, error) {
 	c := &Consumer{
 		connection:     connection,
 		consumerConfig: consumerConfig,
@@ -102,7 +101,7 @@ func (c *Consumer) setup() error {
 	return nil
 }
 
-func (c *Consumer) Consume(ctx context.Context, handler interfaces.MessageHandler) error {
+func (c *Consumer) Consume(ctx context.Context, handler MessageHandler) error {
 	c.mu.Lock()
 	deliveries, err := c.channel.Consume(
 		c.consumerConfig.Queue.Name,

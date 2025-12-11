@@ -100,8 +100,8 @@ func (s *UserServiceImpl) SendNotification(ctx context.Context, id uint32) error
 		Email:     userModel.Email,
 		Text:      fmt.Sprintf("Welcome %s to Ichi-Go!", userModel.Name),
 	}
-
-	err = publisher.Publish(ctx, "user.welcome", msg)
+	var publishOpt = rabbitmq.PublishOptions{}
+	err = publisher.Publish(ctx, "user.welcome", msg, publishOpt)
 	if err != nil {
 		return err
 	}

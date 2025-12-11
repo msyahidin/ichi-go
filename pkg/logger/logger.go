@@ -4,10 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/labstack/echo/v4"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/pkgerrors"
-	"github.com/spf13/viper"
 	"io"
 	"os"
 	"path/filepath"
@@ -15,6 +11,11 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/labstack/echo/v4"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/pkgerrors"
+	"github.com/spf13/viper"
 )
 
 type Logger struct {
@@ -222,6 +223,10 @@ func Panicf(format string, v ...interface{}) {
 
 func Fatalf(format string, v ...interface{}) {
 	GetInstance().Fatalf(format, v...)
+}
+
+func Tracef(format string, v ...interface{}) {
+	GetInstance().Tracef(format, v...)
 }
 
 func DebugContext(ctx context.Context, v ...interface{}) {
