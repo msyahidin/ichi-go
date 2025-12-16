@@ -4,11 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"flag"
-	"github.com/pressly/goose/v3"
 	"ichi-go/config"
 	"ichi-go/internal/infra/database"
 	"log"
 	"os"
+
+	"github.com/pressly/goose/v3"
 
 	// Init DB drivers. -- here I recommend remove unnecessary - but it's up to you
 	_ "github.com/go-sql-driver/mysql"
@@ -25,7 +26,7 @@ var (
 
 func main() {
 	ctx := context.Background()
-	mainConfig := config.LoadConfig()
+	mainConfig := config.MustLoad()
 	flags.Usage = usage
 	err := flags.Parse(os.Args[1:])
 	if err != nil {
@@ -67,7 +68,8 @@ func main() {
 		log.Fatalf("%q driver not supported\n", driver)
 	}
 
-	dbSource := database.GetDsn(&mainConfig.Database)
+	dbCfg := mainConfig.Database()
+	dbSource := database.GetDsn(&dbCfg)
 	db, err := sql.Open(driver, dbSource)
 	if err != nil {
 		log.Fatalf("-dbstring=%q: %v\n", dbSource, err)

@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/labstack/echo/v4"
@@ -14,7 +15,8 @@ import (
 
 // useBufferLogger swaps Log.log to write into `buf` at the given level.
 func useBufferLogger(buf *bytes.Buffer, level zerolog.Level) {
-	Log.log = zerolog.New(buf).Level(level)
+	l := GetInstance()
+	l.Logger = zerolog.New(buf).Level(level)
 }
 
 func TestInit_FallbackToInfoLevel(t *testing.T) {
@@ -29,7 +31,10 @@ func TestInit_FallbackToInfoLevel(t *testing.T) {
 	// 1) Set an invalid log level → Init should fall back to InfoLevel
 	viper.Set("log.level", "notalevel")
 	viper.Set("app.name", "myservice")
-	Init()
+	// Reset singleton to force re-initialization
+	instance = nil
+	once = sync.Once{}
+	GetInstance()
 
 	// Now hijack Log.log into a buffer so we can inspect output
 	buf := &bytes.Buffer{}

@@ -2,6 +2,7 @@ package rabbitmq
 
 import (
 	"fmt"
+	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/spf13/viper"
 )
 
@@ -22,12 +23,13 @@ type RabbitConnectionConfig struct {
 }
 
 type ExchangeConfig struct {
-	Name       string `yaml:"name" mapstructure:"name"`
-	Type       string `yaml:"type" mapstructure:"type"` //direct, topic, fanout, headers
-	Durable    bool   `yaml:"durable" mapstructure:"durable"`
-	AutoDelete bool   `yaml:"auto_delete" mapstructure:"auto_delete"`
-	Internal   bool   `yaml:"internal" mapstructure:"internal"`
-	NoWait     bool   `yaml:"no_wait" mapstructure:"no_wait"`
+	Name       string     `yaml:"name" mapstructure:"name"`
+	Type       string     `yaml:"type" mapstructure:"type"` //direct, topic, fanout, headers
+	Durable    bool       `yaml:"durable" mapstructure:"durable"`
+	AutoDelete bool       `yaml:"auto_delete" mapstructure:"auto_delete"`
+	Internal   bool       `yaml:"internal" mapstructure:"internal"`
+	NoWait     bool       `yaml:"no_wait" mapstructure:"no_wait"`
+	Args       amqp.Table `yaml:"args" mapstructure:"args"`
 }
 
 type ConsumerConfig struct {

@@ -65,7 +65,7 @@ func (s *UserServiceImpl) Update(ctx context.Context, updateUser repository.User
 		return 0, fmt.Errorf("user with ID %d not found", updateUser.ID)
 	}
 
-	updatedId, err := s.repo.Update(ctx, *user)
+	updatedId, err := s.repo.Update(ctx, updateUser)
 	if err != nil {
 		return 0, err
 	}
@@ -78,11 +78,14 @@ func (s *UserServiceImpl) GetPokemon(ctx context.Context, name string) (*dto.Pok
 	return s.pokeClient.GetDetail(ctx, name)
 }
 
-func (s *UserServiceImpl) SendNotification(ctx context.Context, id uint32) error {
-	userModel, err := s.repo.GetById(ctx, uint64(id))
+func (s *UserServiceImpl) SendNotification(ctx context.Context, userID uint32) error {
+
+	user, err := s.GetById(ctx, userID)
+
 	if err != nil {
-		return errors.New("failed to get user")
+		return errors.New("user not found")
 	}
+
 	if s.mc == nil {
 		return errors.New("messaging connection is not initialized")
 	}
@@ -96,12 +99,12 @@ func (s *UserServiceImpl) SendNotification(ctx context.Context, id uint32) error
 	}
 	msg := dtoUser.WelcomeNotificationMessage{
 		EventType: "user.welcome",
-		UserId:    fmt.Sprintf("%d", userModel.ID),
-		Email:     userModel.Email,
-		Text:      fmt.Sprintf("Welcome %s to Ichi-Go!", userModel.Name),
+		UserId:    fmt.Sprintf("%d", user.ID),
+		Email:     user.Email,
+		Text:      fmt.Sprintf("Welcome %s to Ichi-Go!", user.Name),
 	}
-
-	err = publisher.Publish(ctx, "user.welcome", msg)
+	var publishOpt = rabbitmq.PublishOptions{}
+	err = publisher.Publish(ctx, "user.welcome", msg, publishOpt)
 	if err != nil {
 		return err
 	}
