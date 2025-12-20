@@ -1,4 +1,4 @@
-package repository
+package user
 
 import (
 	"context"
@@ -7,15 +7,15 @@ import (
 	"ichi-go/pkg/logger"
 )
 
-type UserRepositoryImpl struct {
+type RepositoryImpl struct {
 	*bun.BaseRepository[UserModel]
 }
 
-func NewUserRepository(dbConnection *upbun.DB) *UserRepositoryImpl {
-	return &UserRepositoryImpl{BaseRepository: bun.NewRepository[UserModel](dbConnection, &UserModel{})}
+func NewUserRepository(dbConnection *upbun.DB) *RepositoryImpl {
+	return &RepositoryImpl{BaseRepository: bun.NewRepository[UserModel](dbConnection, &UserModel{})}
 }
 
-func (r *UserRepositoryImpl) GetById(ctx context.Context, id uint64) (*UserModel, error) {
+func (r *RepositoryImpl) GetById(ctx context.Context, id uint64) (*UserModel, error) {
 	data, err := r.Find(ctx, int64(id))
 	if err != nil {
 		logger.Errorf("Error user repo with data: %+v, err: %+v", data, err)
@@ -24,7 +24,7 @@ func (r *UserRepositoryImpl) GetById(ctx context.Context, id uint64) (*UserModel
 	return data, nil
 }
 
-func (r *UserRepositoryImpl) Create(ctx context.Context, newUser UserModel) (int64, error) {
+func (r *RepositoryImpl) Create(ctx context.Context, newUser UserModel) (int64, error) {
 	data, err := r.DB().NewInsert().
 		Model(&newUser).
 		Returning("id").
@@ -42,7 +42,7 @@ func (r *UserRepositoryImpl) Create(ctx context.Context, newUser UserModel) (int
 	return newUserID, nil
 }
 
-func (r *UserRepositoryImpl) Update(ctx context.Context, updateUser UserModel) (int64, error) {
+func (r *RepositoryImpl) Update(ctx context.Context, updateUser UserModel) (int64, error) {
 	existingUser, err := r.GetById(ctx, uint64(updateUser.ID))
 	if err != nil {
 		logger.Errorf("Error checking existing user with ID %d: %+v", updateUser.ID, err)

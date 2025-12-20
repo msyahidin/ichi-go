@@ -2,8 +2,6 @@ package config
 
 import (
 	"fmt"
-	messageConfig "ichi-go/config/messaging"
-	pkgClientConfig "ichi-go/pkg/clients"
 	"os"
 	"sync"
 
@@ -15,6 +13,8 @@ import (
 	cacheConfig "ichi-go/config/cache"
 	dbConfig "ichi-go/config/database"
 	httpConfig "ichi-go/config/http"
+	messageConfig "ichi-go/config/messaging"
+	pkgClientConfig "ichi-go/pkg/clients"
 	"ichi-go/pkg/logger"
 )
 
@@ -78,6 +78,7 @@ func MustLoad() *Config {
 	return cfg
 }
 
+// Get is kept for backward compatibility
 func Get() *Config {
 	mu.RLock()
 	defer mu.RUnlock()

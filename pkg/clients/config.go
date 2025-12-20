@@ -1,11 +1,7 @@
 package clients
 
-type PkgClient struct {
-	PokemonAPI PokemonAPIConfig `mapstructure:"pokemon_api"`
-}
+import pokeConfig "ichi-go/pkg/clients/pokemonapi/config"
 
-type PokemonAPIConfig struct {
-	BaseURL    string `mapstructure:"base_url"`
-	Timeout    int    `mapstructure:"timeout"` // in ms
-	RetryCount int    `mapstructure:"retry_count"`
+type PkgClient struct {
+	PokemonAPI pokeConfig.Config `mapstructure:"pokemon_api"`
 }

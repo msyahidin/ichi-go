@@ -1,4 +1,4 @@
-package dto
+package user
 
 import (
 	"github.com/uptrace/bun"
