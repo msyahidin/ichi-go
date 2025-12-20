@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"flag"
+	"github.com/samber/do/v2"
 	"ichi-go/config"
 	"ichi-go/internal/infra/database"
 	"log"
@@ -26,7 +27,10 @@ var (
 
 func main() {
 	ctx := context.Background()
-	mainConfig := config.MustLoad()
+	injector := do.New()
+
+	mainConfig := do.MustInvoke[*config.Config](injector)
+	//mainConfig := config.MustLoad()
 	flags.Usage = usage
 	err := flags.Parse(os.Args[1:])
 	if err != nil {
@@ -76,6 +80,7 @@ func main() {
 	}
 
 	executeCommand(ctx, args, command, db)
+	injector.Shutdown()
 }
 
 func executeCommand(ctx context.Context, args []string, command string, db *sql.DB) {

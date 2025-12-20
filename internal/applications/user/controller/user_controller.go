@@ -1,11 +1,11 @@
-package controller
+package user
 
 import (
 	dtoMapper "github.com/dranikpg/dto-mapper"
 	"github.com/labstack/echo/v4"
-	"ichi-go/internal/applications/user/dto"
-	"ichi-go/internal/applications/user/repository"
-	"ichi-go/internal/applications/user/service"
+	userDto "ichi-go/internal/applications/user/dto"
+	userRepo "ichi-go/internal/applications/user/repository"
+	userService "ichi-go/internal/applications/user/service"
 	pokeDto "ichi-go/pkg/clients/pokemonapi/dto"
 	mapper "ichi-go/pkg/utils/dto"
 	"ichi-go/pkg/utils/response"
@@ -14,15 +14,15 @@ import (
 )
 
 type UserController struct {
-	service *service.UserServiceImpl
+	service *userService.ServiceImpl
 }
 
-func NewUserController(service *service.UserServiceImpl) *UserController {
+func NewUserController(service *userService.ServiceImpl) *UserController {
 	return &UserController{service: service}
 }
 
 func (c *UserController) GetUser(eCtx echo.Context) error {
-	var userGetReq dto.UserGetRequest
+	var userGetReq userDto.UserGetRequest
 	err := eCtx.Bind(&userGetReq)
 	if err != nil {
 		return response.Error(eCtx, http.StatusBadRequest, err)
@@ -33,7 +33,7 @@ func (c *UserController) GetUser(eCtx echo.Context) error {
 	if err != nil {
 		return response.Error(eCtx, http.StatusBadRequest, err)
 	}
-	var userGetResponseDto dto.UserGetResponse
+	var userGetResponseDto userDto.UserGetResponse
 	dtoMap := mapper.New()
 	err = dtoMap.SafeMap(&userGetResponseDto, user)
 	if err != nil {
@@ -44,13 +44,13 @@ func (c *UserController) GetUser(eCtx echo.Context) error {
 }
 
 func (c *UserController) CreateUser(eCtx echo.Context) error {
-	var userCreateReq dto.UserCreateRequest
+	var userCreateReq userDto.UserCreateRequest
 	err := eCtx.Bind(&userCreateReq)
 	if err != nil {
 		return response.Error(eCtx, http.StatusBadRequest, err)
 	}
 
-	var userModel repository.UserModel
+	var userModel userRepo.UserModel
 	err = dtoMapper.Map(&userModel, userCreateReq)
 	if err != nil {
 		return response.Error(eCtx, http.StatusInternalServerError, err)
@@ -64,13 +64,13 @@ func (c *UserController) CreateUser(eCtx echo.Context) error {
 }
 
 func (c *UserController) UpdateUser(eCtx echo.Context) error {
-	var userUpdateReq dto.UserUpdateRequest
+	var userUpdateReq userDto.UserUpdateRequest
 	err := eCtx.Bind(&userUpdateReq)
 	if err != nil {
 		return response.Error(eCtx, http.StatusBadRequest, err)
 	}
 
-	var userModel repository.UserModel
+	var userModel userRepo.UserModel
 	err = dtoMapper.Map(&userModel, userUpdateReq)
 	if err != nil {
 		return response.Error(eCtx, http.StatusInternalServerError, err)
@@ -99,7 +99,7 @@ func (c *UserController) GetPokemon(eCtx echo.Context) error {
 }
 
 func (c *UserController) SendNotification(eCtx echo.Context) error {
-	var userGetReq dto.UserGetRequest
+	var userGetReq userDto.UserGetRequest
 	err := eCtx.Bind(&userGetReq)
 	if err != nil {
 		return response.Error(eCtx, http.StatusBadRequest, err)

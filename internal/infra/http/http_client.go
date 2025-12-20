@@ -1,24 +1,23 @@
 package http
 
 import (
-	"ichi-go/config"
+	configHttp "ichi-go/config/http"
 	"net/http"
 	"resty.dev/v3"
 	"time"
 )
 
-func New() *resty.Client {
+func New(cfg configHttp.ClientConfig) *resty.Client {
 	client := resty.New()
 	defer client.Close()
-	cfg := config.Get()
 
-	client.SetTimeout(time.Duration(cfg.HttpClient().Timeout) * time.Millisecond).
-		SetRetryCount(cfg.HttpClient().RetryCount).
-		SetRetryWaitTime(time.Duration(cfg.HttpClient().RetryWaitTime) * time.Millisecond).
-		SetRetryMaxWaitTime(time.Duration(cfg.HttpClient().RetryMaxWait) * time.Millisecond).
+	client.SetTimeout(time.Duration(cfg.Timeout) * time.Millisecond).
+		SetRetryCount(cfg.RetryCount).
+		SetRetryWaitTime(time.Duration(cfg.RetryWaitTime) * time.Millisecond).
+		SetRetryMaxWaitTime(time.Duration(cfg.RetryMaxWait) * time.Millisecond).
 		AddRetryConditions(retryWhenStatusCodeNotOk)
 
-	if cfg.HttpClient().LoggerEnabled {
+	if cfg.LoggerEnabled {
 		client.Logger()
 	}
 	return client

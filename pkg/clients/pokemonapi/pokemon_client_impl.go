@@ -14,12 +14,12 @@ type PokemonClientImpl struct {
 	httpClient *resty.Client
 }
 
-func NewPokemonClientImpl() *PokemonClientImpl {
-	httpClient := http.New()
-	cfg := config.Get().PkgClient().PokemonAPI
-	httpClient.SetBaseURL(cfg.BaseURL)
-	httpClient.SetTimeout(time.Duration(cfg.Timeout))
-	httpClient.SetRetryCount(cfg.RetryCount)
+func NewPokemonClientImpl(cfg *config.Config) *PokemonClientImpl {
+	httpClient := http.New(cfg.HttpClient())
+
+	httpClient.SetBaseURL(cfg.PkgClient().PokemonAPI.BaseURL)
+	httpClient.SetTimeout(time.Duration(cfg.PkgClient().PokemonAPI.Timeout))
+	httpClient.SetRetryCount(cfg.PkgClient().PokemonAPI.RetryCount)
 
 	return &PokemonClientImpl{
 		httpClient: httpClient,

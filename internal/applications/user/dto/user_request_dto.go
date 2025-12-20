@@ -1,4 +1,4 @@
-package dto
+package user
 
 type UserGetRequest struct {
 	ID string `param:"id"`

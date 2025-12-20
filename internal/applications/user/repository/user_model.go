@@ -1,4 +1,4 @@
-package repository
+package user
 
 import (
 	upbun "github.com/uptrace/bun"

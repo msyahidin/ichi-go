@@ -1,13 +1,13 @@
-package service
+package user
 
 import (
 	"context"
 	"ichi-go/internal/applications/user/repository"
 )
 
-type UserService interface {
-	GetById(ctx context.Context, id uint32) (*repository.UserModel, error)
-	Create(ctx context.Context, newUser repository.UserModel) (int64, error)
-	Update(ctx context.Context, updateUser repository.UserModel) (int64, error)
-	SendNotification(ctx context.Context, user repository.UserModel) error
+type Service interface {
+	GetById(ctx context.Context, id uint32) (*user.UserModel, error)
+	Create(ctx context.Context, newUser user.UserModel) (int64, error)
+	Update(ctx context.Context, updateUser user.UserModel) (int64, error)
+	SendNotification(ctx context.Context, user user.UserModel) error
 }
