@@ -45,6 +45,10 @@ func GetInstance() *Logger {
 		if err != nil {
 			level = zerolog.InfoLevel
 		}
+		debug := viper.GetBool("app.debug")
+		if debug {
+			level = zerolog.DebugLevel
+		}
 
 		zerolog.TimeFieldFormat = "2006-01-02 15:04:05.00007Z07:00"
 		wd, _ := os.Getwd()
