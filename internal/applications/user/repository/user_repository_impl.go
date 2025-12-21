@@ -43,13 +43,8 @@ func (r *RepositoryImpl) Create(ctx context.Context, newUser UserModel) (int64, 
 }
 
 func (r *RepositoryImpl) Update(ctx context.Context, updateUser UserModel) (int64, error) {
-	existingUser, err := r.GetById(ctx, uint64(updateUser.ID))
-	if err != nil {
-		logger.Errorf("Error checking existing user with ID %d: %+v", updateUser.ID, err)
-		return 0, err
-	}
 	data, err := r.DB().NewUpdate().
-		Model(existingUser).
+		Model(&updateUser).
 		Where("id = ?", updateUser.ID).
 		OmitZero().
 		Returning("id").

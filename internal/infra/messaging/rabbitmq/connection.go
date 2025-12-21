@@ -10,13 +10,13 @@ import (
 )
 
 type Connection struct {
-	config RabbitMQConfig
+	config Config
 	conn   *amqp.Connection
 	mu     sync.RWMutex
 	closed bool
 }
 
-func NewConnection(config RabbitMQConfig) (*Connection, error) {
+func NewConnection(config Config) (*Connection, error) {
 	c := &Connection{
 		config: config,
 		closed: false,

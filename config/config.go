@@ -2,6 +2,9 @@ package config
 
 import (
 	"fmt"
+	"ichi-go/internal/infra/cache"
+	"ichi-go/internal/infra/database"
+	"ichi-go/internal/infra/messaging"
 	"os"
 	"sync"
 
@@ -10,23 +13,21 @@ import (
 	"github.com/spf13/viper"
 
 	appConfig "ichi-go/config/app"
-	cacheConfig "ichi-go/config/cache"
-	dbConfig "ichi-go/config/database"
+
 	httpConfig "ichi-go/config/http"
-	messageConfig "ichi-go/config/messaging"
 	pkgClientConfig "ichi-go/pkg/clients"
 	"ichi-go/pkg/logger"
 )
 
 type Schema struct {
 	App        appConfig.AppConfig
-	Database   dbConfig.DatabaseConfig
-	Cache      cacheConfig.CacheConfig
+	Database   database.Config
+	Cache      cache.Config
 	Log        logger.LogConfig
 	Http       httpConfig.HttpConfig
 	HttpClient httpConfig.ClientConfig
 	PkgClient  pkgClientConfig.PkgClient
-	Messaging  messageConfig.MessagingConfig
+	Messaging  messaging.Config
 }
 
 type Config struct {
@@ -99,12 +100,12 @@ func (c *Config) App() appConfig.AppConfig {
 	return c.schema.App
 }
 
-func (c *Config) Database() dbConfig.DatabaseConfig {
+func (c *Config) Database() database.Config {
 	c.ensureLoaded()
 	return c.schema.Database
 }
 
-func (c *Config) Cache() cacheConfig.CacheConfig {
+func (c *Config) Cache() cache.Config {
 	c.ensureLoaded()
 	return c.schema.Cache
 }
@@ -129,7 +130,7 @@ func (c *Config) PkgClient() pkgClientConfig.PkgClient {
 	return c.schema.PkgClient
 }
 
-func (c *Config) Messaging() messageConfig.MessagingConfig {
+func (c *Config) Messaging() messaging.Config {
 	c.ensureLoaded()
 	return c.schema.Messaging
 }
@@ -175,11 +176,11 @@ func getEnv() string {
 
 func setDefault() {
 	appConfig.SetDefault()
-	dbConfig.SetDefault()
-	cacheConfig.SetDefault()
+	database.SetDefault()
+	cache.SetDefault()
 	logger.SetDefault()
 	httpConfig.SetDefault()
-	messageConfig.SetDefault()
+	messaging.SetDefault()
 }
 
 func configureLogging(cfg *Config, env string) {

@@ -11,7 +11,7 @@ import (
 
 type Publisher struct {
 	connection   *Connection
-	config       RabbitMQConfig
+	config       Config
 	exchangeName string
 	channel      *amqp.Channel
 	mu           sync.Mutex
@@ -21,7 +21,7 @@ type PublishOptions struct {
 	Delay   time.Duration
 }
 
-func NewPublisher(connection *Connection, config RabbitMQConfig) (MessagePublisher, error) {
+func NewPublisher(connection *Connection, config Config) (MessagePublisher, error) {
 	p := &Publisher{
 		connection:   connection,
 		config:       config,

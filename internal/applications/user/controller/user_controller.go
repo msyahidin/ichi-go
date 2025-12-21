@@ -77,7 +77,7 @@ func (c *UserController) UpdateUser(eCtx echo.Context) error {
 	}
 	user, err := c.service.Update(eCtx.Request().Context(), userModel)
 	if err != nil {
-		return err
+		return response.Error(eCtx, http.StatusInternalServerError, err)
 	}
 
 	return response.Success(eCtx, user)

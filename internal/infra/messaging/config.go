@@ -5,9 +5,9 @@ import (
 	"ichi-go/internal/infra/messaging/rabbitmq"
 )
 
-type MessagingConfig struct {
-	Enabled  bool                    `mapstructure:"enabled"`
-	RabbitMQ rabbitmq.RabbitMQConfig `mapstructure:"rabbitmq"`
+type Config struct {
+	Enabled  bool            `mapstructure:"enabled"`
+	RabbitMQ rabbitmq.Config `mapstructure:"rabbitmq"`
 }
 
 func SetDefault() {

@@ -2,7 +2,7 @@ package database
 
 import "github.com/spf13/viper"
 
-type DatabaseConfig struct {
+type Config struct {
 	Driver          string `mapstructure:"driver"`
 	Host            string `mapstructure:"host"`
 	Port            int    `mapstructure:"port"`
