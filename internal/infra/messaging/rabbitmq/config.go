@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-type RabbitMQConfig struct {
+type Config struct {
 	Enabled    bool                   `mapstructure:"enabled"`
 	Connection RabbitConnectionConfig `yaml:"connection" mapstructure:"connection"`
 	Exchanges  []ExchangeConfig       `yaml:"exchanges" mapstructure:"exchanges"`
@@ -63,7 +63,7 @@ type PublisherConfig struct {
 	ExchangeName string `yaml:"exchange_name" mapstructure:"exchange_name"`
 }
 
-func GetConsumerByName(config *RabbitMQConfig, name string) (*ConsumerConfig, error) {
+func GetConsumerByName(config *Config, name string) (*ConsumerConfig, error) {
 	for _, consumer := range config.Consumers {
 		if consumer.Name == name {
 			return &consumer, nil
@@ -72,7 +72,7 @@ func GetConsumerByName(config *RabbitMQConfig, name string) (*ConsumerConfig, er
 	return nil, fmt.Errorf("consumer '%s' not found", name)
 }
 
-func GetExchangeByName(config *RabbitMQConfig, name string) (*ExchangeConfig, error) {
+func GetExchangeByName(config *Config, name string) (*ExchangeConfig, error) {
 	for _, exchange := range config.Exchanges {
 		if exchange.Name == name {
 			return &exchange, nil
@@ -81,7 +81,7 @@ func GetExchangeByName(config *RabbitMQConfig, name string) (*ExchangeConfig, er
 	return nil, fmt.Errorf("consumer '%s' not found", name)
 }
 
-func GetEnabledConsumers(config *RabbitMQConfig) []ConsumerConfig {
+func GetEnabledConsumers(config *Config) []ConsumerConfig {
 	var enabled []ConsumerConfig
 	for _, consumer := range config.Consumers {
 		if consumer.Enabled {

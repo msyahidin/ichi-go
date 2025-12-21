@@ -2,7 +2,7 @@ package cache
 
 import "github.com/spf13/viper"
 
-type CacheConfig struct {
+type Config struct {
 	Driver     string `mapstructure:"driver"`
 	Host       string `mapstructure:"host"`
 	Port       int    `mapstructure:"port"`

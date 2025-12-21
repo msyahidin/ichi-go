@@ -87,8 +87,13 @@ func (m *CoreModel) BeforeUpdate(ctx context.Context, query *bun.UpdateQuery) er
 	switch v := data.(type) {
 
 	case Versioned:
-		query.Where("versions = ?", v.GetVersion())
-		v.TouchVersion()
+		currentVersion := v.GetVersion()
+
+		if currentVersion > 0 {
+			query.Where("versions = ?", currentVersion)
+
+			v.TouchVersion()
+		}
 
 	case []Versioned:
 		for _, model := range v {

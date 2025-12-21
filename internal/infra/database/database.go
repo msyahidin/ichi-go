@@ -7,7 +7,6 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	upbun "github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/mysqldialect"
-	dbConfig "ichi-go/config/database"
 	"ichi-go/internal/infra/database/bun"
 	"ichi-go/internal/infra/database/ent"
 	"ichi-go/internal/infra/database/enthook"
@@ -16,7 +15,7 @@ import (
 	"time"
 )
 
-func GetDsn(dbConfig *dbConfig.DatabaseConfig) string {
+func GetDsn(dbConfig *Config) string {
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true",
 		dbConfig.User,
 		dbConfig.Password,
@@ -27,7 +26,7 @@ func GetDsn(dbConfig *dbConfig.DatabaseConfig) string {
 	return dsn
 }
 
-func NewEntClient(dbConfig *dbConfig.DatabaseConfig) *ent.Client {
+func NewEntClient(dbConfig *Config) *ent.Client {
 	dsn := GetDsn(dbConfig)
 
 	db, err := sql.Open(dbConfig.Driver, dsn)
@@ -70,7 +69,7 @@ func NewEntClient(dbConfig *dbConfig.DatabaseConfig) *ent.Client {
 	return client
 }
 
-func NewBunClient(cfg dbConfig.DatabaseConfig) (*upbun.DB, error) {
+func NewBunClient(cfg Config) (*upbun.DB, error) {
 	dsn := GetDsn(&cfg)
 
 	// Open connection
