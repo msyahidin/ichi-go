@@ -152,7 +152,7 @@ func (l *Logger) Infof(format string, v ...interface{}) {
 }
 
 func (l *Logger) Debugf(format string, v ...interface{}) {
-	logger := l.Logger
+	logger := l.Logger.Hook(CallerWrapperHook{})
 	logger.
 		Debug().
 		Msgf(format, v...)
@@ -206,7 +206,6 @@ func Infof(format string, v ...interface{}) {
 }
 
 func Debugf(format string, v ...interface{}) {
-	fmt.Println("Debugf called")
 	GetInstance().Debugf(format, v...)
 }
 

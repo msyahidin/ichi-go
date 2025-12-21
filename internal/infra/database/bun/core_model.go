@@ -90,10 +90,8 @@ func (m *CoreModel) BeforeUpdate(ctx context.Context, query *bun.UpdateQuery) er
 		currentVersion := v.GetVersion()
 
 		if currentVersion > 0 {
-			// Add WHERE clause for optimistic locking
 			query.Where("versions = ?", currentVersion)
 
-			// Increment version for the update
 			v.TouchVersion()
 		}
 
