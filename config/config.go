@@ -54,7 +54,6 @@ func Load() (*Config, error) {
 		instance = &Config{schema: schema}
 		mu.Unlock()
 
-		configureLogging(instance, getEnv())
 	})
 
 	if loadErr != nil {
@@ -181,22 +180,6 @@ func setDefault() {
 	logger.SetDefault()
 	httpConfig.SetDefault()
 	messaging.SetDefault()
-}
-
-func configureLogging(cfg *Config, env string) {
-	if cfg == nil || cfg.schema == nil {
-		logger.Warnf("Cannot configure logging: config is nil")
-		return
-	}
-
-	if cfg.App().Debug {
-		log.SetLevel(log.DEBUG)
-		log.Debugf("Debugging enabled")
-		log.Debugf("Configuration loaded successfully for environment: %s", env)
-		log.Debugf("Loaded Config: %+v", cfg.schema)
-	} else {
-		log.SetLevel(log.INFO)
-	}
 }
 
 func SetDebugMode(e *echo.Echo, debug bool) {
