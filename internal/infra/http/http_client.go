@@ -3,11 +3,12 @@ package http
 import (
 	configHttp "ichi-go/config/http"
 	"net/http"
-	"resty.dev/v3"
 	"time"
+
+	"resty.dev/v3"
 )
 
-func New(cfg configHttp.ClientConfig) *resty.Client {
+func New(cfg *configHttp.ClientConfig) *resty.Client {
 	client := resty.New()
 	defer client.Close()
 

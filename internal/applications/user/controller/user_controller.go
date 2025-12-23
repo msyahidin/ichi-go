@@ -1,16 +1,19 @@
 package user
 
 import (
-	dtoMapper "github.com/dranikpg/dto-mapper"
-	"github.com/labstack/echo/v4"
 	userDto "ichi-go/internal/applications/user/dto"
 	userRepo "ichi-go/internal/applications/user/repository"
 	userService "ichi-go/internal/applications/user/service"
 	pokeDto "ichi-go/pkg/clients/pokemonapi/dto"
+	"ichi-go/pkg/logger"
+	"ichi-go/pkg/requestctx"
 	mapper "ichi-go/pkg/utils/dto"
 	"ichi-go/pkg/utils/response"
 	"net/http"
 	"strconv"
+
+	dtoMapper "github.com/dranikpg/dto-mapper"
+	"github.com/labstack/echo/v4"
 )
 
 type UserController struct {
@@ -23,6 +26,7 @@ func NewUserController(service *userService.ServiceImpl) *UserController {
 
 func (c *UserController) GetUser(eCtx echo.Context) error {
 	var userGetReq userDto.UserGetRequest
+	logger.Debugf("GetUser request: %+v", requestctx.FromContext(eCtx.Request().Context()))
 	err := eCtx.Bind(&userGetReq)
 	if err != nil {
 		return response.Error(eCtx, http.StatusBadRequest, err)
@@ -57,7 +61,7 @@ func (c *UserController) CreateUser(eCtx echo.Context) error {
 	}
 	user, err := c.service.Create(eCtx.Request().Context(), userModel)
 	if err != nil {
-		return err
+		return response.Error(eCtx, http.StatusInternalServerError, err)
 	}
 
 	return response.Created(eCtx, map[string]interface{}{"new_user_id": user})

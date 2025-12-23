@@ -2,13 +2,15 @@ package server
 
 import (
 	"encoding/json"
-	"github.com/labstack/echo/v4"
-	"github.com/samber/do/v2"
 	"ichi-go/config"
 	appConfig "ichi-go/config/app"
 	"ichi-go/internal/applications/user"
+	"ichi-go/pkg/authenticator"
 	"ichi-go/pkg/logger"
 	"os"
+
+	"github.com/labstack/echo/v4"
+	"github.com/samber/do/v2"
 )
 
 //func SetupRestRoutes(e *echo.Echo, mainConfig *config.Config, dbClient *bun.DB, cacheClient *redis.Client, messagingConnection *rabbitmq.Connection) {
@@ -20,7 +22,8 @@ import (
 //}
 
 func SetupRestRoutes(injector do.Injector, e *echo.Echo, cfg *config.Config) {
-	user.Register(injector, cfg.App().Name, e)
+	auth := authenticator.New(cfg.Auth())
+	user.Register(injector, cfg.App().Name, e, auth)
 }
 
 func GetServiceName(configApp appConfig.AppConfig) string {

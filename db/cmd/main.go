@@ -4,11 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"flag"
-	"github.com/samber/do/v2"
 	"ichi-go/config"
 	"ichi-go/internal/infra/database"
 	"log"
 	"os"
+
+	"github.com/samber/do/v2"
 
 	"github.com/pressly/goose/v3"
 
@@ -73,7 +74,7 @@ func main() {
 	}
 
 	dbCfg := mainConfig.Database()
-	dbSource := database.GetDsn(&dbCfg)
+	dbSource := database.GetDsn(dbCfg)
 	db, err := sql.Open(driver, dbSource)
 	if err != nil {
 		log.Fatalf("-dbstring=%q: %v\n", dbSource, err)

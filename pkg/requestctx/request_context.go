@@ -14,9 +14,10 @@ var ctxKey = ctxKeyType{}
 
 type RequestContext struct {
 	// Auth
-	Authorization string `json:"authorization"`
-	BasicAuth     string `json:"basic_auth"`
-	Timezone      string `json:"timezone"`
+	Authorization   string `json:"authorization"`
+	BasicAuth       string `json:"basic_auth"`
+	Timezone        string `json:"timezone"`
+	ValidatedClaims any    `json:"validated_claims,omitempty"`
 
 	// Custom app headers
 	UserName string `json:"user_name"`

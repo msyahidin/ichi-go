@@ -2,17 +2,18 @@ package database
 
 import (
 	"database/sql"
-	entSql "entgo.io/ent/dialect/sql"
 	"fmt"
-	_ "github.com/go-sql-driver/mysql"
-	upbun "github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/mysqldialect"
 	"ichi-go/internal/infra/database/bun"
 	"ichi-go/internal/infra/database/ent"
 	"ichi-go/internal/infra/database/enthook"
 	"ichi-go/pkg/logger"
 	"strconv"
 	"time"
+
+	entSql "entgo.io/ent/dialect/sql"
+	_ "github.com/go-sql-driver/mysql"
+	upbun "github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect/mysqldialect"
 )
 
 func GetDsn(dbConfig *Config) string {
@@ -69,8 +70,8 @@ func NewEntClient(dbConfig *Config) *ent.Client {
 	return client
 }
 
-func NewBunClient(cfg Config) (*upbun.DB, error) {
-	dsn := GetDsn(&cfg)
+func NewBunClient(cfg *Config) (*upbun.DB, error) {
+	dsn := GetDsn(cfg)
 
 	// Open connection
 	sqldb, err := sql.Open(cfg.Driver, dsn)
