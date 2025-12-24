@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/samber/do/v2"
 	"ichi-go/cmd/server"
 	"ichi-go/config"
 	"ichi-go/internal/infra"
@@ -15,6 +14,8 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/samber/do/v2"
+
 	"github.com/labstack/echo/v4"
 )
 
@@ -22,14 +23,13 @@ func main() {
 	injector := do.New()
 
 	e := echo.New()
-	// Get config from DI container
 	cfg := config.MustLoad()
+	logger.Debugf("initialized configuration %+v", *cfg)
 	if cfg == nil {
 		logger.Fatalf("failed to load configuration")
 	}
-	infra.Setup(injector, cfg)
-	// Setup echo with config
 	config.SetDebugMode(e, cfg.App().Debug)
+	infra.Setup(injector, cfg)
 	middlewares.Init(e, cfg)
 	logger.GetInstance()
 

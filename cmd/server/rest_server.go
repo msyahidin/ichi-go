@@ -13,15 +13,10 @@ import (
 	"github.com/samber/do/v2"
 )
 
-//func SetupRestRoutes(e *echo.Echo, mainConfig *config.Config, dbClient *bun.DB, cacheClient *redis.Client, messagingConnection *rabbitmq.Connection) {
-//	//user_wire.Register(mainConfig.App().Name, e, dbClient, cacheClient, messagingConnection)
-//	// Please register new domain routes before this line
-//	if mainConfig.App().Env == "local" {
-//		generateRouteList(e)
-//	}
-//}
-
 func SetupRestRoutes(injector do.Injector, e *echo.Echo, cfg *config.Config) {
+	if err := cfg.Auth().InitializeJWTKeys(); err != nil {
+		logger.Errorf("Failed to initialize JWT keys: %v", err)
+	}
 	auth := authenticator.New(cfg.Auth())
 	user.Register(injector, cfg.App().Name, e, auth)
 }

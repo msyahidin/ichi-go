@@ -1,7 +1,6 @@
 package authenticator
 
 import (
-	"ichi-go/pkg/requestctx"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -16,63 +15,93 @@ func NewJWTAuthenticator(config *JWTConfig) *JWTAuthenticator {
 	return &JWTAuthenticator{config: config}
 }
 
+// JWTConfig represents the configuration for JWT authentication
 type JWTConfig struct {
 	Enabled bool
 
-	// Token validation
-	SigningMethod jwt.SigningMethod // e.g., jwt.SigningMethodHS256, RS256
-	SecretKey     []byte            // For HMAC (HS256, HS384, HS512)
-	PublicKey     interface{}       // For RSA/ECDSA (RS256, ES256, etc.)
-	PrivateKey    interface{}       // For token generation
+	Algorithm string `yaml:"signing_method" json:"signing_method" mapstructure:"signing_method"`
 
-	// Token extraction
-	TokenLookup string // "header:Authorization,query:token,cookie:jwt"
-	AuthScheme  string // "Bearer" (default) or custom
+	SecretKeyString string `yaml:"secret_key" json:"secret_key" mapstructure:"secret_key"`
 
-	// Token validation rules
-	Issuer        string   // Expected "iss" claim
-	Audience      []string // Expected "aud" claim
-	RequireClaims []string // Required claim keys (e.g., ["sub", "exp"])
+	SigningMethod jwt.SigningMethod `yaml:"-" json:"-"`
+	SecretKey     []byte            `yaml:"-" json:"-"`
+	PublicKey     interface{}       `yaml:"public_key" json:"public_key" mapstructure:"public_key"`
+	PrivateKey    interface{}       `yaml:"private_key" json:"private_key" mapstructure:"private_key"`
 
-	// Token lifecycle
-	AccessTokenTTL  time.Duration // e.g., 15 * time.Minute
-	RefreshTokenTTL time.Duration // e.g., 7 * 24 * time.Hour
+	TokenLookup string `yaml:"token_lookup" json:"token_lookup" mapstructure:"token_lookup"`
+	AuthScheme  string `yaml:"auth_scheme" json:"auth_scheme" mapstructure:"auth_scheme"`
 
-	// Advanced
-	ClaimsValidator JWTClaimsValidator // Custom claims validation
-	KeyFunc         jwt.Keyfunc        // Dynamic key resolution for multi-tenant
-	SkipPaths       []string           // JWT-specific skip paths
+	Issuer        string   `yaml:"issuer" json:"issuer" mapstructure:"issuer"`
+	Audience      []string `yaml:"audience" json:"audience" mapstructure:"audience"`
+	RequireClaims []string `yaml:"require_claims" json:"require_claims" mapstructure:"require_claims"`
 
-	LeewayDuration time.Duration // Clock skew leeway for time-based claims
+	AccessTokenTTL  time.Duration `yaml:"access_token_ttl" json:"access_token_ttl" mapstructure:"access_token_ttl"`
+	RefreshTokenTTL time.Duration `yaml:"refresh_token_ttl" json:"refresh_token_ttl" mapstructure:"refresh_token_ttl"`
+
+	ClaimsValidator JWTClaimsValidator `yaml:"-" json:"-"`
+	KeyFunc         jwt.Keyfunc        `yaml:"-" json:"-"`
+	SkipPaths       []string           `yaml:"skip_paths" json:"skip_paths" mapstructure:"skip_paths"`
+
+	LeewayDuration time.Duration `yaml:"leeway_duration" json:"leeway_duration" mapstructure:"leeway_duration"`
 }
 
 type JWTClaimsValidator func(claims jwt.MapClaims) error
 
 func (a *JWTAuthenticator) Authenticate(c echo.Context) (*AuthContext, error) {
-	// Extract token from request
-	reqCtx := requestctx.FromContext(c.Request().Context())
-	tokenString, err := ExtractToken(*reqCtx)
+	tokenString, err := ExtractToken(c, *a.config)
 	if err != nil {
 		return nil, err
 	}
 
-	// Parse token
 	token, err := ParseToken(tokenString, *a.config)
 	if err != nil {
 		return nil, err
 	}
-
-	// Validate token
-	claims, err := ValidateToken(*token)
+	claims, err := ValidateToken(token, *a.config)
 	if err != nil {
 		return nil, err
 	}
 
-	// Get user ID
-	user, err := GetUserId(claims)
+	user, err := GetUserIdFromMapClaims(claims)
 	if err != nil {
 		return nil, err
 	}
 
 	return &AuthContext{UserID: user}, nil
+}
+
+// GenerateToken creates a new JWT token for the given user ID
+// This is a convenience method for the authenticator
+func (a *JWTAuthenticator) GenerateToken(userID uint64) (string, error) {
+	return GenerateAccessToken(userID, *a.config)
+}
+
+// GenerateTokens creates both access and refresh tokens for the given user ID
+// Returns a TokenPair with both tokens
+func (a *JWTAuthenticator) GenerateTokens(userID uint64) (*TokenPair, error) {
+	return GenerateTokenPair(userID, *a.config)
+}
+
+// ValidateRefreshToken validates a refresh token and returns the user ID
+// This is useful for token refresh endpoints
+func (a *JWTAuthenticator) ValidateRefreshToken(tokenString string) (uint64, error) {
+	// Parse the refresh token
+	token, err := ParseToken(tokenString, *a.config)
+	if err != nil {
+		return 0, err
+	}
+
+	// Validate the token
+	claims, err := ValidateToken(token, *a.config)
+	if err != nil {
+		return 0, err
+	}
+
+	// Extract user ID
+	user, err := GetUserIdFromMapClaims(claims)
+	if err != nil {
+		return 0, err
+	}
+
+	return user.ID, nil
 }

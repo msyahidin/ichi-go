@@ -22,6 +22,7 @@ require (
 	github.com/rs/zerolog v1.34.0
 	github.com/samber/do/v2 v2.0.0
 	github.com/spf13/viper v1.21.0
+	github.com/stretchr/testify v1.11.1
 	github.com/uptrace/bun v1.2.16
 	github.com/uptrace/bun/dialect/mysqldialect v1.2.16
 	github.com/vmihailenco/msgpack/v5 v5.4.1
