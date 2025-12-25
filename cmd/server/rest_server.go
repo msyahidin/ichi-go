@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"ichi-go/config"
 	appConfig "ichi-go/config/app"
+	"ichi-go/internal/applications/auth"
 	"ichi-go/internal/applications/user"
 	"ichi-go/pkg/authenticator"
 	"ichi-go/pkg/logger"
@@ -17,8 +18,9 @@ func SetupRestRoutes(injector do.Injector, e *echo.Echo, cfg *config.Config) {
 	if err := cfg.Auth().InitializeJWTKeys(); err != nil {
 		logger.Errorf("Failed to initialize JWT keys: %v", err)
 	}
-	auth := authenticator.New(cfg.Auth())
-	user.Register(injector, cfg.App().Name, e, auth)
+	authenticator := authenticator.New(cfg.Auth())
+	user.Register(injector, cfg.App().Name, e, authenticator)
+	auth.Register(injector, cfg.App().Name, e, authenticator)
 }
 
 func GetServiceName(configApp appConfig.AppConfig) string {

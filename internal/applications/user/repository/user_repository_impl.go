@@ -24,6 +24,15 @@ func (r *RepositoryImpl) GetById(ctx context.Context, id uint64) (*UserModel, er
 	return data, nil
 }
 
+func (r *RepositoryImpl) FindByEmail(ctx context.Context, email string) (*UserModel, error) {
+	data, err := r.FindBy(ctx, "email", email)
+	if err != nil {
+		logger.Errorf("Error user repo with data: %+v, err: %+v", data, err)
+		return nil, err
+	}
+	return data, nil
+}
+
 func (r *RepositoryImpl) Create(ctx context.Context, newUser UserModel) (int64, error) {
 	data, err := r.DB().NewInsert().
 		Model(&newUser).
