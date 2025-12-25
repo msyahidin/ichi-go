@@ -20,12 +20,12 @@ func (s *ServiceImpl) Login(ctx context.Context, req authDto.LoginRequest) (*aut
 	}
 
 	if user == nil {
-		return nil, errors.New("invalid credentials: user not found")
+		return nil, errors.New("invalid credentials")
 	}
 
 	// Verify password
 	if !s.VerifyPassword(user.Password, req.Password) {
-		return nil, errors.New("invalid credentials: incorrect password")
+		return nil, errors.New("invalid credentials")
 	}
 
 	// Generate tokens

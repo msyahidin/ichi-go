@@ -10,6 +10,7 @@ import (
 	"ichi-go/internal/middlewares"
 	"ichi-go/pkg/errorhandler"
 	"ichi-go/pkg/logger"
+	"ichi-go/pkg/validator"
 	"os"
 	"os/signal"
 	"time"
@@ -39,7 +40,7 @@ func main() {
 		msgConn := do.MustInvoke[*rabbitmq.Connection](injector)
 		server.StartConsumer(msgConfig, msgConn)
 	}
-
+	validator.RegisterValidator(e)
 	// Setup web routes and error handler
 	server.SetupRestRoutes(injector, e, cfg)
 	server.SetupWebRoutes(e, cfg.Schema())
