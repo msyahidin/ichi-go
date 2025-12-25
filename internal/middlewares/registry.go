@@ -2,13 +2,14 @@ package middlewares
 
 import (
 	"context"
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
-	"github.com/labstack/gommon/log"
 	"ichi-go/config"
 	httpConfig "ichi-go/config/http"
 	"ichi-go/pkg/logger"
 	"time"
+
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+	"github.com/labstack/gommon/log"
 )
 
 func Init(e *echo.Echo, mainConfig *config.Config) {
@@ -21,7 +22,7 @@ func Init(e *echo.Echo, mainConfig *config.Config) {
 	if configLog.RequestLogging.Enabled {
 		switch configLog.RequestLogging.Driver {
 		case "builtin":
-			e.Use(middleware.Logger())
+			e.Use(middleware.RequestLogger())
 		case "internal":
 			e.Use(Logger(mainConfig))
 		default:
@@ -42,7 +43,7 @@ func Init(e *echo.Echo, mainConfig *config.Config) {
 	e.Use(middleware.Gzip())
 	e.Use(middleware.Secure())
 	e.Use(AppRequestTimeOut(mainConfig.Http()))
-	e.Use(Cors(mainConfig.Http().Cors))
+	e.Use(Cors(&mainConfig.Http().Cors))
 	e.Use(copyRequestID)
 	e.Use(RequestContextMiddleware())
 }
@@ -59,7 +60,7 @@ func copyRequestID(next echo.HandlerFunc) echo.HandlerFunc {
 	}
 }
 
-func AppRequestTimeOut(configHttp httpConfig.HttpConfig) echo.MiddlewareFunc {
+func AppRequestTimeOut(configHttp *httpConfig.HttpConfig) echo.MiddlewareFunc {
 	return middleware.TimeoutWithConfig(middleware.TimeoutConfig{
 		Timeout: time.Duration(configHttp.Timeout) * time.Second,
 	})

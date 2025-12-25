@@ -8,6 +8,7 @@
 .idea/dictionaries
 
 .idea
+.cursor
 
 *.log*
 
@@ -61,3 +62,5 @@ config.staging.yaml
 config.production.yaml
 
 *.log
+*.key
+*.pem

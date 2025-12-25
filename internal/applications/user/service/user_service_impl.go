@@ -12,13 +12,13 @@ import (
 )
 
 type ServiceImpl struct {
-	repo       user.UserRepository
+	repo       user.Repository
 	cache      cache.Cache
 	pokeClient pokemonapi.PokemonClient
 	mc         *rabbitmq.Connection
 }
 
-func NewUserService(repo user.UserRepository, cache cache.Cache, pokeClient pokemonapi.PokemonClient, mc *rabbitmq.Connection) *ServiceImpl {
+func NewUserService(repo user.Repository, cache cache.Cache, pokeClient pokemonapi.PokemonClient, mc *rabbitmq.Connection) *ServiceImpl {
 	return &ServiceImpl{repo: repo, cache: cache, pokeClient: pokeClient, mc: mc}
 }
 

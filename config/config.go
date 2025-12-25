@@ -5,6 +5,7 @@ import (
 	"ichi-go/internal/infra/cache"
 	"ichi-go/internal/infra/database"
 	"ichi-go/internal/infra/messaging"
+	"ichi-go/pkg/authenticator"
 	"os"
 	"sync"
 
@@ -28,6 +29,7 @@ type Schema struct {
 	HttpClient httpConfig.ClientConfig
 	PkgClient  pkgClientConfig.PkgClient
 	Messaging  messaging.Config
+	Auth       authenticator.Config
 }
 
 type Config struct {
@@ -94,44 +96,49 @@ func (c *Config) Schema() *Schema {
 	return c.schema
 }
 
-func (c *Config) App() appConfig.AppConfig {
+func (c *Config) App() *appConfig.AppConfig {
 	c.ensureLoaded()
-	return c.schema.App
+	return &c.schema.App
 }
 
-func (c *Config) Database() database.Config {
+func (c *Config) Database() *database.Config {
 	c.ensureLoaded()
-	return c.schema.Database
+	return &c.schema.Database
 }
 
-func (c *Config) Cache() cache.Config {
+func (c *Config) Cache() *cache.Config {
 	c.ensureLoaded()
-	return c.schema.Cache
+	return &c.schema.Cache
 }
 
-func (c *Config) Http() httpConfig.HttpConfig {
+func (c *Config) Http() *httpConfig.HttpConfig {
 	c.ensureLoaded()
-	return c.schema.Http
+	return &c.schema.Http
 }
 
-func (c *Config) HttpClient() httpConfig.ClientConfig {
+func (c *Config) HttpClient() *httpConfig.ClientConfig {
 	c.ensureLoaded()
-	return c.schema.HttpClient
+	return &c.schema.HttpClient
 }
 
-func (c *Config) Log() logger.LogConfig {
+func (c *Config) Log() *logger.LogConfig {
 	c.ensureLoaded()
-	return c.schema.Log
+	return &c.schema.Log
 }
 
-func (c *Config) PkgClient() pkgClientConfig.PkgClient {
+func (c *Config) PkgClient() *pkgClientConfig.PkgClient {
 	c.ensureLoaded()
-	return c.schema.PkgClient
+	return &c.schema.PkgClient
 }
 
-func (c *Config) Messaging() messaging.Config {
+func (c *Config) Messaging() *messaging.Config {
 	c.ensureLoaded()
-	return c.schema.Messaging
+	return &c.schema.Messaging
+}
+
+func (c *Config) Auth() *authenticator.Config {
+	c.ensureLoaded()
+	return &c.schema.Auth
 }
 
 func (c *Config) ensureLoaded() {
@@ -180,6 +187,7 @@ func setDefault() {
 	logger.SetDefault()
 	httpConfig.SetDefault()
 	messaging.SetDefault()
+	authenticator.SetDefault()
 }
 
 func SetDebugMode(e *echo.Echo, debug bool) {

@@ -54,20 +54,35 @@ log:
   requestId:
     driver: "builtin"
 
+auth:
+  jwt:
+    enabled: true
+    signing_method: "HS256"
+    secret_key: "dev-secret-key-change-in-production"
+    token_lookup: "header:Authorization,query:token"
+    auth_scheme: "Bearer"
+    issuer: "myapp-dev"
+    audience:
+      - "myapp-dev-users"
+    require_claims:
+      - "sub"
+      - "exp"
+    access_token_ttl: "1h"    # Longer for development
+    refresh_token_ttl: "720h" # 30 days for development
+    leeway_duration: "5m"     # More lenient for dev
+    skip_paths:
+      - "/api/v1/auth/*"
+      - "/api/v1/public/*"
+      - "/swagger/*"
+      - "/debug/*"
+    private_key: "path to private key"
+    public_key: "path to public key"
+
 pkgclient:
   pokemon_api:
     base_url: "https://pokeapi.co/api/v2"
     timeout: 10000
     retry: 3
-
-messages:
-  enabled: true
-  rabbitmq:
-    enabled: true
-    host: "localhost"
-    port: 5672
-    username: "guest"
-    password: "guest"
 
 messaging:
   enabled: false

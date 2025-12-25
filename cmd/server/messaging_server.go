@@ -11,7 +11,7 @@ import (
 	"syscall"
 )
 
-func StartConsumer(msgConfig infraMessaging.Config, conn *rabbitmq.Connection) {
+func StartConsumer(msgConfig *infraMessaging.Config, conn *rabbitmq.Connection) {
 	logger.Infof("Starting consumer workers...")
 
 	ctx, cancel := context.WithCancel(context.Background())
