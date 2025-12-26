@@ -3,16 +3,18 @@ package response
 import (
 	"errors"
 	"github.com/labstack/echo/v4"
+	"ichi-go/pkg/validator"
 	"net/http"
 	"time"
 )
 
 type body struct {
-	ErrorCode  int         `json:"code,omitempty"`
-	Message    string      `json:"message"`
-	Data       interface{} `json:"data,omitempty"`
-	Error      string      `json:"error,omitempty"`
-	ServerTime string      `json:"serverTime"`
+	ErrorCode  int                    `json:"code,omitempty"`
+	Message    string                 `json:"message"`
+	Data       interface{}            `json:"data,omitempty"`
+	Errors     []validator.FieldError `json:"errors,omitempty"`
+	Error      string                 `json:"error,omitempty"`
+	ServerTime string                 `json:"serverTime"`
 }
 
 func Base(ctx echo.Context, httpCode int, message string, data interface{}, errorCode int, err error) error {
@@ -29,7 +31,13 @@ func Base(ctx echo.Context, httpCode int, message string, data interface{}, erro
 	}
 
 	if err != nil {
-		bodyResponse.Error = err.Error()
+		// Check if it's ValidationErrors
+		if validationErr, ok := err.(*validator.ValidationErrors); ok {
+			bodyResponse.Errors = validationErr.Errors
+			bodyResponse.Message = "Validation failed"
+		} else {
+			bodyResponse.Error = err.Error()
+		}
 	}
 
 	//added header for standard response
