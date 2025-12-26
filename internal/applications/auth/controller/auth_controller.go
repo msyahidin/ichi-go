@@ -47,26 +47,19 @@ func (c *AuthController) Login(eCtx echo.Context) error {
 func (c *AuthController) Register(eCtx echo.Context) error {
 	var req authDto.RegisterRequest
 
-	// Bind and validate with automatic language detection
 	err := appValidator.BindAndValidate(eCtx, &req)
-	logger.Errorf("Register request validation result: %v", err)
 	if err != nil {
-		logger.Errorf("Register request validation failed: %v", err)
-		return response.Error(eCtx, http.StatusBadRequest, err) // Already formatted as JSON
+		return response.Error(eCtx, http.StatusBadRequest, err)
 	}
-	return err
 
-	//logger.Errorf("Register request validation passed %v", err)
+	logger.Errorf("Register request validation passed %v", err)
 
-	//// Register user
-	//registerResponse, err := c.service.Register(eCtx.Request().Context(), req)
-	//if err != nil {
-	//	logger.Errorf("Registration failed: %v", err)
-	//	return response.Error(eCtx, http.StatusBadRequest, err)
-	//}
-	//
-	//logger.Infof("User registered successfully: %s", req.Email)
-	//return response.Created(eCtx, "success")
+	registerResponse, err := c.service.Register(eCtx.Request().Context(), req)
+	if err != nil {
+		return response.Error(eCtx, http.StatusBadRequest, err)
+	}
+
+	return response.Created(eCtx, registerResponse)
 }
 
 // RefreshToken handles token refresh

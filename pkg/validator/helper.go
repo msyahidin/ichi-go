@@ -1,10 +1,14 @@
 package validator
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
 )
+
+// ErrValidationFailed is a sentinel error for validation failures
+var ErrValidationFailed = errors.New("validation failed")
 
 type ContextValidator interface {
 	ValidateWithContext(c echo.Context, i interface{}) error
@@ -12,14 +16,11 @@ type ContextValidator interface {
 }
 
 // BindAndValidate binds request body and validates with automatic language detection
-// Returns formatted JSON error response if validation fails, nil if successful
+// Returns ValidationErrors that can be passed to response.Error()
 func BindAndValidate(c echo.Context, req interface{}) error {
+	// Bind request body
 	if err := c.Bind(req); err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]interface{}{
-			"code":    http.StatusBadRequest,
-			"message": "Invalid request format",
-			"error":   err.Error(),
-		})
+		return err
 	}
 
 	// Validate with language detection
@@ -27,90 +28,51 @@ func BindAndValidate(c echo.Context, req interface{}) error {
 }
 
 // ValidateWithTranslation validates a struct with automatic language detection from headers
-// Returns formatted JSON error response if validation fails, nil if successful
+// Returns ValidationErrors without sending response (compatible with response builder)
 func ValidateWithTranslation(c echo.Context, req interface{}) error {
 	// Get validator from Echo
 	echoValidator := c.Echo().Validator
 	if echoValidator == nil {
-		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
-			"code":    http.StatusInternalServerError,
-			"message": "Validator not configured",
-		})
+		return errors.New("validator not configured")
 	}
 
 	// Try to use context-aware validator
 	if contextValidator, ok := echoValidator.(ContextValidator); ok {
 		if err := contextValidator.ValidateWithContext(c, req); err != nil {
-			// Check if it's our custom ValidationErrors type
-			if validationErr, ok := err.(*ValidationErrors); ok {
-				return c.JSON(http.StatusBadRequest, map[string]interface{}{
-					"code":    http.StatusBadRequest,
-					"message": "Validation failed",
-					"errors":  validationErr.Errors,
-				})
-			}
-
-			// Fallback for other error types
-			return c.JSON(http.StatusBadRequest, map[string]interface{}{
-				"code":    http.StatusBadRequest,
-				"message": "Validation failed",
-				"error":   err.Error(),
-			})
+			// Return the ValidationErrors directly - don't send response
+			return err
 		}
 		return nil
 	}
 
 	// Fallback to basic validation if custom validator not available
 	if err := c.Validate(req); err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]interface{}{
-			"code":    http.StatusBadRequest,
-			"message": "Validation failed",
-			"error":   err.Error(),
-		})
+		return err
 	}
 
 	return nil
 }
 
 // ValidateWithLanguage validates a struct with a specific language
-// Returns formatted JSON error response if validation fails, nil if successful
+// Returns ValidationErrors without sending response (compatible with response builder)
 func ValidateWithLanguage(c echo.Context, req interface{}, lang string) error {
 	// Get validator from Echo
 	echoValidator := c.Echo().Validator
 	if echoValidator == nil {
-		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
-			"code":    http.StatusInternalServerError,
-			"message": "Validator not configured",
-		})
+		return errors.New("validator not configured")
 	}
 
 	// Try to use context-aware validator
 	if contextValidator, ok := echoValidator.(ContextValidator); ok {
 		if err := contextValidator.ValidateWithLanguage(req, lang); err != nil {
-			if validationErr, ok := err.(*ValidationErrors); ok {
-				return c.JSON(http.StatusBadRequest, map[string]interface{}{
-					"code":    http.StatusBadRequest,
-					"message": "Validation failed",
-					"errors":  validationErr.Errors,
-				})
-			}
-
-			return c.JSON(http.StatusBadRequest, map[string]interface{}{
-				"code":    http.StatusBadRequest,
-				"message": "Validation failed",
-				"error":   err.Error(),
-			})
+			return err
 		}
 		return nil
 	}
 
 	// Fallback to basic validation
 	if err := c.Validate(req); err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]interface{}{
-			"code":    http.StatusBadRequest,
-			"message": "Validation failed",
-			"error":   err.Error(),
-		})
+		return err
 	}
 
 	return nil
