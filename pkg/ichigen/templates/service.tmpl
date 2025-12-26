@@ -1,0 +1,95 @@
+package service
+
+import (
+	"context"
+	"fmt"
+
+	"ichi-go/internal/applications/{{.Domain}}/dto"
+	"ichi-go/internal/applications/{{.Domain}}/repository"
+)
+
+type {{.StructName}}Service interface {
+{{if .HasCRUD}}	Create(ctx context.Context, req dto.Create{{.StructName}}Request) (*dto.{{.StructName}}Response, error)
+	List(ctx context.Context, req dto.List{{.StructName}}Request) (*dto.{{.StructName}}ListResponse, error)
+	GetByID(ctx context.Context, id int64) (*dto.{{.StructName}}Response, error)
+	Update(ctx context.Context, id int64, req dto.Update{{.StructName}}Request) (*dto.{{.StructName}}Response, error)
+	Delete(ctx context.Context, id int64) error
+{{else}}	Get(ctx context.Context) error
+{{end}}}
+
+type ServiceImpl struct {
+	repo repository.{{.StructName}}Repository
+}
+
+func New{{.StructName}}Service(repo repository.{{.StructName}}Repository) {{.StructName}}Service {
+	return &ServiceImpl{repo: repo}
+}
+{{if .HasCRUD}}
+func (s *ServiceImpl) Create(ctx context.Context, req dto.Create{{.StructName}}Request) (*dto.{{.StructName}}Response, error) {
+	// TODO: Add business logic validation here
+	model := req.ToModel()
+	created, err := s.repo.Create(ctx, model)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create {{.LowerName}}: %w", err)
+	}
+	return dto.{{.StructName}}ResponseFromModel(created), nil
+}
+
+func (s *ServiceImpl) List(ctx context.Context, req dto.List{{.StructName}}Request) (*dto.{{.StructName}}ListResponse, error) {
+	if req.Page == 0 {
+		req.Page = 1
+	}
+	if req.Limit == 0 {
+		req.Limit = 10
+	}
+	models, total, err := s.repo.List(ctx, req.Page, req.Limit)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list {{.LowerName}}s: %w", err)
+	}
+	items := make([]*dto.{{.StructName}}Response, len(models))
+	for i, model := range models {
+		items[i] = dto.{{.StructName}}ResponseFromModel(model)
+	}
+	return &dto.{{.StructName}}ListResponse{
+		Items: items,
+		Total: total,
+		Page:  req.Page,
+		Limit: req.Limit,
+	}, nil
+}
+
+func (s *ServiceImpl) GetByID(ctx context.Context, id int64) (*dto.{{.StructName}}Response, error) {
+	model, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("{{.LowerName}} not found: %w", err)
+	}
+	return dto.{{.StructName}}ResponseFromModel(model), nil
+}
+
+func (s *ServiceImpl) Update(ctx context.Context, id int64, req dto.Update{{.StructName}}Request) (*dto.{{.StructName}}Response, error) {
+	model, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("{{.LowerName}} not found: %w", err)
+	}
+	// TODO: Add business rules before update
+	req.ApplyToModel(model)
+	updated, err := s.repo.Update(ctx, model)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update {{.LowerName}}: %w", err)
+	}
+	return dto.{{.StructName}}ResponseFromModel(updated), nil
+}
+
+func (s *ServiceImpl) Delete(ctx context.Context, id int64) error {
+	// TODO: Add authorization checks
+	if err := s.repo.SoftDelete(ctx, id); err != nil {
+		return fmt.Errorf("failed to delete {{.LowerName}}: %w", err)
+	}
+	return nil
+}
+{{else}}
+func (s *ServiceImpl) Get(ctx context.Context) error {
+	// TODO: Implement business logic
+	return nil
+}
+{{end}}

@@ -1,0 +1,14 @@
+package {{.PackageName}}
+
+import (
+	"github.com/labstack/echo/v4"
+	"github.com/samber/do/v2"
+	
+	"ichi-go/internal/applications/{{.Domain}}/controller"
+)
+
+func Register(injector do.Injector, serviceName string, e *echo.Echo) {
+	RegisterProviders(injector)
+	ctrl := do.MustInvoke[*controller.{{.StructName}}Controller](injector)
+	ctrl.RegisterRoutes(serviceName, e)
+}

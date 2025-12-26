@@ -1,0 +1,111 @@
+package controller
+
+import (
+	"net/http"
+	"strconv"
+
+	"github.com/labstack/echo/v4"
+	"ichi-go/internal/applications/{{.Domain}}/dto"
+	"ichi-go/internal/applications/{{.Domain}}/service"
+	"ichi-go/pkg/logger"
+	"ichi-go/pkg/utils/response"
+	appValidator "ichi-go/pkg/validator"
+)
+
+type {{.StructName}}Controller struct {
+	service service.{{.StructName}}Service
+}
+
+func New{{.StructName}}Controller(service service.{{.StructName}}Service) *{{.StructName}}Controller {
+	return &{{.StructName}}Controller{service: service}
+}
+
+func (c *{{.StructName}}Controller) RegisterRoutes(serviceName string, e *echo.Echo) {
+	group := e.Group("/" + serviceName + "/api/{{.LowerName}}s")
+	{{if .HasCRUD}}group.POST("", c.Create)
+	group.GET("", c.List)
+	group.GET("/:id", c.GetByID)
+	group.PUT("/:id", c.Update)
+	group.DELETE("/:id", c.Delete){{else}}group.GET("", c.Get){{end}}
+}
+{{if .HasCRUD}}
+func (c *{{.StructName}}Controller) Create(eCtx echo.Context) error {
+	var req dto.Create{{.StructName}}Request
+	if err := appValidator.BindAndValidate(eCtx, &req); err != nil {
+		logger.Errorf("Create {{.LowerName}} validation failed: %v", err)
+		return err
+	}
+	result, err := c.service.Create(eCtx.Request().Context(), req)
+	if err != nil {
+		logger.Errorf("Failed to create {{.LowerName}}: %v", err)
+		return response.Error(eCtx, http.StatusBadRequest, err)
+	}
+	logger.Infof("{{.StructName}} created successfully")
+	return response.Created(eCtx, result)
+}
+
+func (c *{{.StructName}}Controller) List(eCtx echo.Context) error {
+	var req dto.List{{.StructName}}Request
+	if err := appValidator.BindAndValidate(eCtx, &req); err != nil {
+		return err
+	}
+	result, err := c.service.List(eCtx.Request().Context(), req)
+	if err != nil {
+		logger.Errorf("Failed to list {{.LowerName}}s: %v", err)
+		return response.Error(eCtx, http.StatusInternalServerError, err)
+	}
+	return response.Success(eCtx, result)
+}
+
+func (c *{{.StructName}}Controller) GetByID(eCtx echo.Context) error {
+	idStr := eCtx.Param("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		return response.Error(eCtx, http.StatusBadRequest, err)
+	}
+	result, err := c.service.GetByID(eCtx.Request().Context(), id)
+	if err != nil {
+		logger.Errorf("Failed to get {{.LowerName}}: %v", err)
+		return response.Error(eCtx, http.StatusNotFound, err)
+	}
+	return response.Success(eCtx, result)
+}
+
+func (c *{{.StructName}}Controller) Update(eCtx echo.Context) error {
+	idStr := eCtx.Param("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		return response.Error(eCtx, http.StatusBadRequest, err)
+	}
+	var req dto.Update{{.StructName}}Request
+	if err := appValidator.BindAndValidate(eCtx, &req); err != nil {
+		logger.Errorf("Update {{.LowerName}} validation failed: %v", err)
+		return err
+	}
+	result, err := c.service.Update(eCtx.Request().Context(), id, req)
+	if err != nil {
+		logger.Errorf("Failed to update {{.LowerName}}: %v", err)
+		return response.Error(eCtx, http.StatusBadRequest, err)
+	}
+	logger.Infof("{{.StructName}} updated successfully: %d", id)
+	return response.Success(eCtx, result)
+}
+
+func (c *{{.StructName}}Controller) Delete(eCtx echo.Context) error {
+	idStr := eCtx.Param("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		return response.Error(eCtx, http.StatusBadRequest, err)
+	}
+	if err := c.service.Delete(eCtx.Request().Context(), id); err != nil {
+		logger.Errorf("Failed to delete {{.LowerName}}: %v", err)
+		return response.Error(eCtx, http.StatusInternalServerError, err)
+	}
+	logger.Infof("{{.StructName}} deleted successfully: %d", id)
+	return response.Success(eCtx, map[string]string{"message": "{{.StructName}} deleted successfully"})
+}
+{{else}}
+func (c *{{.StructName}}Controller) Get(eCtx echo.Context) error {
+	return response.Success(eCtx, map[string]string{"message": "{{.StructName}} endpoint"})
+}
+{{end}}
