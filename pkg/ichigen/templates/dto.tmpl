@@ -1,0 +1,73 @@
+package dto
+
+import (
+	"time"
+
+	"ichi-go/internal/applications/{{.Domain}}/repository"
+)
+
+{{if .HasCRUD}}
+type Create{{.StructName}}Request struct {
+	// TODO: Add your fields here
+	// Name string `json:"name" validate:"required,min=2,max=100"`
+}
+
+func (r *Create{{.StructName}}Request) ToModel() *repository.{{.StructName}}Model {
+	return &repository.{{.StructName}}Model{
+		// TODO: Map your fields
+		// Name: r.Name,
+	}
+}
+
+type Update{{.StructName}}Request struct {
+	// TODO: Add your fields here (use pointers for optional updates)
+	// Name *string `json:"name" validate:"omitempty,min=2,max=100"`
+}
+
+func (r *Update{{.StructName}}Request) ApplyToModel(m *repository.{{.StructName}}Model) {
+	// TODO: Apply updates only if fields are provided
+	// if r.Name != nil {
+	//     m.Name = *r.Name
+	// }
+}
+
+type List{{.StructName}}Request struct {
+	Page  int `query:"page" validate:"omitempty,min=1"`
+	Limit int `query:"limit" validate:"omitempty,min=1,max=100"`
+}
+{{else}}
+type {{.StructName}}Request struct {
+	// TODO: Add your fields here
+}
+{{end}}
+
+type {{.StructName}}Response struct {
+	ID        int64     `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	// TODO: Add your fields here
+	// Name        string    `json:"name"`
+	// Description string    `json:"description,omitempty"`
+}
+
+func {{.StructName}}ResponseFromModel(m *repository.{{.StructName}}Model) *{{.StructName}}Response {
+	if m == nil {
+		return nil
+	}
+	return &{{.StructName}}Response{
+		ID:        m.ID,
+		CreatedAt: m.CreatedAt,
+		UpdatedAt: m.UpdatedAt.Time,
+		// TODO: Map your fields
+		// Name:        m.Name,
+		// Description: m.Description,
+	}
+}
+{{if .HasCRUD}}
+type {{.StructName}}ListResponse struct {
+	Items []*{{.StructName}}Response `json:"items"`
+	Total int                        `json:"total"`
+	Page  int                        `json:"page"`
+	Limit int                        `json:"limit"`
+}
+{{end}}

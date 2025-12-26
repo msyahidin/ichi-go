@@ -1,0 +1,31 @@
+package {{.PackageName}}
+
+import (
+	"github.com/samber/do/v2"
+	"github.com/uptrace/bun"
+	
+	"ichi-go/internal/applications/{{.Domain}}/controller"
+	"ichi-go/internal/applications/{{.Domain}}/repository"
+	"ichi-go/internal/applications/{{.Domain}}/service"
+)
+
+func RegisterProviders(injector do.Injector) {
+	do.Provide(injector, Provide{{.StructName}}Repository)
+	do.Provide(injector, Provide{{.StructName}}Service)
+	do.Provide(injector, Provide{{.StructName}}Controller)
+}
+
+func Provide{{.StructName}}Repository(i do.Injector) (repository.{{.StructName}}Repository, error) {
+	db := do.MustInvoke[*bun.DB](i)
+	return repository.New{{.StructName}}Repository(db), nil
+}
+
+func Provide{{.StructName}}Service(i do.Injector) (service.{{.StructName}}Service, error) {
+	repo := do.MustInvoke[repository.{{.StructName}}Repository](i)
+	return service.New{{.StructName}}Service(repo), nil
+}
+
+func Provide{{.StructName}}Controller(i do.Injector) (*controller.{{.StructName}}Controller, error) {
+	svc := do.MustInvoke[service.{{.StructName}}Service](i)
+	return controller.New{{.StructName}}Controller(svc), nil
+}

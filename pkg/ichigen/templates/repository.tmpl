@@ -1,0 +1,65 @@
+package repository
+
+import (
+	"context"
+
+	"github.com/uptrace/bun"
+	bunBase "ichi-go/internal/infra/database/bun"
+)
+
+type {{.StructName}}Model struct {
+	bunBase.CoreModel
+	bun.BaseModel `bun:"table:{{.TableName}},alias:{{.LowerName}}"`
+
+	// TODO: Add your fields here
+	// Name        string    `bun:"name,notnull"`
+	// Description string    `bun:"description"`
+	// Price       float64   `bun:"price,notnull"`
+}
+
+type {{.StructName}}Repository interface {
+{{if .HasCRUD}}	Create(ctx context.Context, model *{{.StructName}}Model) (*{{.StructName}}Model, error)
+	List(ctx context.Context, page, limit int) ([]*{{.StructName}}Model, int, error)
+	GetByID(ctx context.Context, id int64) (*{{.StructName}}Model, error)
+	Update(ctx context.Context, model *{{.StructName}}Model) (*{{.StructName}}Model, error)
+	SoftDelete(ctx context.Context, id int64) error
+{{else}}	Get(ctx context.Context) error
+{{end}}}
+
+type RepositoryImpl struct {
+	*bunBase.BaseRepository[{{.StructName}}Model]
+}
+
+func New{{.StructName}}Repository(db *bun.DB) {{.StructName}}Repository {
+	base := bunBase.NewRepository[{{.StructName}}Model](db, &{{.StructName}}Model{})
+	return &RepositoryImpl{BaseRepository: base}
+}
+{{if .HasCRUD}}
+func (r *RepositoryImpl) Create(ctx context.Context, model *{{.StructName}}Model) (*{{.StructName}}Model, error) {
+	return r.BaseRepository.Create(ctx, model)
+}
+
+func (r *RepositoryImpl) List(ctx context.Context, page, limit int) ([]*{{.StructName}}Model, int, error) {
+	return r.BaseRepository.PaginateWithCount(ctx, page, limit,
+		bunBase.WhereNotDeleted(),
+		bunBase.OrderByLatest(),
+	)
+}
+
+func (r *RepositoryImpl) GetByID(ctx context.Context, id int64) (*{{.StructName}}Model, error) {
+	return r.BaseRepository.Find(ctx, id)
+}
+
+func (r *RepositoryImpl) Update(ctx context.Context, model *{{.StructName}}Model) (*{{.StructName}}Model, error) {
+	return r.BaseRepository.Update(ctx, model)
+}
+
+func (r *RepositoryImpl) SoftDelete(ctx context.Context, id int64) error {
+	return r.BaseRepository.SoftDelete(ctx, id)
+}
+{{else}}
+func (r *RepositoryImpl) Get(ctx context.Context) error {
+	// TODO: Implement database logic
+	return nil
+}
+{{end}}
