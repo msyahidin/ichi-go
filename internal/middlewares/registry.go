@@ -2,9 +2,12 @@ package middlewares
 
 import (
 	"context"
+	"fmt"
 	"ichi-go/config"
 	httpConfig "ichi-go/config/http"
+	authValidators "ichi-go/internal/applications/auth/validators"
 	"ichi-go/pkg/logger"
+	appValidator "ichi-go/pkg/validator"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -46,8 +49,9 @@ func Init(e *echo.Echo, mainConfig *config.Config) {
 	e.Use(Cors(&mainConfig.Http().Cors))
 	e.Use(copyRequestID)
 	e.Use(RequestContextMiddleware())
-	
-	if err := InitValidator(e, *mainConfig.Validator()); err != nil {
+
+	// Initialize validator
+	if err := setupValidator(e, *mainConfig.Validator()); err != nil {
 		logger.Fatalf("failed to initialize validator: %v", err)
 	}
 }
@@ -68,4 +72,29 @@ func AppRequestTimeOut(configHttp *httpConfig.HttpConfig) echo.MiddlewareFunc {
 	return middleware.TimeoutWithConfig(middleware.TimeoutConfig{
 		Timeout: time.Duration(configHttp.Timeout) * time.Second,
 	})
+}
+
+// setupValidator creates and configures the validator with all domain validators
+func setupValidator(e *echo.Echo, config appValidator.Config) error {
+	// Create base validator with translation support
+	v, err := appValidator.NewValidator(config)
+	if err != nil {
+		return fmt.Errorf("failed to create validator: %w", err)
+	}
+
+	// Register auth domain validators
+	if err := authValidators.RegisterAuthValidators(v); err != nil {
+		return fmt.Errorf("failed to register auth validators: %w", err)
+	}
+
+	// Register other domain validators here:
+	// if err := userValidators.RegisterUserValidators(v); err != nil {
+	//     return fmt.Errorf("failed to register user validators: %w", err)
+	// }
+
+	// Set Echo validator
+	e.Validator = NewValidatorMiddleware(v)
+
+	logger.Debugf("Validator initialized with auth validators")
+	return nil
 }

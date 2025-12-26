@@ -9,40 +9,55 @@ import (
 	appValidator "ichi-go/pkg/validator"
 )
 
-// RegisterAuthValidators registers all auth-related custom validators
+// RegisterAuthValidators registers authentication-specific validators
 func RegisterAuthValidators(av *appValidator.AppValidator) error {
-	validators := []appValidator.CustomValidator{
-		{
-			Tag:           "strong_password",
-			Fn:            validateStrongPassword,
-			RegisterTrans: registerPasswordTranslations,
-		},
-		{
-			Tag:           "username_format",
-			Fn:            validateUsernameFormat,
-			RegisterTrans: registerUsernameTranslations,
-		},
+	// Get the underlying validator
+	v := av.GetValidator()
+
+	// Register validation functions
+	if err := v.RegisterValidation("strong_password", validateStrongPassword); err != nil {
+		return err
 	}
 
-	return av.RegisterCustomValidators(validators)
+	if err := v.RegisterValidation("username_format", validateUsernameFormat); err != nil {
+		return err
+	}
+
+	// Register translations for each supported language
+	for _, lang := range []string{"en", "id"} {
+		trans := av.GetTranslator(lang)
+
+		if err := registerPasswordTranslation(v, trans, lang); err != nil {
+			return err
+		}
+
+		if err := registerUsernameTranslation(v, trans, lang); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
-// validateStrongPassword checks password strength
+// validateStrongPassword validates password strength
 // Requirements:
 // - At least 8 characters
-// - At least 1 uppercase letter
-// - At least 1 lowercase letter
-// - At least 1 number
-// - At least 1 special character
+// - At least one uppercase letter
+// - At least one lowercase letter
+// - At least one number
+// - At least one special character
 func validateStrongPassword(fl validator.FieldLevel) bool {
 	password := fl.Field().String()
 
+	if len(password) < 8 {
+		return false
+	}
+
 	var (
-		hasMinLen  = len(password) >= 8
-		hasUpper   = false
-		hasLower   = false
-		hasNumber  = false
-		hasSpecial = false
+		hasUpper   bool
+		hasLower   bool
+		hasNumber  bool
+		hasSpecial bool
 	)
 
 	for _, char := range password {
@@ -58,56 +73,68 @@ func validateStrongPassword(fl validator.FieldLevel) bool {
 		}
 	}
 
-	return hasMinLen && hasUpper && hasLower && hasNumber && hasSpecial
+	return hasUpper && hasLower && hasNumber && hasSpecial
 }
 
 // validateUsernameFormat validates username format
 // Requirements:
-// - Must start with a letter
-// - Only alphanumeric, underscore, and hyphen allowed
-// - 3-50 characters
+// - 3-20 characters
+// - Only alphanumeric, underscore, hyphen
+// - Must start with letter
+// - Cannot end with underscore or hyphen
 func validateUsernameFormat(fl validator.FieldLevel) bool {
 	username := fl.Field().String()
 
-	// Check length
-	if len(username) < 3 || len(username) > 50 {
+	if len(username) < 3 || len(username) > 20 {
 		return false
 	}
 
-	// Only alphanumeric, underscore, and hyphen
-	// Must start with letter
-	matched, _ := regexp.MatchString(`^[a-zA-Z][a-zA-Z0-9_-]*$`, username)
+	// Regex: starts with letter, contains alphanumeric/underscore/hyphen, doesn't end with underscore/hyphen
+	pattern := `^[a-zA-Z][a-zA-Z0-9_-]*[a-zA-Z0-9]$`
+	matched, _ := regexp.MatchString(pattern, username)
 	return matched
 }
 
-// registerPasswordTranslations registers translations for password validation
-func registerPasswordTranslations(trans ut.Translator) error {
-	messages := map[string]string{
-		"en": "{0} must contain at least 8 characters, including uppercase, lowercase, number, and special character",
-		"id": "{0} harus berisi minimal 8 karakter, termasuk huruf besar, huruf kecil, angka, dan karakter khusus",
+// registerPasswordTranslation registers password validator translation
+func registerPasswordTranslation(v *validator.Validate, trans ut.Translator, lang string) error {
+	var message string
+
+	switch lang {
+	case "id":
+		message = "{0} harus berisi minimal 8 karakter, termasuk huruf besar, huruf kecil, angka, dan karakter khusus"
+	default: // "en"
+		message = "{0} must contain at least 8 characters, including uppercase, lowercase, number, and special character"
 	}
 
-	locale := trans.Locale()
-	message, ok := messages[locale]
-	if !ok {
-		message = messages["en"]
-	}
-
-	return trans.Add("strong_password", message, true)
+	return v.RegisterTranslation("strong_password", trans,
+		func(ut ut.Translator) error {
+			return ut.Add("strong_password", message, true)
+		},
+		func(ut ut.Translator, fe validator.FieldError) string {
+			t, _ := ut.T("strong_password", fe.Field())
+			return t
+		},
+	)
 }
 
-// registerUsernameTranslations registers translations for username validation
-func registerUsernameTranslations(trans ut.Translator) error {
-	messages := map[string]string{
-		"en": "{0} must start with a letter and contain only letters, numbers, underscore, and hyphen (3-50 characters)",
-		"id": "{0} harus diawali dengan huruf dan hanya berisi huruf, angka, underscore, dan tanda hubung (3-50 karakter)",
+// registerUsernameTranslation registers username validator translation
+func registerUsernameTranslation(v *validator.Validate, trans ut.Translator, lang string) error {
+	var message string
+
+	switch lang {
+	case "id":
+		message = "{0} harus berisi 3-20 karakter, dimulai dengan huruf, dan hanya boleh mengandung huruf, angka, garis bawah, atau tanda hubung"
+	default: // "en"
+		message = "{0} must be 3-20 characters, start with a letter, and contain only letters, numbers, underscores, or hyphens"
 	}
 
-	locale := trans.Locale()
-	message, ok := messages[locale]
-	if !ok {
-		message = messages["en"]
-	}
-
-	return trans.Add("username_format", message, true)
+	return v.RegisterTranslation("username_format", trans,
+		func(ut ut.Translator) error {
+			return ut.Add("username_format", message, true)
+		},
+		func(ut ut.Translator, fe validator.FieldError) string {
+			t, _ := ut.T("username_format", fe.Field())
+			return t
+		},
+	)
 }

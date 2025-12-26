@@ -1,9 +1,7 @@
 package middlewares
 
 import (
-	"fmt"
 	"github.com/labstack/echo/v4"
-	authValidators "ichi-go/internal/applications/auth/validators"
 	appValidator "ichi-go/pkg/validator"
 )
 
@@ -43,29 +41,4 @@ func (vm *ValidatorMiddleware) ValidateWithLanguage(i interface{}, lang string) 
 func (vm *ValidatorMiddleware) ValidateWithContext(c echo.Context, i interface{}) error {
 	lang := appValidator.GetLanguageFromContext(c)
 	return vm.ValidateWithLanguage(i, lang)
-}
-
-// InitValidator sets up the validator with all domain validators and registers it with Echo
-func InitValidator(e *echo.Echo, config appValidator.Config) error {
-	// Create base validator with translation support
-	v, err := appValidator.NewValidator(config)
-	if err != nil {
-		return fmt.Errorf("failed to create validator: %w", err)
-	}
-
-	// Register auth domain validators (strong_password, username_format)
-	if err := authValidators.RegisterAuthValidators(v); err != nil {
-		return fmt.Errorf("failed to register auth validators: %w", err)
-	}
-
-	// Add more domain validators here as your application grows:
-	//
-	// if err := productValidators.RegisterProductValidators(v); err != nil {
-	//     return fmt.Errorf("failed to register product validators: %w", err)
-	// }
-
-	// Set Echo validator
-	e.Validator = NewValidatorMiddleware(v)
-
-	return nil
 }
