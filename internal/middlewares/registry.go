@@ -46,6 +46,10 @@ func Init(e *echo.Echo, mainConfig *config.Config) {
 	e.Use(Cors(&mainConfig.Http().Cors))
 	e.Use(copyRequestID)
 	e.Use(RequestContextMiddleware())
+	
+	if err := InitValidator(e, *mainConfig.Validator()); err != nil {
+		logger.Fatalf("failed to initialize validator: %v", err)
+	}
 }
 
 func copyRequestID(next echo.HandlerFunc) echo.HandlerFunc {

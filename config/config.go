@@ -6,6 +6,7 @@ import (
 	"ichi-go/internal/infra/database"
 	"ichi-go/internal/infra/messaging"
 	"ichi-go/pkg/authenticator"
+	"ichi-go/pkg/validator"
 	"os"
 	"sync"
 
@@ -30,6 +31,7 @@ type Schema struct {
 	PkgClient  pkgClientConfig.PkgClient
 	Messaging  messaging.Config
 	Auth       authenticator.Config
+	Validator  validator.Config
 }
 
 type Config struct {
@@ -139,6 +141,11 @@ func (c *Config) Messaging() *messaging.Config {
 func (c *Config) Auth() *authenticator.Config {
 	c.ensureLoaded()
 	return &c.schema.Auth
+}
+
+func (c *Config) Validator() *validator.Config {
+	c.ensureLoaded()
+	return &c.schema.Validator
 }
 
 func (c *Config) ensureLoaded() {
