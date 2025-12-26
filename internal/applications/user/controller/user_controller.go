@@ -111,7 +111,7 @@ func (c *UserController) SendNotification(eCtx echo.Context) error {
 
 	idString, err := strconv.Atoi(userGetReq.ID)
 
-	err = c.service.SendNotification(eCtx.Request().Context(), uint32(idString))
+	err = c.service.EnqueueWelcomeNotification(eCtx.Request().Context(), uint32(idString))
 	if err != nil {
 		return response.Error(eCtx, http.StatusInternalServerError, err)
 	}

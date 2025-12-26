@@ -8,7 +8,7 @@ import (
 	"ichi-go/config"
 	"ichi-go/internal/infra/cache"
 	"ichi-go/internal/infra/database"
-	"ichi-go/internal/infra/messaging/rabbitmq"
+	"ichi-go/internal/infra/queue/rabbitmq"
 	"ichi-go/pkg/logger"
 )
 
@@ -44,10 +44,10 @@ func provideCache(cfg *config.Config) func(do.Injector) (*redis.Client, error) {
 
 func provideMessaging(cfg *config.Config) func(do.Injector) (*rabbitmq.Connection, error) {
 	return func(i do.Injector) (*rabbitmq.Connection, error) {
-		if !cfg.Messaging().Enabled {
+		if !cfg.Queue().Enabled {
 			return nil, nil
 		}
-		conn, err := rabbitmq.NewConnection(cfg.Messaging().RabbitMQ)
+		conn, err := rabbitmq.NewConnection(cfg.Queue().RabbitMQ)
 		if err != nil {
 			return nil, fmt.Errorf("failed to connect to RabbitMQ: %w", err)
 		}

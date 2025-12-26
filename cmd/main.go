@@ -6,7 +6,7 @@ import (
 	"ichi-go/cmd/server"
 	"ichi-go/config"
 	"ichi-go/internal/infra"
-	"ichi-go/internal/infra/messaging/rabbitmq"
+	"ichi-go/internal/infra/queue/rabbitmq"
 	"ichi-go/internal/middlewares"
 	"ichi-go/pkg/errorhandler"
 	"ichi-go/pkg/logger"
@@ -34,10 +34,10 @@ func main() {
 	logger.GetInstance()
 
 	// Setup messaging if enabled
-	if cfg.Messaging().Enabled {
-		msgConfig := cfg.Messaging()
+	if cfg.Queue().Enabled {
+		msgConfig := cfg.Queue()
 		msgConn := do.MustInvoke[*rabbitmq.Connection](injector)
-		server.StartConsumer(msgConfig, msgConn)
+		server.StartQueueWorkers(msgConfig, msgConn)
 	}
 	// Setup web routes and error handler
 	server.SetupRestRoutes(injector, e, cfg)

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"ichi-go/internal/infra/cache"
 	"ichi-go/internal/infra/database"
-	"ichi-go/internal/infra/messaging"
+	"ichi-go/internal/infra/queue"
 	"ichi-go/pkg/authenticator"
 	"ichi-go/pkg/validator"
 	"os"
@@ -29,7 +29,7 @@ type Schema struct {
 	Http       httpConfig.HttpConfig
 	HttpClient httpConfig.ClientConfig
 	PkgClient  pkgClientConfig.PkgClient
-	Messaging  messaging.Config
+	Messaging  queue.Config
 	Auth       authenticator.Config
 	Validator  validator.Config
 }
@@ -133,7 +133,7 @@ func (c *Config) PkgClient() *pkgClientConfig.PkgClient {
 	return &c.schema.PkgClient
 }
 
-func (c *Config) Messaging() *messaging.Config {
+func (c *Config) Queue() *queue.Config {
 	c.ensureLoaded()
 	return &c.schema.Messaging
 }
@@ -193,7 +193,7 @@ func setDefault() {
 	cache.SetDefault()
 	logger.SetDefault()
 	httpConfig.SetDefault()
-	messaging.SetDefault()
+	queue.SetDefault()
 	authenticator.SetDefault()
 }
 

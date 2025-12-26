@@ -91,96 +91,108 @@ pkgclient:
     timeout: 10000
     retry: 3
 
-messaging:
-  enabled: false
+queue:
+  enabled: false  # Enable/disable queue system
+
   rabbitmq:
     enabled: true
+
+    # Connection settings
     connection:
       host: "localhost"
       port: 5672
       username: "guest"
       password: "guest"
       vhost: "/"
-      connection_name: "user-service-v1"
+      connection_name: "ichi-go-queue"
+
+    # Exchange definitions
+    # Routes messages to queues
     exchanges:
       - name: "app.events"
-        type: "topic"
-        durable: true
+        type: "topic"       # Pattern matching (user.*, payment.*)
+        durable: true       # Survive restart
+        auto_delete: false
+        internal: false
+        no_wait: false
 
       - name: "app.notifications"
-        type: "fanout"
+        type: "fanout"      # Broadcast to all
         durable: true
-    publisher:
+        auto_delete: false
+        internal: false
+        no_wait: false
+
+    # Producer settings (message sender)
+    producer:
       exchange_name: "app.events"
+
+    # Consumer settings (message receivers)
     consumers:
-      # Consumer 1: Email verification (critical, slow processing)
+      # Email verification consumer
       - name: "email_verifier"
         enabled: true
+
         queue:
           name: "user.email.verification"
           durable: true
           auto_delete: false
           exclusive: false
+          no_wait: false
+
         exchange_name: "app.events"
         routing_keys:
           - "email.verified"
           - "email.verification.requested"
-        prefetch_count: 5        # Low prefetch - slow processing
-        worker_pool_size: 3      # Few workers - avoid overwhelming email service
-        auto_ack: false          # Manual ack for reliability
+
+        # Performance settings
+        prefetch_count: 5    # Low: slow processing (email service)
+        worker_pool_size: 3  # Few workers
+        auto_ack: false      # Manual ack (critical)
+
         exclusive: false
         consumer_tag: "email_verifier_v1"
 
-      # Consumer 2: Payment events (important, fast processing)
+      # Payment event handler
       - name: "payment_handler"
         enabled: true
+
         queue:
-          name: "user.payment.events"
+          name: "order.payment.events"
           durable: true
           auto_delete: false
           exclusive: false
+
         exchange_name: "app.events"
         routing_keys:
           - "payment.completed"
           - "payment.failed"
-          - "subscription.*"     # Wildcard routing
-        prefetch_count: 50       # Higher prefetch for fast processing
-        worker_pool_size: 10     # More workers for throughput
-        auto_ack: false
+          - "payment.refunded"
+
+        # High throughput settings
+        prefetch_count: 50   # High: fast processing
+        worker_pool_size: 10 # Many workers
+        auto_ack: false      # Still need reliability
+
         exclusive: false
         consumer_tag: "payment_handler_v1"
 
-      # Consumer 3: Notification dispatcher (non-critical, very fast)
+      # Push notifications (non-critical)
       - name: "notification_dispatcher"
         enabled: true
+
         queue:
           name: "user.notifications"
-          durable: false         # Transient - don't persist
-          auto_delete: true      # Delete when no consumers
-          exclusive: false
+          durable: false     # Non-critical
+          auto_delete: true  # Cleanup when idle
+
         exchange_name: "app.notifications"
-        routing_keys: []         # Fanout ignores routing keys
-        prefetch_count: 100      # Very high prefetch
-        worker_pool_size: 20     # Many workers
-        auto_ack: true           # Auto-ack for speed (acceptable loss)
+        routing_keys: []     # Fanout ignores keys
+
+        # Maximum speed settings
+        prefetch_count: 100  # Very high
+        worker_pool_size: 20 # Maximum workers
+        auto_ack: true       # Speed over safety
+
         exclusive: false
         consumer_tag: "notifier_v1"
-
-      # Consumer 4: User analytics (optional, can be disabled)
-      - name: "analytics_processor"
-        enabled: false           # Disabled by default
-        queue:
-          name: "user.analytics"
-          durable: true
-          auto_delete: false
-          exclusive: false
-        exchange_name: "app.events"
-        routing_keys:
-          - "user.created"
-          - "user.updated"
-          - "user.deleted"
-        prefetch_count: 20
-        worker_pool_size: 5
-        auto_ack: false
-        exclusive: false
-        consumer_tag: "analytics_v1"

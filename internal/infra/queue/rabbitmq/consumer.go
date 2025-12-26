@@ -101,7 +101,7 @@ func (c *Consumer) setup() error {
 	return nil
 }
 
-func (c *Consumer) Consume(ctx context.Context, handler MessageHandler) error {
+func (c *Consumer) Consume(ctx context.Context, handler ConsumeFunc) error {
 	c.mu.Lock()
 	deliveries, err := c.channel.Consume(
 		c.consumerConfig.Queue.Name,

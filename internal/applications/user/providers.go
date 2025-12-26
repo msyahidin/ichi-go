@@ -11,7 +11,7 @@ import (
 	"ichi-go/pkg/clients/pokemonapi"
 
 	"ichi-go/internal/infra/cache"
-	"ichi-go/internal/infra/messaging/rabbitmq"
+	"ichi-go/internal/infra/queue/rabbitmq"
 )
 
 // RegisterProviders registers all user domain dependencies
@@ -37,12 +37,17 @@ func ProvideUserService(i do.Injector) (*userService.ServiceImpl, error) {
 	cacheClient := do.MustInvoke[*redis.Client](i)
 	cacheImpl := cache.NewCache(cacheClient)
 	pokeClient := do.MustInvoke[pokemonapi.PokemonClient](i)
-	// Messaging is optional
-	var msgConn *rabbitmq.Connection
+	// Queue producer is optional
+	var producer rabbitmq.MessageProducer
 	if conn, err := do.Invoke[*rabbitmq.Connection](i); err == nil && conn != nil {
-		msgConn = conn
+		cfg := do.MustInvoke[*config.Config](i)
+		// Create producer from connection
+		if p, err := rabbitmq.NewProducer(conn, cfg.Queue().RabbitMQ); err == nil {
+			producer = p
+		}
 	}
-	return userService.NewUserService(repo, cacheImpl, pokeClient, msgConn), nil
+
+	return userService.NewUserService(repo, cacheImpl, pokeClient, producer), nil
 }
 
 func ProvideUserController(i do.Injector) (*user.UserController, error) {
