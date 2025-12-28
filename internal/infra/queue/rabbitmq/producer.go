@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	amqp "github.com/rabbitmq/amqp091-go"
+	"ichi-go/pkg/logger"
 	"sync"
 	"time"
 )
@@ -44,13 +45,20 @@ func (p *Producer) setup() error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
+	logger.Infof("🔧 Setting up producer...")
+
 	ch, err := p.connection.GetConnection().Channel()
 	if err != nil {
 		return fmt.Errorf("failed to open channel: %w", err)
 	}
 
+	logger.Infof("✅ Channel opened")
+
 	// Declare exchanges
 	for _, exchange := range p.config.Exchanges {
+		logger.Infof("📢 Declaring exchange: name=%s, type=%s, durable=%v",
+			exchange.Name, exchange.Type, exchange.Durable)
+
 		args := amqp.Table{}
 
 		if exchange.Type == "x-delayed-message" {
@@ -70,11 +78,15 @@ func (p *Producer) setup() error {
 		)
 		if err != nil {
 			ch.Close()
+			logger.Errorf("❌ Failed to declare exchange %s: %v", exchange.Name, err)
 			return fmt.Errorf("failed to declare exchange %s: %w", exchange.Name, err)
 		}
+
+		logger.Infof("✅ Exchange declared: %s", exchange.Name)
 	}
 
 	p.channel = ch
+	logger.Infof("✅ Producer setup complete")
 	return nil
 }
 
@@ -100,28 +112,40 @@ func (p *Producer) Publish(ctx context.Context, routingKey string, message inter
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
+	// Add logging BEFORE serialization
+	logger.Infof("📤 Publishing message to exchange=%s, routingKey=%s", p.exchangeName, routingKey)
+
+	// Serialize
 	body, err := json.Marshal(message)
 	if err != nil {
+		logger.Errorf("❌ Failed to marshal message: %v", err)
 		return fmt.Errorf("failed to marshal: %w", err)
 	}
 
+	logger.Debugf("📦 Message body: %s", string(body))
+
+	// Add timeout
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
+	// Initialize headers
 	if opts.Headers == nil {
 		opts.Headers = amqp.Table{}
 	}
 
+	// Add delay
 	if opts.Delay > 0 {
 		opts.Headers["x-delay"] = int32(opts.Delay.Milliseconds())
 	}
 
+	// Publish
+	logger.Debugf("🔄 Publishing to channel (exchange=%s, key=%s)", p.exchangeName, routingKey)
 	err = p.channel.PublishWithContext(
 		ctx,
 		p.exchangeName,
 		routingKey,
-		false,
-		false,
+		false, // mandatory
+		false, // immediate
 		amqp.Publishing{
 			ContentType:  "application/json",
 			Body:         body,
@@ -132,9 +156,11 @@ func (p *Producer) Publish(ctx context.Context, routingKey string, message inter
 	)
 
 	if err != nil {
+		logger.Errorf("❌ Failed to publish: %v", err)
 		return fmt.Errorf("failed to publish: %w", err)
 	}
 
+	logger.Infof("✅ Message published successfully to %s/%s", p.exchangeName, routingKey)
 	return nil
 }
 

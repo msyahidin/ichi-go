@@ -3,13 +3,11 @@ package user
 import (
 	"context"
 	"fmt"
-	userDto "ichi-go/internal/applications/user/dto"
 	"ichi-go/internal/applications/user/repository"
 	"ichi-go/internal/infra/cache"
 	"ichi-go/internal/infra/queue/rabbitmq"
 	"ichi-go/pkg/clients/pokemonapi"
 	"ichi-go/pkg/clients/pokemonapi/dto"
-	"ichi-go/pkg/logger"
 	"time"
 )
 
@@ -62,12 +60,6 @@ func (s *ServiceImpl) Create(ctx context.Context, newUser user.UserModel) (int64
 		return 0, err
 	}
 
-	// Publish welcome notification to queue
-	if err := s.EnqueueWelcomeNotification(ctx, uint32(userId)); err != nil {
-		// Log but don't fail user creation
-		logger.Errorf("Failed to queue welcome notification: %v", err)
-	}
-
 	return userId, nil
 }
 
@@ -91,46 +83,4 @@ func (s *ServiceImpl) Update(ctx context.Context, updateUser user.UserModel) (in
 
 func (s *ServiceImpl) GetPokemon(ctx context.Context, name string) (*dto.PokemonGetResponseDto, error) {
 	return s.pokeClient.GetDetail(ctx, name)
-}
-
-// PublishWelcomeNotification Producer publishes message to queue
-func (s *ServiceImpl) PublishWelcomeNotification(ctx context.Context, userID uint32) error {
-	if s.producer == nil {
-		logger.Debugf("Queue not configured - skipping notification")
-		return nil
-	}
-
-	user, err := s.GetById(ctx, userID)
-	if err != nil {
-		return fmt.Errorf("failed to get user: %w", err)
-	}
-
-	message := userDto.WelcomeNotificationMessage{
-		EventType: "user.welcome",
-		UserID:    fmt.Sprintf("%d", user.ID),
-		Email:     user.Email,
-		Text:      fmt.Sprintf("Welcome %s!", user.Name),
-	}
-
-	opts := rabbitmq.PublishOptions{}
-	if err := s.producer.Publish(ctx, "user.welcome", message, opts); err != nil {
-		return fmt.Errorf("failed to publish: %w", err)
-	}
-
-	logger.Infof("Published welcome notification for user %d", userID)
-	return nil
-}
-
-// Alternative naming for different use cases:
-
-// EnqueueWelcomeNotification - Use when emphasizing it's a background job
-func (s *ServiceImpl) EnqueueWelcomeNotification(ctx context.Context, userID uint32) error {
-	// Same implementation as PublishWelcomeNotification
-	return s.PublishWelcomeNotification(ctx, userID)
-}
-
-// SendWelcomeNotificationAsync - Use when emphasizing it's non-blocking
-func (s *ServiceImpl) SendWelcomeNotificationAsync(ctx context.Context, userID uint32) error {
-	// Same implementation as PublishWelcomeNotification
-	return s.PublishWelcomeNotification(ctx, userID)
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	authDto "ichi-go/internal/applications/auth/dto"
 	userRepo "ichi-go/internal/applications/user/repository"
+	"ichi-go/internal/infra/queue/rabbitmq"
 	"ichi-go/pkg/authenticator"
 )
 
@@ -19,11 +20,13 @@ type Service interface {
 type ServiceImpl struct {
 	userRepo userRepo.Repository
 	jwtAuth  *authenticator.JWTAuthenticator
+	producer rabbitmq.MessageProducer
 }
 
-func NewAuthService(userRepo userRepo.Repository, jwtAuth *authenticator.JWTAuthenticator) *ServiceImpl {
+func NewAuthService(userRepo userRepo.Repository, jwtAuth *authenticator.JWTAuthenticator, producer rabbitmq.MessageProducer) *ServiceImpl {
 	return &ServiceImpl{
 		userRepo: userRepo,
 		jwtAuth:  jwtAuth,
+		producer: producer,
 	}
 }

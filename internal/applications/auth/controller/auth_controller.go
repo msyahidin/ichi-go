@@ -52,8 +52,6 @@ func (c *AuthController) Register(eCtx echo.Context) error {
 		return response.Error(eCtx, http.StatusBadRequest, err)
 	}
 
-	logger.Errorf("Register request validation passed %v", err)
-
 	registerResponse, err := c.service.Register(eCtx.Request().Context(), req)
 	if err != nil {
 		return response.Error(eCtx, http.StatusBadRequest, err)

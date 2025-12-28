@@ -5,8 +5,12 @@ import (
 	"errors"
 	"fmt"
 	authDto "ichi-go/internal/applications/auth/dto"
+	userDto "ichi-go/internal/applications/user/dto"
 	userRepo "ichi-go/internal/applications/user/repository"
+	"ichi-go/internal/infra/queue/rabbitmq"
 	"ichi-go/pkg/authenticator"
+	"ichi-go/pkg/logger"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -33,6 +37,8 @@ func (s *ServiceImpl) Login(ctx context.Context, req authDto.LoginRequest) (*aut
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate tokens: %w", err)
 	}
+
+	// TODO: Store refresh token in database or cache if needed
 
 	// Build response
 	response := &authDto.LoginResponse{
@@ -90,6 +96,8 @@ func (s *ServiceImpl) Register(ctx context.Context, req authDto.RegisterRequest)
 		return nil, fmt.Errorf("failed to generate tokens: %w", err)
 	}
 
+	// TODO: Store refresh token in database or cache if needed
+
 	// Build response
 	response := &authDto.RegisterResponse{
 		User: authDto.UserInfo{
@@ -102,6 +110,11 @@ func (s *ServiceImpl) Register(ctx context.Context, req authDto.RegisterRequest)
 		RefreshToken: tokenPair.RefreshToken,
 		TokenType:    tokenPair.TokenType,
 		ExpiresIn:    tokenPair.ExpiresIn,
+	}
+
+	if err := s.EnqueueWelcomeNotification(ctx, uint32(userID)); err != nil {
+		// Log but don't fail user creation
+		logger.Errorf("Failed to queue welcome notification: %v", err)
 	}
 
 	return response, nil
@@ -126,6 +139,8 @@ func (s *ServiceImpl) RefreshToken(ctx context.Context, req authDto.RefreshToken
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate tokens: %w", err)
 	}
+
+	// TODO: Update stored refresh token in database or cache if needed
 
 	// Build response
 	response := &authDto.RefreshTokenResponse{
@@ -176,4 +191,33 @@ func (s *ServiceImpl) Me(ctx context.Context, authCtx authenticator.AuthContext)
 	}
 
 	return userInfo, nil
+}
+
+// EnqueueWelcomeNotification PublishWelcomeNotification Producer publishes message to queue
+func (s *ServiceImpl) EnqueueWelcomeNotification(ctx context.Context, userID uint32) error {
+	if s.producer == nil {
+		logger.Debugf("Queue not configured - skipping notification")
+		return nil
+	}
+
+	user, err := s.userRepo.GetById(ctx, uint64(userID))
+	if err != nil {
+		return fmt.Errorf("failed to get user: %w", err)
+	}
+
+	message := userDto.WelcomeNotificationMessage{
+		EventType: "user.welcome",
+		UserID:    fmt.Sprintf("%d", user.ID),
+		Email:     user.Email,
+		Text:      fmt.Sprintf("Welcome %s!", user.Name),
+	}
+
+	opts := rabbitmq.PublishOptions{
+		Delay: 5 * time.Second,
+	}
+	if err := s.producer.Publish(ctx, "user.welcome", message, opts); err != nil {
+		logger.Errorf("Failed to publish welcome notification: %v", err)
+		return fmt.Errorf("failed to publish: %w", err)
+	}
+	return nil
 }

@@ -13,8 +13,6 @@ func (c *UserController) httpRoutes(serviceName string, e *echo.Echo, auth *auth
 	group := e.Group("/" + serviceName + "/api/" + Domain)
 	group.Use(middlewares.RequestInjector(middlewares.RequestFields{Domain: Domain}))
 	group.GET("/:id", c.GetUser)
-	group.GET("/:id/send-notification", c.SendNotification)
-	group.POST("", c.CreateUser, auth.AuthenticateMiddleware())
 	group.PUT("/:id", c.UpdateUser)
 	group.GET("/pokemon/:name", c.GetPokemon)
 }
