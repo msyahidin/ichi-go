@@ -7,6 +7,7 @@ import (
 	userRepo "ichi-go/internal/applications/user/repository"
 	"ichi-go/internal/infra/queue/rabbitmq"
 	"ichi-go/pkg/authenticator"
+	"ichi-go/pkg/logger"
 
 	"github.com/samber/do/v2"
 )
@@ -26,11 +27,15 @@ func ProvideAuthService(i do.Injector) (*authService.ServiceImpl, error) {
 	jwtAuth := authenticator.NewJWTAuthenticator(cfg.Auth().JWT)
 	// Queue producer is optional
 	var producer rabbitmq.MessageProducer
-	if conn, err := do.Invoke[*rabbitmq.Connection](i); err == nil && conn != nil {
-		// Create producer from connection
-		if p, err := rabbitmq.NewProducer(conn, cfg.Queue().RabbitMQ); err == nil {
-			producer = p
+	if p, err := do.Invoke[rabbitmq.MessageProducer](i); err == nil {
+		producer = p
+		if producer != nil {
+			logger.Infof("✅ Auth service using message producer")
+		} else {
+			logger.Warnf("⚠️  Message producer is nil")
 		}
+	} else {
+		logger.Warnf("⚠️  Queue not available: %v", err)
 	}
 
 	return authService.NewAuthService(userRepository, jwtAuth, producer), nil

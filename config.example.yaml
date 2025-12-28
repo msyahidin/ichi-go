@@ -92,107 +92,65 @@ pkgclient:
     retry: 3
 
 queue:
-  enabled: false  # Enable/disable queue system
+  enabled: true
 
   rabbitmq:
     enabled: true
 
-    # Connection settings
     connection:
       host: "localhost"
       port: 5672
       username: "guest"
       password: "guest"
       vhost: "/"
-      connection_name: "ichi-go-queue"
+      connection_name: "ichigo-queue"
 
-    # Exchange definitions
-    # Routes messages to queues
+    # CRITICAL: Exchanges MUST be declared
     exchanges:
       - name: "app.events"
-        type: "topic"       # Pattern matching (user.*, payment.*)
-        durable: true       # Survive restart
-        auto_delete: false
-        internal: false
-        no_wait: false
-
-      - name: "app.notifications"
-        type: "fanout"      # Broadcast to all
+        type: "topic"
         durable: true
         auto_delete: false
         internal: false
         no_wait: false
 
-    # Producer settings (message sender)
+    # Producer MUST reference existing exchange
     producer:
       exchange_name: "app.events"
 
-    # Consumer settings (message receivers)
     consumers:
-      # Email verification consumer
-      - name: "email_verifier"
-        enabled: true
-
-        queue:
-          name: "user.email.verification"
-          durable: true
-          auto_delete: false
-          exclusive: false
-          no_wait: false
-
-        exchange_name: "app.events"
-        routing_keys:
-          - "email.verified"
-          - "email.verification.requested"
-
-        # Performance settings
-        prefetch_count: 5    # Low: slow processing (email service)
-        worker_pool_size: 3  # Few workers
-        auto_ack: false      # Manual ack (critical)
-
-        exclusive: false
-        consumer_tag: "email_verifier_v1"
-
-      # Payment event handler
       - name: "payment_handler"
         enabled: true
-
         queue:
           name: "order.payment.events"
           durable: true
           auto_delete: false
           exclusive: false
-
+          no_wait: false
         exchange_name: "app.events"
         routing_keys:
           - "payment.completed"
           - "payment.failed"
           - "payment.refunded"
-
-        # High throughput settings
-        prefetch_count: 50   # High: fast processing
-        worker_pool_size: 10 # Many workers
-        auto_ack: false      # Still need reliability
-
+        prefetch_count: 50
+        worker_pool_size: 10
+        auto_ack: false
         exclusive: false
         consumer_tag: "payment_handler_v1"
 
-      # Push notifications (non-critical)
-      - name: "notification_dispatcher"
+      - name: "welcome_notifier"
         enabled: true
-
         queue:
-          name: "user.notifications"
-          durable: false     # Non-critical
-          auto_delete: true  # Cleanup when idle
-
-        exchange_name: "app.notifications"
-        routing_keys: []     # Fanout ignores keys
-
-        # Maximum speed settings
-        prefetch_count: 100  # Very high
-        worker_pool_size: 20 # Maximum workers
-        auto_ack: true       # Speed over safety
-
+          name: "user.welcome.notifications"
+          durable: true
+          auto_delete: false
+          exclusive: false
+          no_wait: false
+        exchange_name: "app.events"
+        routing_keys:
+          - "user.welcome"
+        prefetch_count: 10
+        worker_pool_size: 3
+        auto_ack: false
         exclusive: false
-        consumer_tag: "notifier_v1"
+        consumer_tag: "welcome_notifier_v1"
