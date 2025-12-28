@@ -27,7 +27,6 @@ func (r *RepositoryImpl) GetById(ctx context.Context, id uint64) (*UserModel, er
 func (r *RepositoryImpl) FindByEmail(ctx context.Context, email string) (*UserModel, error) {
 	data, err := r.FindBy(ctx, "email", email)
 	if err != nil {
-		logger.Errorf("Error user repo with data: %+v, err: %+v", data, err)
 		return nil, err
 	}
 	return data, nil

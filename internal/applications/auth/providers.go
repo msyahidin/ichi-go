@@ -5,7 +5,9 @@ import (
 	authController "ichi-go/internal/applications/auth/controller"
 	authService "ichi-go/internal/applications/auth/service"
 	userRepo "ichi-go/internal/applications/user/repository"
+	"ichi-go/internal/infra/queue/rabbitmq"
 	"ichi-go/pkg/authenticator"
+	"ichi-go/pkg/logger"
 
 	"github.com/samber/do/v2"
 )
@@ -23,8 +25,20 @@ func ProvideAuthService(i do.Injector) (*authService.ServiceImpl, error) {
 
 	// Create JWT authenticator
 	jwtAuth := authenticator.NewJWTAuthenticator(cfg.Auth().JWT)
+	// Queue producer is optional
+	var producer rabbitmq.MessageProducer
+	if p, err := do.Invoke[rabbitmq.MessageProducer](i); err == nil {
+		producer = p
+		if producer != nil {
+			logger.Infof("✅ Auth service using message producer")
+		} else {
+			logger.Warnf("⚠️  Message producer is nil")
+		}
+	} else {
+		logger.Warnf("⚠️  Queue not available: %v", err)
+	}
 
-	return authService.NewAuthService(userRepository, jwtAuth), nil
+	return authService.NewAuthService(userRepository, jwtAuth, producer), nil
 }
 
 // ProvideAuthController provides auth controller instance

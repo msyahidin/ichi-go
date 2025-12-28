@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"ichi-go/internal/applications/user/repository"
 	"ichi-go/internal/infra/cache"
-	"ichi-go/internal/infra/messaging/rabbitmq"
+	"ichi-go/internal/infra/queue/rabbitmq"
 	"ichi-go/pkg/clients/pokemonapi"
 	"ichi-go/pkg/clients/pokemonapi/dto"
 	"time"
@@ -15,11 +15,21 @@ type ServiceImpl struct {
 	repo       user.Repository
 	cache      cache.Cache
 	pokeClient pokemonapi.PokemonClient
-	mc         *rabbitmq.Connection
+	producer   rabbitmq.MessageProducer
 }
 
-func NewUserService(repo user.Repository, cache cache.Cache, pokeClient pokemonapi.PokemonClient, mc *rabbitmq.Connection) *ServiceImpl {
-	return &ServiceImpl{repo: repo, cache: cache, pokeClient: pokeClient, mc: mc}
+func NewUserService(
+	repo user.Repository,
+	cache cache.Cache,
+	pokeClient pokemonapi.PokemonClient,
+	producer rabbitmq.MessageProducer, // Renamed from msgConnection
+) *ServiceImpl {
+	return &ServiceImpl{
+		repo:       repo,
+		cache:      cache,
+		pokeClient: pokeClient,
+		producer:   producer,
+	}
 }
 
 func (s *ServiceImpl) GetById(ctx context.Context, id uint32) (*user.UserModel, error) {
@@ -49,6 +59,7 @@ func (s *ServiceImpl) Create(ctx context.Context, newUser user.UserModel) (int64
 	if err != nil {
 		return 0, err
 	}
+
 	return userId, nil
 }
 
@@ -72,37 +83,4 @@ func (s *ServiceImpl) Update(ctx context.Context, updateUser user.UserModel) (in
 
 func (s *ServiceImpl) GetPokemon(ctx context.Context, name string) (*dto.PokemonGetResponseDto, error) {
 	return s.pokeClient.GetDetail(ctx, name)
-}
-
-func (s *ServiceImpl) SendNotification(ctx context.Context, userID uint32) error {
-
-	//user, err := s.GetById(ctx, userID)
-	//
-	//if err != nil {
-	//	return errors.New("user not found")
-	//}
-	//
-	//if s.mc == nil {
-	//	return errors.New("messaging connection is not initialized")
-	//}
-	//
-	//cfg := config.Get()
-	//
-	//publisher, err := rabbitmq.NewPublisher(s.mc, cfg.Messaging().RabbitMQ)
-	//
-	//if err != nil {
-	//	return err
-	//}
-	//msg := dtoUser.WelcomeNotificationMessage{
-	//	EventType: "user.welcome",
-	//	UserId:    fmt.Sprintf("%d", user.ID),
-	//	Email:     user.Email,
-	//	Text:      fmt.Sprintf("Welcome %s to Ichi-Go!", user.Name),
-	//}
-	//var publishOpt = rabbitmq.PublishOptions{}
-	//err = publisher.Publish(ctx, "user.welcome", msg, publishOpt)
-	//if err != nil {
-	//	return err
-	//}
-	return nil
 }
