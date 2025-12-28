@@ -213,7 +213,7 @@ func (s *ServiceImpl) EnqueueWelcomeNotification(ctx context.Context, userID uin
 	}
 
 	opts := rabbitmq.PublishOptions{
-		Delay: 5 * time.Second,
+		Delay: 30 * time.Second,
 	}
 	if err := s.producer.Publish(ctx, "user.welcome", message, opts); err != nil {
 		logger.Errorf("Failed to publish welcome notification: %v", err)

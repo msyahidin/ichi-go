@@ -60,12 +60,30 @@ func provideMessaging(cfg *config.Config) func(do.Injector) (*rabbitmq.Connectio
 	}
 }
 
-// ← Add this new provider
+// FIXED: Add detailed logging to diagnose configuration issues
 func provideMessageProducer(cfg *config.Config) func(do.Injector) (rabbitmq.MessageProducer, error) {
 	return func(i do.Injector) (rabbitmq.MessageProducer, error) {
 		if !cfg.Queue().Enabled {
 			logger.Debugf("Queue disabled - no producer")
 			return nil, nil
+		}
+
+		// DIAGNOSTIC: Log the full RabbitMQ config
+		logger.Infof("🔍 Diagnosing producer configuration...")
+		logger.Infof("   Queue Enabled: %v", cfg.Queue().Enabled)
+		logger.Infof("   RabbitMQ Enabled: %v", cfg.Queue().RabbitMQ.Enabled)
+		logger.Infof("   Publisher Exchange Name: '%s'", cfg.Queue().RabbitMQ.Publisher.ExchangeName)
+		logger.Infof("   Configured Exchanges: %d", len(cfg.Queue().RabbitMQ.Exchanges))
+
+		for i, ex := range cfg.Queue().RabbitMQ.Exchanges {
+			logger.Infof("     [%d] Name: '%s', Type: '%s'", i, ex.Name, ex.Type)
+		}
+
+		// Check if exchange name is configured
+		if cfg.Queue().RabbitMQ.Publisher.ExchangeName == "" {
+			logger.Errorf("❌ CRITICAL: Publisher exchange name is empty in config!")
+			logger.Errorf("   Check your config file has: queue.rabbitmq.producer.exchange_name")
+			return nil, fmt.Errorf("publisher exchange name not configured")
 		}
 
 		conn, err := do.Invoke[*rabbitmq.Connection](i)
@@ -75,7 +93,7 @@ func provideMessageProducer(cfg *config.Config) func(do.Injector) (rabbitmq.Mess
 		}
 
 		logger.Infof("🔧 Creating message producer...")
-		logger.Debugf("Producer config: %+v", cfg.Queue().RabbitMQ.Publisher)
+		logger.Infof("   Will publish to exchange: '%s'", cfg.Queue().RabbitMQ.Publisher.ExchangeName)
 
 		producer, err := rabbitmq.NewProducer(conn, cfg.Queue().RabbitMQ)
 		if err != nil {
@@ -83,7 +101,7 @@ func provideMessageProducer(cfg *config.Config) func(do.Injector) (rabbitmq.Mess
 			return nil, err
 		}
 
-		logger.Infof("✅ Message producer created")
+		logger.Infof("✅ Message producer created successfully")
 		return producer, nil
 	}
 }

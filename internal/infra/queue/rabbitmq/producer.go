@@ -16,13 +16,15 @@ type Producer struct {
 	config       Config
 	exchangeName string
 	channel      *amqp.Channel
+	confirms     chan amqp.Confirmation
 	mu           sync.Mutex
 }
 
 // PublishOptions configures message publishing.
 type PublishOptions struct {
-	Headers amqp.Table    // Custom metadata
-	Delay   time.Duration // Delivery delay
+	Headers   amqp.Table    // Custom metadata
+	Delay     time.Duration // Delivery delay
+	Mandatory bool          // Return error if no queue is bound
 }
 
 // NewProducer creates message producer.
@@ -31,6 +33,7 @@ func NewProducer(connection *Connection, config Config) (MessageProducer, error)
 		connection:   connection,
 		config:       config,
 		exchangeName: config.Publisher.ExchangeName,
+		confirms:     make(chan amqp.Confirmation, 1),
 	}
 
 	if err := p.setup(); err != nil {
@@ -53,6 +56,13 @@ func (p *Producer) setup() error {
 	}
 
 	logger.Infof("✅ Channel opened")
+
+	// Enable publisher confirms for reliability
+	if err := ch.Confirm(false); err != nil {
+		logger.Warnf("⚠️  Failed to enable publisher confirms: %v (continuing anyway)", err)
+	} else {
+		logger.Infof("✅ Publisher confirms enabled")
+	}
 
 	// Declare exchanges
 	for _, exchange := range p.config.Exchanges {
@@ -82,38 +92,30 @@ func (p *Producer) setup() error {
 			return fmt.Errorf("failed to declare exchange %s: %w", exchange.Name, err)
 		}
 
-		logger.Infof("✅ Exchange declared: %s", exchange.Name)
+		logger.Infof("✅ Exchange declared successfully")
+		logger.Infof("   Name: %s", exchange.Name)
+		logger.Infof("   Type: %s", exchange.Type)
+		logger.Infof("   Durable: %v", exchange.Durable)
 	}
 
 	p.channel = ch
+
+	logger.Infof("✅ Producer configured to publish to exchange: '%s'", p.exchangeName)
 	logger.Infof("✅ Producer setup complete")
+
 	return nil
 }
 
-// Publish sends message to queue.
-//
-// Flow:
-// 1. Serialize to JSON
-// 2. Publish to exchange
-// 3. Exchange routes to queue(s)
-// 4. Consumer processes
-//
-// Examples:
-//
-//	// Simple
-//	producer.Publish(ctx, "user.welcome", msg, PublishOptions{})
-//
-//	// Delayed
-//	opts := PublishOptions{Delay: 5 * time.Minute}
-//	producer.Publish(ctx, "reminder", msg, opts)
-//	opts := PublishOptions{Headers: amqp.Table{"x-correlation-id": id}}
-//	producer.Publish(ctx, "order", msg, opts)
+// Publish sends message to queue with enhanced diagnostics.
 func (p *Producer) Publish(ctx context.Context, routingKey string, message interface{}, opts PublishOptions) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	// Add logging BEFORE serialization
-	logger.Infof("📤 Publishing message to exchange=%s, routingKey=%s", p.exchangeName, routingKey)
+	// Detailed logging for diagnostics
+	logger.Infof("📤 Publishing message:")
+	logger.Infof("   Exchange: '%s'", p.exchangeName)
+	logger.Infof("   Routing Key: '%s'", routingKey)
+	logger.Infof("   Message Type: %T", message)
 
 	// Serialize
 	body, err := json.Marshal(message)
@@ -122,10 +124,11 @@ func (p *Producer) Publish(ctx context.Context, routingKey string, message inter
 		return fmt.Errorf("failed to marshal: %w", err)
 	}
 
-	logger.Debugf("📦 Message body: %s", string(body))
+	logger.Infof("   Body Length: %d bytes", len(body))
+	logger.Debugf("   Body Content: %s", string(body))
 
 	// Add timeout
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
 	// Initialize headers
@@ -136,16 +139,23 @@ func (p *Producer) Publish(ctx context.Context, routingKey string, message inter
 	// Add delay
 	if opts.Delay > 0 {
 		opts.Headers["x-delay"] = int32(opts.Delay.Milliseconds())
+		logger.Infof("   Delay: %v", opts.Delay)
 	}
 
-	// Publish
-	logger.Debugf("🔄 Publishing to channel (exchange=%s, key=%s)", p.exchangeName, routingKey)
+	// Add timestamp to headers for tracking
+	opts.Headers["published_at"] = time.Now().Format(time.RFC3339)
+
+	// Publish with mandatory flag to detect routing failures
+	mandatory := opts.Mandatory
+	logger.Infof("   Mandatory: %v (will error if no queue bound)", mandatory)
+	logger.Infof("🔄 Calling PublishWithContext...")
+
 	err = p.channel.PublishWithContext(
 		ctx,
 		p.exchangeName,
 		routingKey,
-		false, // mandatory
-		false, // immediate
+		mandatory, // Set to true to get errors if message can't be routed
+		false,     // immediate
 		amqp.Publishing{
 			ContentType:  "application/json",
 			Body:         body,
@@ -156,11 +166,15 @@ func (p *Producer) Publish(ctx context.Context, routingKey string, message inter
 	)
 
 	if err != nil {
-		logger.Errorf("❌ Failed to publish: %v", err)
+		logger.Errorf("❌ PublishWithContext failed: %v", err)
 		return fmt.Errorf("failed to publish: %w", err)
 	}
 
-	logger.Infof("✅ Message published successfully to %s/%s", p.exchangeName, routingKey)
+	logger.Infof("✅ Message published successfully")
+	logger.Infof("   Exchange: '%s'", p.exchangeName)
+	logger.Infof("   Routing Key: '%s'", routingKey)
+	logger.Infof("   Next: RabbitMQ will route to queues bound with this routing key")
+
 	return nil
 }
 

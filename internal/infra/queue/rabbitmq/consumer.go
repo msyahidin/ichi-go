@@ -39,18 +39,26 @@ func (c *Consumer) setup() error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
+	logger.Infof("🔧 Setting up consumer '%s'...", c.consumerConfig.Name)
+
 	ch, err := c.connection.GetConnection().Channel()
 	if err != nil {
 		return fmt.Errorf("failed to open channel: %w", err)
 	}
 
 	// Set QoS (prefetch) for this consumer
+	logger.Debugf("⚙️  Setting QoS: prefetch_count=%d", c.consumerConfig.PrefetchCount)
 	err = ch.Qos(c.consumerConfig.PrefetchCount, 0, false)
 	if err != nil {
 		return fmt.Errorf("failed to set QoS: %w", err)
 	}
 
 	// Declare exchange
+	logger.Debugf("📢 Declaring exchange:")
+	logger.Debugf("   Name: '%s'", c.exchangeConfig.Name)
+	logger.Debugf("   Type: '%s'", c.exchangeConfig.Type)
+	logger.Debugf("   Durable: %v", c.exchangeConfig.Durable)
+
 	err = ch.ExchangeDeclare(
 		c.exchangeConfig.Name,
 		c.exchangeConfig.Type,
@@ -61,11 +69,16 @@ func (c *Consumer) setup() error {
 		nil,
 	)
 	if err != nil {
-		return fmt.Errorf("failed to declare exchange: %w", err)
+		return fmt.Errorf("failed to declare exchange '%s': %w", c.exchangeConfig.Name, err)
 	}
+	logger.Debugf("✅ Exchange declared: '%s'", c.exchangeConfig.Name)
 
 	// Declare queue
-	_, err = ch.QueueDeclare(
+	logger.Debugf("📦 Declaring queue:")
+	logger.Debugf("   Name: '%s'", c.consumerConfig.Queue.Name)
+	logger.Debugf("   Durable: %v", c.consumerConfig.Queue.Durable)
+
+	queue, err := ch.QueueDeclare(
 		c.consumerConfig.Queue.Name,
 		c.consumerConfig.Queue.Durable,
 		c.consumerConfig.Queue.AutoDelete,
@@ -74,50 +87,69 @@ func (c *Consumer) setup() error {
 		nil,
 	)
 	if err != nil {
-		return fmt.Errorf("failed to declare queue: %w", err)
+		return fmt.Errorf("failed to declare queue '%s': %w", c.consumerConfig.Queue.Name, err)
 	}
+	logger.Debugf("✅ Queue declared: '%s' (messages: %d, consumers: %d)",
+		queue.Name, queue.Messages, queue.Consumers)
 
 	// Bind queue to exchange with routing keys
-	for _, routingKey := range c.consumerConfig.RoutingKeys {
+	logger.Debugf("🔗 Binding queue to exchange...")
+	for i, routingKey := range c.consumerConfig.RoutingKeys {
+		logger.Debugf("   [%d/%d] Binding with routing key: '%s'",
+			i+1, len(c.consumerConfig.RoutingKeys), routingKey)
+
 		err = ch.QueueBind(
 			c.consumerConfig.Queue.Name,
 			routingKey,
 			c.exchangeConfig.Name,
-			false, nil,
+			false,
+			nil,
 		)
 		if err != nil {
-			return fmt.Errorf("failed to bind queue: %w", err)
+			return fmt.Errorf("failed to bind queue '%s' to exchange '%s' with key '%s': %w",
+				c.consumerConfig.Queue.Name, c.exchangeConfig.Name, routingKey, err)
 		}
-		logger.Infof("bound queue '%s' to exchange '%s' with routing key '%s'",
+
+		logger.Debugf("   ✅ Bound: queue='%s' <-> exchange='%s' (key='%s')",
 			c.consumerConfig.Queue.Name, c.exchangeConfig.Name, routingKey)
 	}
 
 	c.channel = ch
-	logger.Infof("Consumer '%s' ready (prefetch: %d, workers: %d)",
-		c.consumerConfig.Name,
-		c.consumerConfig.PrefetchCount,
-		c.consumerConfig.WorkerPoolSize)
+
+	logger.Debugf("✅ Consumer '%s' setup complete:", c.consumerConfig.Name)
+	logger.Debugf("   Queue: '%s'", c.consumerConfig.Queue.Name)
+	logger.Debugf("   Exchange: '%s' (type: %s)", c.exchangeConfig.Name, c.exchangeConfig.Type)
+	logger.Debugf("   Routing Keys: %v", c.consumerConfig.RoutingKeys)
+	logger.Debugf("   Prefetch: %d", c.consumerConfig.PrefetchCount)
+	logger.Debugf("   Workers: %d", c.consumerConfig.WorkerPoolSize)
+	logger.Debugf("   Auto-Ack: %v", c.consumerConfig.AutoAck)
 
 	return nil
 }
 
 func (c *Consumer) Consume(ctx context.Context, handler ConsumeFunc) error {
 	c.mu.Lock()
+
+	logger.Infof("🎧 Starting to consume from queue '%s'...", c.consumerConfig.Queue.Name)
+
 	deliveries, err := c.channel.Consume(
 		c.consumerConfig.Queue.Name,
 		c.consumerConfig.ConsumerTag,
 		c.consumerConfig.AutoAck,
 		c.consumerConfig.Exclusive,
-		false, false, nil,
+		false,
+		false,
+		nil,
 	)
 	c.mu.Unlock()
 
 	if err != nil {
-		return fmt.Errorf("failed to start consuming: %w", err)
+		return fmt.Errorf("failed to start consuming from queue '%s': %w", c.consumerConfig.Queue.Name, err)
 	}
 
-	logger.Infof("Consumer '%s' listening on queue '%s'",
+	logger.Debugf("✅ Consumer '%s' listening on queue '%s'",
 		c.consumerConfig.Name, c.consumerConfig.Queue.Name)
+	logger.Debugf("   Waiting for messages with routing keys: %v", c.consumerConfig.RoutingKeys)
 
 	// Create worker pool
 	var wg sync.WaitGroup
@@ -127,28 +159,58 @@ func (c *Consumer) Consume(ctx context.Context, handler ConsumeFunc) error {
 		go func(workerID int) {
 			defer wg.Done()
 
-			logger.Infof("Worker #%d started for '%s'", workerID, c.consumerConfig.Name)
+			logger.Debugf("👷 Worker #%d started for consumer '%s'", workerID, c.consumerConfig.Name)
+
+			messagesProcessed := 0
 
 			for {
 				select {
 				case <-ctx.Done():
-					logger.Infof("👷 Worker #%d stopping", workerID)
+					logger.Debugf("👷 Worker #%d stopping (processed %d messages)", workerID, messagesProcessed)
 					return
 
 				case delivery, ok := <-deliveries:
 					if !ok {
-						logger.Infof("Worker #%d channel closed", workerID)
+						logger.Debugf("👷 Worker #%d: delivery channel closed (processed %d messages)",
+							workerID, messagesProcessed)
 						return
 					}
 
+					messagesProcessed++
+
+					logger.Debugf("📨 Worker #%d received message #%d:", workerID, messagesProcessed)
+					logger.Debugf("   Routing Key: '%s'", delivery.RoutingKey)
+					logger.Debugf("   Content Type: %s", delivery.ContentType)
+					logger.Debugf("   Body Length: %d bytes", len(delivery.Body))
+					logger.Debugf("   Body: %s", string(delivery.Body))
+
+					if delivery.Timestamp.IsZero() {
+						logger.Debugf("   Published: (no timestamp)")
+					} else {
+						logger.Debugf("   Published: %s", delivery.Timestamp.Format("2006-01-02 15:04:05"))
+					}
+
 					// Process message
+					logger.Infof("⚙️  Processing message...")
 					if err := handler(ctx, delivery.Body); err != nil {
+						logger.Errorf("❌ Worker #%d: handler error: %v", workerID, err)
+
 						if !c.consumerConfig.AutoAck {
-							delivery.Nack(false, true) // Requeue on error
+							logger.Warnf("📤 Nacking message (will requeue)")
+							if nackErr := delivery.Nack(false, true); nackErr != nil {
+								logger.Errorf("❌ Failed to nack: %v", nackErr)
+							}
 						}
 					} else {
+						logger.Debugf("✅ Worker #%d: message processed successfully", workerID)
+
 						if !c.consumerConfig.AutoAck {
-							delivery.Ack(false)
+							logger.Debugf("📤 Acking message")
+							if ackErr := delivery.Ack(false); ackErr != nil {
+								logger.Errorf("❌ Failed to ack: %v", ackErr)
+							} else {
+								logger.Debugf("✅ Message acknowledged")
+							}
 						}
 					}
 				}
@@ -156,7 +218,13 @@ func (c *Consumer) Consume(ctx context.Context, handler ConsumeFunc) error {
 		}(i)
 	}
 
+	logger.Debugf("✅ All %d workers running for consumer '%s'",
+		c.consumerConfig.WorkerPoolSize, c.consumerConfig.Name)
+
 	wg.Wait()
+
+	logger.Debugf("👋 All workers stopped for consumer '%s'", c.consumerConfig.Name)
+
 	return nil
 }
 

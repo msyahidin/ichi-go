@@ -105,17 +105,17 @@ queue:
       vhost: "/"
       connection_name: "ichigo-queue"
 
-    # CRITICAL: Exchanges MUST be declared
     exchanges:
       - name: "app.events"
-        type: "topic"
+        type: "x-delayed-message"
+        args:
+          x-delayed-type: "topic"
         durable: true
         auto_delete: false
         internal: false
         no_wait: false
 
-    # Producer MUST reference existing exchange
-    producer:
+    publisher:
       exchange_name: "app.events"
 
     consumers:
