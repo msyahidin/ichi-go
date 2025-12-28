@@ -1,0 +1,40 @@
+package {{.Domain}}
+
+import (
+	"{{.ModulePath}}/pkg/authenticator"
+	"{{.ModulePath}}/pkg/versioning"
+	"github.com/labstack/echo/v4"
+)
+
+const Domain = "{{.Domain}}"
+
+// RegisterRoutesV1 registers V1 {{.Domain}} routes
+func (c *{{.StructName}}Controller) RegisterRoutesV1(serviceName string, e *echo.Echo, auth *authenticator.Authenticator) {
+	vr := versioning.NewVersionedRoute(serviceName, versioning.V1, Domain)
+	
+	{{if .HasPublicRoutes -}}
+	// Public routes (no authentication required)
+	publicGroup := vr.Group(e)
+	{{range .PublicRoutes -}}
+	publicGroup.{{.Method}}("{{.Path}}", c.{{.Handler}})
+	{{end}}
+	{{- end}}
+
+	{{if .HasProtectedRoutes -}}
+	// Protected routes (authentication required)
+	protectedGroup := vr.Group(e)
+	protectedGroup.Use(auth.AuthenticateMiddleware())
+	{{range .ProtectedRoutes -}}
+	protectedGroup.{{.Method}}("{{.Path}}", c.{{.Handler}})
+	{{end}}
+	{{- end}}
+}
+
+// RegisterRoutes is the main registration method
+func (c *{{.StructName}}Controller) RegisterRoutes(serviceName string, e *echo.Echo, auth *authenticator.Authenticator) {
+	// Register current version (V1)
+	c.RegisterRoutesV1(serviceName, e, auth)
+	
+	// TODO: When V2 is ready, uncomment:
+	// c.RegisterRoutesV2(serviceName, e, auth)
+}

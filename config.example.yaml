@@ -5,6 +5,18 @@ app:
   debug: true
   locale: "en"
 
+api:
+  versioning:
+    enabled: true
+    strategy: "date"
+    default_version: "202601"
+    supported_versions: [ "202511", "202512", "202601" ]
+    deprecation:
+      # Enable deprecation warning headers
+      header_enabled: true
+      # Days before sunset to start showing warnings
+      sunset_notification_days: 90
+
 http:
   timeout: 10000
   port: 8080
