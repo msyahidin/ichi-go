@@ -14,8 +14,8 @@ func Register(injector do.Injector, serviceName string, e *echo.Echo, auth *auth
 	RegisterProviders(injector)
 
 	// Get auth controller from DI container
-	authController := do.MustInvoke[*authController.AuthController](injector)
+	authDI := do.MustInvoke[*authController.AuthController](injector)
 
 	// Register routes
-	authController.RegisterRoutes(serviceName, e, auth)
+	authDI.RegisterRoutes(serviceName, e, auth)
 }

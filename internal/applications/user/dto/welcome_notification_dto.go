@@ -1,4 +1,4 @@
-package user
+package dto
 
 type WelcomeNotificationMessage struct {
 	EventType string `json:"event_type"` // Always "user.welcome"

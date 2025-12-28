@@ -18,9 +18,9 @@ func SetupRestRoutes(injector do.Injector, e *echo.Echo, cfg *config.Config) {
 	if err := cfg.Auth().InitializeJWTKeys(); err != nil {
 		logger.Errorf("Failed to initialize JWT keys: %v", err)
 	}
-	authenticator := authenticator.New(cfg.Auth())
-	user.Register(injector, cfg.App().Name, e, authenticator)
-	auth.Register(injector, cfg.App().Name, e, authenticator)
+	appAuth := authenticator.New(cfg.Auth())
+	user.Register(injector, cfg.App().Name, e, appAuth)
+	auth.Register(injector, cfg.App().Name, e, appAuth)
 }
 
 func GetServiceName(configApp appConfig.AppConfig) string {

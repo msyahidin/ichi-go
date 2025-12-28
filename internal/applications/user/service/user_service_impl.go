@@ -61,6 +61,13 @@ func (s *ServiceImpl) Create(ctx context.Context, newUser user.UserModel) (int64
 	if err != nil {
 		return 0, err
 	}
+
+	// Publish welcome notification to queue
+	if err := s.EnqueueWelcomeNotification(ctx, uint32(userId)); err != nil {
+		// Log but don't fail user creation
+		logger.Errorf("Failed to queue welcome notification: %v", err)
+	}
+
 	return userId, nil
 }
 
@@ -86,41 +93,31 @@ func (s *ServiceImpl) GetPokemon(ctx context.Context, name string) (*dto.Pokemon
 	return s.pokeClient.GetDetail(ctx, name)
 }
 
+// PublishWelcomeNotification Producer publishes message to queue
 func (s *ServiceImpl) PublishWelcomeNotification(ctx context.Context, userID uint32) error {
-	return s.publishWelcomeNotification(ctx, userID)
-}
-
-// publishWelcomeNotification is internal implementation.
-func (s *ServiceImpl) publishWelcomeNotification(ctx context.Context, userID uint32) error {
-	// Check if queue system is enabled
 	if s.producer == nil {
-		logger.Debugf("Queue producer not configured - skipping welcome notification for user %d", userID)
+		logger.Debugf("Queue not configured - skipping notification")
 		return nil
 	}
 
-	// Get user details
 	user, err := s.GetById(ctx, userID)
 	if err != nil {
-		return fmt.Errorf("failed to get user for notification: %w", err)
+		return fmt.Errorf("failed to get user: %w", err)
 	}
 
-	// Build notification message
 	message := userDto.WelcomeNotificationMessage{
 		EventType: "user.welcome",
 		UserID:    fmt.Sprintf("%d", user.ID),
 		Email:     user.Email,
-		Text:      fmt.Sprintf("Welcome %s! Thanks for joining us.", user.Name),
+		Text:      fmt.Sprintf("Welcome %s!", user.Name),
 	}
 
-	// Publish to queue
-	publishOpts := rabbitmq.PublishOptions{}
-	if err := s.producer.Publish(ctx, "user.welcome", message, publishOpts); err != nil {
-		// Log error but don't fail the operation
-		logger.Errorf("Failed to publish welcome notification for user %d: %v", userID, err)
-		return fmt.Errorf("failed to publish notification: %w", err)
+	opts := rabbitmq.PublishOptions{}
+	if err := s.producer.Publish(ctx, "user.welcome", message, opts); err != nil {
+		return fmt.Errorf("failed to publish: %w", err)
 	}
 
-	logger.Infof("✅ Published welcome notification for user %d", userID)
+	logger.Infof("Published welcome notification for user %d", userID)
 	return nil
 }
 

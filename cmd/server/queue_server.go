@@ -5,35 +5,22 @@ import (
 	queue "ichi-go/internal/infra/queue"
 	"ichi-go/internal/infra/queue/rabbitmq"
 	"ichi-go/pkg/logger"
-	"os"
-	"os/signal"
 	"sync"
-	"syscall"
 )
 
-// StartQueueWorkers starts all queue consumers.
-// Renamed from "StartConsumer".
-//
-// Lifecycle:
-// 1. Get registered consumers
-// 2. Filter enabled consumers
-// 3. Start worker pools
-// 4. Wait for shutdown
-// 5. Graceful stop
-//
-// Blocks until SIGTERM/SIGINT.
-func StartQueueWorkers(queueConfig *queue.Config, conn *rabbitmq.Connection) {
+// StartQueueWorkers starts all queue consumers with context-based lifecycle.
+// Blocks until context is cancelled.
+func StartQueueWorkers(ctx context.Context, queueConfig *queue.Config, conn *rabbitmq.Connection) {
+	if conn == nil {
+		logger.Warnf("Queue connection is nil - skipping worker startup")
+		return
+	}
+
 	logger.Infof("🚀 Starting queue workers...")
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 
 	wg := sync.WaitGroup{}
 
-	// Get consumers
+	// Get registered consumers
 	registeredConsumers := queue.GetRegisteredConsumers()
 
 	// Start each consumer
@@ -77,13 +64,14 @@ func StartQueueWorkers(queueConfig *queue.Config, conn *rabbitmq.Connection) {
 
 	logger.Infof("✅ All workers started")
 
-	<-sigChan
-	logger.Infof("🛑 Shutting down...")
+	// Wait for context cancellation
+	<-ctx.Done()
 
-	cancel()
+	logger.Infof("🛑 Shutting down queue workers...")
 
-	logger.Infof("⏳ Waiting for workers...")
+	// Wait for all workers to finish
+	logger.Infof("⏳ Waiting for workers to finish...")
 	wg.Wait()
 
-	logger.Infof("👋 All workers stopped")
+	logger.Infof("👋 All queue workers stopped")
 }

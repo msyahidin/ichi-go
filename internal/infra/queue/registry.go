@@ -1,7 +1,8 @@
 package queue
 
 import (
-	"ichi-go/internal/applications/order/consumers"
+	orderConsumers "ichi-go/internal/applications/order/consumers"
+	userConsumers "ichi-go/internal/applications/user/consumers"
 	"ichi-go/internal/infra/queue/rabbitmq"
 )
 
@@ -22,10 +23,17 @@ type ConsumerRegistration struct {
 // 5. Test
 func GetRegisteredConsumers() []ConsumerRegistration {
 	return []ConsumerRegistration{
+		// Payment events consumer
 		{
 			Name:        "payment_handler",
-			ConsumeFunc: consumers.NewPaymentConsumer().Consume,
+			ConsumeFunc: orderConsumers.NewPaymentConsumer().Consume,
 			Description: "Processes payment events (completed, failed, refunded)",
+		},
+		// Welcome notification consumer
+		{
+			Name:        "welcome_notifier",
+			ConsumeFunc: userConsumers.NewWelcomeNotificationConsumer().Consume,
+			Description: "Sends welcome notifications to new users",
 		},
 	}
 }

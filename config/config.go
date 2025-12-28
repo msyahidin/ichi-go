@@ -29,7 +29,7 @@ type Schema struct {
 	Http       httpConfig.HttpConfig
 	HttpClient httpConfig.ClientConfig
 	PkgClient  pkgClientConfig.PkgClient
-	Messaging  queue.Config
+	Queue      queue.Config
 	Auth       authenticator.Config
 	Validator  validator.Config
 }
@@ -135,7 +135,7 @@ func (c *Config) PkgClient() *pkgClientConfig.PkgClient {
 
 func (c *Config) Queue() *queue.Config {
 	c.ensureLoaded()
-	return &c.schema.Messaging
+	return &c.schema.Queue
 }
 
 func (c *Config) Auth() *authenticator.Config {

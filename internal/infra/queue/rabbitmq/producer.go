@@ -10,7 +10,6 @@ import (
 )
 
 // Producer publishes messages to RabbitMQ.
-// Renamed from "Publisher" to match RabbitMQ terminology.
 type Producer struct {
 	connection   *Connection
 	config       Config
@@ -95,37 +94,28 @@ func (p *Producer) setup() error {
 //	// Delayed
 //	opts := PublishOptions{Delay: 5 * time.Minute}
 //	producer.Publish(ctx, "reminder", msg, opts)
-//
-//	// With headers
 //	opts := PublishOptions{Headers: amqp.Table{"x-correlation-id": id}}
 //	producer.Publish(ctx, "order", msg, opts)
-//
-// Thread-safe.
 func (p *Producer) Publish(ctx context.Context, routingKey string, message interface{}, opts PublishOptions) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	// Serialize
 	body, err := json.Marshal(message)
 	if err != nil {
 		return fmt.Errorf("failed to marshal: %w", err)
 	}
 
-	// Add timeout
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	// Initialize headers
 	if opts.Headers == nil {
 		opts.Headers = amqp.Table{}
 	}
 
-	// Add delay
 	if opts.Delay > 0 {
 		opts.Headers["x-delay"] = int32(opts.Delay.Milliseconds())
 	}
 
-	// Publish
 	err = p.channel.PublishWithContext(
 		ctx,
 		p.exchangeName,
