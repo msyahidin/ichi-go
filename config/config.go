@@ -7,6 +7,7 @@ import (
 	"ichi-go/internal/infra/queue"
 	"ichi-go/pkg/authenticator"
 	"ichi-go/pkg/validator"
+	"ichi-go/pkg/versioning"
 	"os"
 	"sync"
 
@@ -32,6 +33,7 @@ type Schema struct {
 	Queue      queue.Config
 	Auth       authenticator.Config
 	Validator  validator.Config
+	Versioning versioning.Config
 }
 
 type Config struct {
@@ -146,6 +148,11 @@ func (c *Config) Auth() *authenticator.Config {
 func (c *Config) Validator() *validator.Config {
 	c.ensureLoaded()
 	return &c.schema.Validator
+}
+
+func (c *Config) Versioning() *versioning.Config {
+	c.ensureLoaded()
+	return &c.schema.Versioning
 }
 
 func (c *Config) ensureLoaded() {

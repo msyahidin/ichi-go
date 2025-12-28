@@ -50,6 +50,24 @@ func Init(e *echo.Echo, mainConfig *config.Config) {
 	e.Use(copyRequestID)
 	e.Use(RequestContextMiddleware())
 
+	versionConfig := mainConfig.Versioning()
+	if versionConfig != nil && versionConfig.Enabled {
+		// Log API version usage
+		e.Use(VersionLogger())
+
+		// Validate version is supported
+		e.Use(VersionValidator(versionConfig))
+
+		// Check deprecation and add warning headers
+		if versionConfig.Deprecation.HeaderEnabled {
+			e.Use(VersionDeprecation())
+		}
+
+		logger.Infof("API versioning enabled - Default: %s, Supported: %v",
+			versionConfig.DefaultVersion,
+			versionConfig.SupportedVersions)
+	}
+
 	// Initialize validator
 	if err := setupValidator(e, *mainConfig.Validator()); err != nil {
 		logger.Fatalf("failed to initialize validator: %v", err)
