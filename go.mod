@@ -7,7 +7,7 @@ toolchain go1.24.11
 require (
 	entgo.io/ent v0.14.3
 	github.com/dranikpg/dto-mapper v0.2.1
-	github.com/go-sql-driver/mysql v1.9.1
+	github.com/go-sql-driver/mysql v1.9.3
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/google/uuid v1.6.0
 	github.com/google/wire v0.7.0
@@ -16,7 +16,7 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/mattn/go-sqlite3 v1.14.28
 	github.com/pierrec/lz4/v4 v4.1.23
-	github.com/pressly/goose/v3 v3.24.2
+	github.com/pressly/goose/v3 v3.26.0
 	github.com/rabbitmq/amqp091-go v1.10.0
 	github.com/redis/go-redis/v9 v9.17.2
 	github.com/rs/zerolog v1.34.0
