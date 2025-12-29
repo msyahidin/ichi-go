@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
+	"ichi-go/config"
+	"ichi-go/internal/infra/database"
 	"log"
 	"os"
 	"path/filepath"
@@ -79,7 +81,9 @@ func connectDatabase(environment string) *sql.DB {
 	// Load config based on environment
 	// For now, using default connection
 	// TODO: Integrate with your config system
-	dsn := os.Getenv("DATABASE_URL")
+	config.MustLoad()
+	dbConfig := config.Get().Database()
+	dsn := database.GetDsn(dbConfig)
 	if dsn == "" {
 		dsn = "root:password@tcp(localhost:3306)/ichigo_db?parseTime=true"
 	}
