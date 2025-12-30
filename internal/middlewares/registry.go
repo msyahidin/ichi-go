@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"ichi-go/config"
-	httpConfig "ichi-go/config/http"
 	authValidators "ichi-go/internal/applications/auth/validators"
+	httpConfig "ichi-go/pkg/http"
 	"ichi-go/pkg/logger"
 	appValidator "ichi-go/pkg/validator"
 	"time"
@@ -86,7 +86,7 @@ func copyRequestID(next echo.HandlerFunc) echo.HandlerFunc {
 	}
 }
 
-func AppRequestTimeOut(configHttp *httpConfig.HttpConfig) echo.MiddlewareFunc {
+func AppRequestTimeOut(configHttp *httpConfig.Config) echo.MiddlewareFunc {
 	return middleware.TimeoutWithConfig(middleware.TimeoutConfig{
 		Timeout: time.Duration(configHttp.Timeout) * time.Second,
 	})

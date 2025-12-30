@@ -3,23 +3,27 @@ package pokemonapi
 import (
 	"context"
 	"fmt"
-	"ichi-go/config"
-	"ichi-go/internal/infra/http"
 	"ichi-go/pkg/clients/pokemonapi/dto"
+	pkgHttp "ichi-go/pkg/http"
 	"resty.dev/v3"
-	"time"
 )
 
 type PokemonClientImpl struct {
 	httpClient *resty.Client
 }
 
-func NewPokemonClientImpl(cfg *config.Config) *PokemonClientImpl {
-	httpClient := http.New(cfg.HttpClient())
+// NewPokemonClient creates Pokemon client with merged configuration
+func NewPokemonClient(pokemonCfg Config, httpDefaults HTTPClientDefaults) *PokemonClientImpl {
+	opts := pokemonCfg.MergeWithDefaults(httpDefaults)
 
-	httpClient.SetBaseURL(cfg.PkgClient().PokemonAPI.BaseURL)
-	httpClient.SetTimeout(time.Duration(cfg.PkgClient().PokemonAPI.Timeout))
-	httpClient.SetRetryCount(cfg.PkgClient().PokemonAPI.RetryCount)
+	httpClient := pkgHttp.New(pkgHttp.ClientOptions{
+		BaseURL:       opts.BaseURL,
+		Timeout:       opts.Timeout,
+		RetryCount:    opts.RetryCount,
+		RetryWaitTime: opts.RetryWaitTime,
+		RetryMaxWait:  opts.RetryMaxWait,
+		LoggerEnabled: opts.LoggerEnabled,
+	})
 
 	return &PokemonClientImpl{
 		httpClient: httpClient,

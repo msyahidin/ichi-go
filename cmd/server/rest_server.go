@@ -3,7 +3,6 @@ package server
 import (
 	"encoding/json"
 	"ichi-go/config"
-	appConfig "ichi-go/config/app"
 	"ichi-go/internal/applications/auth"
 	"ichi-go/internal/applications/user"
 	"ichi-go/pkg/authenticator"
@@ -23,7 +22,7 @@ func SetupRestRoutes(injector do.Injector, e *echo.Echo, cfg *config.Config) {
 	auth.Register(injector, cfg.App().Name, e, appAuth)
 }
 
-func GetServiceName(configApp appConfig.AppConfig) string {
+func GetServiceName(configApp config.AppConfig) string {
 	return configApp.Name
 }
 

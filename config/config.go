@@ -6,6 +6,7 @@ import (
 	"ichi-go/internal/infra/database"
 	"ichi-go/internal/infra/queue"
 	"ichi-go/pkg/authenticator"
+	httpConfig "ichi-go/pkg/http"
 	"ichi-go/pkg/validator"
 	"ichi-go/pkg/versioning"
 	"os"
@@ -15,19 +16,16 @@ import (
 	"github.com/labstack/gommon/log"
 	"github.com/spf13/viper"
 
-	appConfig "ichi-go/config/app"
-
-	httpConfig "ichi-go/config/http"
 	pkgClientConfig "ichi-go/pkg/clients"
 	"ichi-go/pkg/logger"
 )
 
 type Schema struct {
-	App        appConfig.AppConfig
+	App        AppConfig
 	Database   database.Config
 	Cache      cache.Config
 	Log        logger.LogConfig
-	Http       httpConfig.HttpConfig
+	Http       httpConfig.Config
 	HttpClient httpConfig.ClientConfig
 	PkgClient  pkgClientConfig.PkgClient
 	Queue      queue.Config
@@ -100,7 +98,7 @@ func (c *Config) Schema() *Schema {
 	return c.schema
 }
 
-func (c *Config) App() *appConfig.AppConfig {
+func (c *Config) App() *AppConfig {
 	c.ensureLoaded()
 	return &c.schema.App
 }
@@ -115,7 +113,7 @@ func (c *Config) Cache() *cache.Config {
 	return &c.schema.Cache
 }
 
-func (c *Config) Http() *httpConfig.HttpConfig {
+func (c *Config) Http() *httpConfig.Config {
 	c.ensureLoaded()
 	return &c.schema.Http
 }
@@ -195,7 +193,7 @@ func getEnv() string {
 }
 
 func setDefault() {
-	appConfig.SetDefault()
+	SetDefault()
 	database.SetDefault()
 	cache.SetDefault()
 	logger.SetDefault()
