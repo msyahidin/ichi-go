@@ -24,7 +24,16 @@ func RegisterProviders(injector do.Injector) {
 
 func ProvidePokemonClient(i do.Injector) (pokemonapi.PokemonClient, error) {
 	cfg := do.MustInvoke[*config.Config](i)
-	return pokemonapi.NewPokemonClientImpl(cfg), nil
+	httpDefaults := pokemonapi.HTTPClientDefaults{
+		RetryWaitTime: cfg.HttpClient().RetryWaitTime,
+		RetryMaxWait:  cfg.HttpClient().RetryMaxWait,
+		LoggerEnabled: cfg.HttpClient().LoggerEnabled,
+	}
+
+	return pokemonapi.NewPokemonClient(
+		cfg.PkgClient().PokemonAPI,
+		httpDefaults,
+	), nil
 }
 
 func ProvideUserRepository(i do.Injector) (*userRepo.RepositoryImpl, error) {

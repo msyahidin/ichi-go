@@ -2,6 +2,7 @@ package http
 
 import (
 	"github.com/spf13/viper"
+	"time"
 )
 
 type CorsConfig struct {
@@ -20,6 +21,17 @@ type ClientConfig struct {
 	RetryWaitTime int  `mapstructure:"retry_wait_time"` // delay between retries
 	RetryMaxWait  int  `mapstructure:"retry_max_wait"`  // total max backoff wait
 	LoggerEnabled bool `mapstructure:"logger_enabled"`  // enable/disable http log
+}
+
+// ToOptions converts ClientConfig to ClientOptions
+func (c *ClientConfig) ToOptions() ClientOptions {
+	return ClientOptions{
+		Timeout:       time.Duration(c.Timeout) * time.Millisecond,
+		RetryCount:    c.RetryCount,
+		RetryWaitTime: time.Duration(c.RetryWaitTime) * time.Millisecond,
+		RetryMaxWait:  time.Duration(c.RetryMaxWait) * time.Millisecond,
+		LoggerEnabled: c.LoggerEnabled,
+	}
 }
 
 func SetDefault() {
