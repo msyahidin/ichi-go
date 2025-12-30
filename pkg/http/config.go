@@ -8,7 +8,7 @@ type CorsConfig struct {
 	AllowOrigins []string `mapstructure:"allow_origins"`
 }
 
-type HttpConfig struct {
+type Config struct {
 	Timeout int        `mapstructure:"timeout"`
 	Cors    CorsConfig `mapstructure:"cors"`
 	Port    int        `mapstructure:"port"`

@@ -1,7 +1,7 @@
 package middlewares
 
 import (
-	httpConfig "ichi-go/config/http"
+	httpConfig "ichi-go/pkg/http"
 	"net/http"
 
 	"github.com/labstack/echo/v4"

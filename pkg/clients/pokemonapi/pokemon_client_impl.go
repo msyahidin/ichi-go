@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"ichi-go/config"
-	"ichi-go/internal/infra/http"
 	"ichi-go/pkg/clients/pokemonapi/dto"
+	"ichi-go/pkg/http"
 	"resty.dev/v3"
 	"time"
 )
