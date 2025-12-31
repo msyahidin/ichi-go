@@ -1,0 +1,364 @@
+basePath: /ichi-go/api
+definitions:
+  ichi-go_internal_applications_auth_dto.LoginRequest:
+    description: Login credentials for user authentication
+    properties:
+      email:
+        example: user@example.com
+        type: string
+      password:
+        example: Password123!
+        minLength: 6
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  ichi-go_internal_applications_auth_dto.LoginResponse:
+    description: Successful authentication response containing user info and JWT tokens
+    properties:
+      access_token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+        type: string
+      expires_in:
+        example: 3600
+        type: integer
+      refresh_token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+        type: string
+      token_type:
+        example: Bearer
+        type: string
+      user:
+        $ref: '#/definitions/ichi-go_internal_applications_auth_dto.UserInfo'
+    type: object
+  ichi-go_internal_applications_auth_dto.RefreshTokenRequest:
+    description: Refresh token for obtaining new access token
+    properties:
+      refresh_token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
+    required:
+    - refresh_token
+    type: object
+  ichi-go_internal_applications_auth_dto.RefreshTokenResponse:
+    description: New JWT token pair
+    properties:
+      access_token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
+      expires_in:
+        example: 3600
+        type: integer
+      refresh_token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
+      token_type:
+        example: Bearer
+        type: string
+    type: object
+  ichi-go_internal_applications_auth_dto.RegisterRequest:
+    description: User registration information
+    properties:
+      email:
+        example: john.doe@example.com
+        type: string
+      name:
+        example: John Doe
+        maxLength: 100
+        minLength: 2
+        type: string
+      password:
+        example: SecurePass123!@#
+        type: string
+    required:
+    - email
+    - name
+    - password
+    type: object
+  ichi-go_internal_applications_auth_dto.RegisterResponse:
+    description: Successful user registration response
+    properties:
+      access_token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
+      expires_in:
+        example: 3600
+        type: integer
+      refresh_token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
+      token_type:
+        example: Bearer
+        type: string
+      user:
+        $ref: '#/definitions/ichi-go_internal_applications_auth_dto.UserInfo'
+    type: object
+  ichi-go_internal_applications_auth_dto.UserInfo:
+    description: User profile information
+    properties:
+      created_at:
+        example: "2025-01-01T00:00:00Z"
+        type: string
+      email:
+        example: john.doe@example.com
+        type: string
+      id:
+        example: 1
+        type: integer
+      name:
+        example: John Doe
+        type: string
+    type: object
+  ichi-go_pkg_utils_response.ErrorDetail:
+    description: Detailed error information
+    properties:
+      code:
+        example: VALIDATION_ERROR
+        type: string
+      details:
+        type: object
+      message:
+        example: Validation failed
+        type: string
+    type: object
+  ichi-go_pkg_utils_response.ErrorResponse:
+    description: Standard error response wrapper
+    properties:
+      error:
+        $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorDetail'
+      success:
+        example: false
+        type: boolean
+    type: object
+  ichi-go_pkg_utils_response.SuccessResponse:
+    description: Standard success response wrapper
+    properties:
+      data:
+        type: object
+      message:
+        example: Operation completed successfully
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+externalDocs:
+  description: OpenAPI Specification
+  url: https://swagger.io/specification/
+host: localhost:8080
+info:
+  contact:
+    email: support@ichi-go.dev
+    name: API Support
+  description: |-
+    A production-ready Go backend template built on clean architecture principles.
+    Features include JWT authentication with multiple algorithms (HMAC, RSA, ECDSA),
+    multi-language validation (English/Indonesian), RabbitMQ message queuing,
+    Redis caching with LZ4 compression, and comprehensive error handling.
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  title: Ichi-Go API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user with email and password, returns access and refresh
+        tokens
+      parameters:
+      - default: en
+        description: Language preference (en or id)
+        in: header
+        name: X-Language
+        type: string
+      - description: Login credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/ichi-go_internal_applications_auth_dto.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Login successful
+          schema:
+            allOf:
+            - $ref: '#/definitions/ichi-go_pkg_utils_response.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/ichi-go_internal_applications_auth_dto.LoginResponse'
+              type: object
+        "400":
+          description: Invalid request or validation error
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+        "401":
+          description: Invalid credentials
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+      summary: User login
+      tags:
+      - Auth
+  /auth/logout:
+    post:
+      consumes:
+      - application/json
+      description: Invalidate current user session (client should discard tokens)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Logged out successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/ichi-go_pkg_utils_response.SuccessResponse'
+            - properties:
+                data:
+                  additionalProperties:
+                    type: string
+                  type: object
+              type: object
+        "401":
+          description: Unauthorized - invalid or missing token
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: User logout
+      tags:
+      - Auth
+  /auth/me:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve authenticated user's profile information
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User profile retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/ichi-go_pkg_utils_response.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/ichi-go_internal_applications_auth_dto.UserInfo'
+              type: object
+        "401":
+          description: Unauthorized - invalid or missing token
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get current user profile
+      tags:
+      - Auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Generate new access and refresh tokens using a valid refresh token
+      parameters:
+      - default: en
+        description: Language preference (en or id)
+        in: header
+        name: X-Language
+        type: string
+      - description: Refresh token
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/ichi-go_internal_applications_auth_dto.RefreshTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Tokens refreshed successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/ichi-go_pkg_utils_response.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/ichi-go_internal_applications_auth_dto.RefreshTokenResponse'
+              type: object
+        "400":
+          description: Invalid request or validation error
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+        "401":
+          description: Invalid or expired refresh token
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+      summary: Refresh access token
+      tags:
+      - Auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Create a new user account with email, password, and name
+      parameters:
+      - default: en
+        description: Language preference (en or id)
+        in: header
+        name: X-Language
+        type: string
+      - description: Registration data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/ichi-go_internal_applications_auth_dto.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: User registered successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/ichi-go_pkg_utils_response.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/ichi-go_internal_applications_auth_dto.RegisterResponse'
+              type: object
+        "400":
+          description: Invalid request, validation error, or user already exists
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+      summary: Register new user
+      tags:
+      - Auth
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
+tags:
+- description: Authentication and authorization endpoints including login, register,
+    token refresh, and user profile
+  name: Auth
+- description: User management endpoints
+  name: Users
