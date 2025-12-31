@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	echoSwagger "github.com/swaggo/echo-swagger"
 	"ichi-go/config"
 	"ichi-go/internal/applications/auth"
 	"ichi-go/internal/applications/user"
@@ -14,6 +15,7 @@ import (
 )
 
 func SetupRestRoutes(injector do.Injector, e *echo.Echo, cfg *config.Config) {
+	openOpenAPIDocs(e, cfg)
 	if err := cfg.Auth().InitializeJWTKeys(); err != nil {
 		logger.Errorf("Failed to initialize JWT keys: %v", err)
 	}
@@ -35,4 +37,10 @@ func generateRouteList(e *echo.Echo) {
 	if err != nil {
 		logger.Errorf("failed to write routes to file: %v", err)
 	}
+}
+
+func openOpenAPIDocs(e *echo.Echo, cfg *config.Config) {
+	// Swagger documentation endpoint
+	e.GET("/docs/*", echoSwagger.WrapHandler)
+	logger.Infof("Swagger UI available at http://localhost:%d/docs/index.html", cfg.Http().Port)
 }

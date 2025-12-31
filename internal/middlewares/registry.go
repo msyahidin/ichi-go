@@ -8,6 +8,7 @@ import (
 	httpConfig "ichi-go/pkg/http"
 	"ichi-go/pkg/logger"
 	appValidator "ichi-go/pkg/validator"
+	"strings"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -43,7 +44,14 @@ func Init(e *echo.Echo, mainConfig *config.Config) {
 		DisableErrorHandler: true,
 	}))
 
-	e.Use(middleware.Gzip())
+	e.Use(middleware.GzipWithConfig(middleware.GzipConfig{
+		Skipper: func(c echo.Context) bool {
+			if strings.Contains(c.Request().URL.Path, "swagger") {
+				return true
+			}
+			return false
+		},
+	}))
 	e.Use(middleware.Secure())
 	e.Use(AppRequestTimeOut(mainConfig.Http()))
 	e.Use(Cors(&mainConfig.Http().Cors))

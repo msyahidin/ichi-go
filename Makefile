@@ -174,3 +174,137 @@ db-status: ## Show complete database status
 	@echo ""
 	@echo "$(COLOR_INFO)Available Seeds:$(COLOR_RESET)"
 	@$(MAKE) seed-list
+
+##@ Swagger Documentation
+
+swagger-init: ## Initialize Swagger documentation
+	@echo "$(COLOR_INFO)📝 Initializing Swagger documentation...$(COLOR_RESET)"
+	@swag init -g cmd/main.go -o docs --parseDependency --parseInternal
+	@echo "$(COLOR_SUCCESS)✅ Swagger documentation generated$(COLOR_RESET)"
+	@echo "$(COLOR_INFO)📍 Access at: http://localhost:8080/swagger/index.html$(COLOR_RESET)"
+
+swagger-fmt: ## Format Swagger comments
+	@echo "$(COLOR_INFO)🔧 Formatting Swagger comments...$(COLOR_RESET)"
+	@swag fmt
+	@echo "$(COLOR_SUCCESS)✅ Swagger comments formatted$(COLOR_RESET)"
+
+swagger-gen: swagger-fmt swagger-init ## Format and generate Swagger docs
+	@echo "$(COLOR_SUCCESS)✅ Swagger documentation updated$(COLOR_RESET)"
+
+swagger-validate: ## Validate Swagger documentation
+	@echo "$(COLOR_INFO)🔍 Validating Swagger spec...$(COLOR_RESET)"
+	@if [ -f "docs/swagger.json" ]; then \
+		echo "$(COLOR_SUCCESS)✅ Swagger spec exists$(COLOR_RESET)"; \
+		echo "$(COLOR_INFO)📄 JSON spec: docs/swagger.json$(COLOR_RESET)"; \
+		echo "$(COLOR_INFO)📄 YAML spec: docs/swagger.yaml$(COLOR_RESET)"; \
+	else \
+		echo "$(COLOR_ERROR)❌ Swagger spec not found. Run 'make swagger-init'$(COLOR_RESET)"; \
+		exit 1; \
+	fi
+
+swagger-clean: ## Clean generated Swagger files
+	@echo "$(COLOR_WARNING)🗑️  Cleaning Swagger documentation...$(COLOR_RESET)"
+	@rm -rf docs/docs.go docs/swagger.json docs/swagger.yaml
+	@echo "$(COLOR_SUCCESS)✅ Swagger documentation cleaned$(COLOR_RESET)"
+
+swagger-help: ## Show Swagger usage help
+	@echo "$(COLOR_INFO)╔════════════════════════════════════════════════╗$(COLOR_RESET)"
+	@echo "$(COLOR_INFO)║     Swagger Documentation Commands            ║$(COLOR_RESET)"
+	@echo "$(COLOR_INFO)╚════════════════════════════════════════════════╝$(COLOR_RESET)"
+	@echo ""
+	@echo "$(COLOR_SUCCESS)📚 Available Commands:$(COLOR_RESET)"
+	@echo "  $(COLOR_INFO)make swagger-init$(COLOR_RESET)       - Generate Swagger documentation"
+	@echo "  $(COLOR_INFO)make swagger-fmt$(COLOR_RESET)        - Format Swagger comments"
+	@echo "  $(COLOR_INFO)make swagger-gen$(COLOR_RESET)        - Format and generate docs (recommended)"
+	@echo "  $(COLOR_INFO)make swagger-validate$(COLOR_RESET)   - Validate Swagger spec"
+	@echo "  $(COLOR_INFO)make swagger-clean$(COLOR_RESET)      - Remove generated files"
+	@echo "  $(COLOR_INFO)make swagger-help$(COLOR_RESET)       - Show this help message"
+	@echo ""
+	@echo "$(COLOR_SUCCESS)🚀 Quick Start:$(COLOR_RESET)"
+	@echo "  1. Generate docs:   $(COLOR_INFO)make swagger-gen$(COLOR_RESET)"
+	@echo "  2. Start server:    $(COLOR_INFO)go run cmd/main.go$(COLOR_RESET) or $(COLOR_INFO)air$(COLOR_RESET)"
+	@echo "  3. Visit:           $(COLOR_INFO)http://localhost:8080/swagger/index.html$(COLOR_RESET)"
+	@echo ""
+	@echo "$(COLOR_SUCCESS)💡 Tips:$(COLOR_RESET)"
+	@echo "  • Always run $(COLOR_INFO)make swagger-gen$(COLOR_RESET) after changing controllers"
+	@echo "  • Swagger UI lets you test endpoints interactively"
+	@echo "  • Use the 'Authorize' button to add Bearer token"
+	@echo ""
+
+##@ Application
+
+run: ## Run the application
+	@echo "$(COLOR_INFO)🚀 Starting application...$(COLOR_RESET)"
+	@go run cmd/main.go
+
+run-dev: ## Run the application with hot reload (requires air)
+	@echo "$(COLOR_INFO)🔥 Starting application with hot reload...$(COLOR_RESET)"
+	@air
+
+build: ## Build the application
+	@echo "$(COLOR_INFO)🔨 Building application...$(COLOR_RESET)"
+	@go build -o bin/ichi-go cmd/main.go
+	@echo "$(COLOR_SUCCESS)✅ Build completed: bin/ichi-go$(COLOR_RESET)"
+
+test: ## Run tests
+	@echo "$(COLOR_INFO)🧪 Running tests...$(COLOR_RESET)"
+	@go test ./... -v
+
+test-coverage: ## Run tests with coverage
+	@echo "$(COLOR_INFO)🧪 Running tests with coverage...$(COLOR_RESET)"
+	@go test ./... -coverprofile=coverage.out
+	@go tool cover -html=coverage.out -o coverage.html
+	@echo "$(COLOR_SUCCESS)✅ Coverage report: coverage.html$(COLOR_RESET)"
+
+lint: ## Run linter
+	@echo "$(COLOR_INFO)🔍 Running linter...$(COLOR_RESET)"
+	@golangci-lint run
+
+fmt: ## Format code
+	@echo "$(COLOR_INFO)💅 Formatting code...$(COLOR_RESET)"
+	@go fmt ./...
+	@echo "$(COLOR_SUCCESS)✅ Code formatted$(COLOR_RESET)"
+
+clean: ## Clean build artifacts and generated files
+	@echo "$(COLOR_WARNING)🧹 Cleaning...$(COLOR_RESET)"
+	@rm -rf bin/
+	@rm -rf coverage.out coverage.html
+	@echo "$(COLOR_SUCCESS)✅ Clean completed$(COLOR_RESET)"
+
+##@ Docker
+
+docker-build: ## Build Docker image
+	@echo "$(COLOR_INFO)🐳 Building Docker image...$(COLOR_RESET)"
+	@docker build -t ichi-go:latest .
+	@echo "$(COLOR_SUCCESS)✅ Docker image built$(COLOR_RESET)"
+
+docker-run: ## Run Docker container
+	@echo "$(COLOR_INFO)🐳 Running Docker container...$(COLOR_RESET)"
+	@docker run -p 8080:8080 ichi-go:latest
+
+docker-compose-up: ## Start Docker Compose services
+	@echo "$(COLOR_INFO)🐳 Starting Docker Compose services...$(COLOR_RESET)"
+	@docker-compose up -d
+	@echo "$(COLOR_SUCCESS)✅ Services started$(COLOR_RESET)"
+
+docker-compose-down: ## Stop Docker Compose services
+	@echo "$(COLOR_WARNING)🐳 Stopping Docker Compose services...$(COLOR_RESET)"
+	@docker-compose down
+	@echo "$(COLOR_SUCCESS)✅ Services stopped$(COLOR_RESET)"
+
+##@ Help
+
+help: ## Display this help message
+	@echo "$(COLOR_INFO)╔════════════════════════════════════════════════╗$(COLOR_RESET)"
+	@echo "$(COLOR_INFO)║        Ichi-Go Makefile Commands               ║$(COLOR_RESET)"
+	@echo "$(COLOR_INFO)╚════════════════════════════════════════════════╝$(COLOR_RESET)"
+	@echo ""
+	@awk 'BEGIN {FS = ":.*##"; printf "Usage:\n  make $(COLOR_INFO)<target>$(COLOR_RESET)\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  $(COLOR_INFO)%-25s$(COLOR_RESET) %s\n", $$1, $$2 } /^##@/ { printf "\n$(COLOR_SUCCESS)%s$(COLOR_RESET)\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
+	@echo ""
+	@echo "$(COLOR_SUCCESS)💡 Quick Commands:$(COLOR_RESET)"
+	@echo "  $(COLOR_INFO)make help$(COLOR_RESET)              - Show all commands"
+	@echo "  $(COLOR_INFO)make swagger-help$(COLOR_RESET)     - Show Swagger commands"
+	@echo "  $(COLOR_INFO)make migration-help$(COLOR_RESET)   - Show migration commands"
+	@echo ""
+
+.DEFAULT_GOAL := help
