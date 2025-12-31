@@ -7,6 +7,7 @@ import (
 	"ichi-go/internal/applications/order/repository"
 	"ichi-go/internal/infra/queue/rabbitmq"
 	"ichi-go/pkg/logger"
+	"strconv"
 )
 
 type OrderService interface {
@@ -42,19 +43,19 @@ func (s *ServiceImpl) ProcessPayment(ctx context.Context, orderID string) error 
 	if paymentSuccess {
 		// Update order status
 		order.Status = "paid"
-		if err := s.repo.Update(ctx, order); err != nil {
+		if order, err = s.repo.Update(ctx, order); err != nil {
 			return err
 		}
 
 		// Publish payment completed event
 		event := dto.PaymentCompletedEvent{
 			EventType:     "payment.completed",
-			OrderID:       order.ID,
+			OrderID:       strconv.FormatInt(order.ID, 10),
 			UserID:        order.UserID,
 			Amount:        order.TotalAmount,
 			Currency:      "IDR",
 			PaymentMethod: "credit_card",
-			TransactionID: "txn_" + order.ID,
+			TransactionID: "txn_" + strconv.FormatInt(order.ID, 10),
 		}
 
 		opts := rabbitmq.PublishOptions{}
@@ -69,14 +70,14 @@ func (s *ServiceImpl) ProcessPayment(ctx context.Context, orderID string) error 
 
 	// Payment failed
 	order.Status = "payment_failed"
-	if err := s.repo.Update(ctx, order); err != nil {
+	if order, err = s.repo.Update(ctx, order); err != nil {
 		return err
 	}
 
 	// Publish payment failed event
 	event := dto.PaymentFailedEvent{
 		EventType: "payment.failed",
-		OrderID:   order.ID,
+		OrderID:   strconv.FormatInt(order.ID, 10),
 		UserID:    order.UserID,
 		Amount:    order.TotalAmount,
 		Reason:    "Insufficient funds",
@@ -103,18 +104,18 @@ func (s *ServiceImpl) RefundOrder(ctx context.Context, orderID, reason string) e
 	}
 
 	// Process refund with payment gateway
-	refundID := "ref_" + order.ID
+	refundID := "ref_" + strconv.FormatInt(order.ID, 10)
 
 	// Update order
 	order.Status = "refunded"
-	if err := s.repo.Update(ctx, order); err != nil {
+	if order, err = s.repo.Update(ctx, order); err != nil {
 		return err
 	}
 
 	// Publish refund event
 	event := dto.PaymentRefundedEvent{
 		EventType: "payment.refunded",
-		OrderID:   order.ID,
+		OrderID:   strconv.FormatInt(order.ID, 10),
 		UserID:    order.UserID,
 		Amount:    order.TotalAmount,
 		Reason:    reason,
