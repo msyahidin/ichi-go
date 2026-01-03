@@ -14,7 +14,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/pkgerrors"
+	"github.com/samber/oops/loggers/zerolog"
 	"github.com/spf13/viper"
 )
 
@@ -45,6 +45,8 @@ func GetInstance() *Logger {
 		if err != nil {
 			level = zerolog.InfoLevel
 		}
+		zerolog.ErrorStackMarshaler = oopszerolog.OopsStackMarshaller
+		zerolog.ErrorMarshalFunc = oopszerolog.OopsMarshalFunc
 		debug := viper.GetBool("app.debug")
 		if debug {
 			level = zerolog.DebugLevel
@@ -59,7 +61,8 @@ func GetInstance() *Logger {
 		var output io.Writer
 		output = os.Stdout
 		if level == zerolog.DebugLevel {
-			zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
+			// zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
+			zerolog.ErrorStackMarshaler = oopszerolog.OopsStackMarshaller
 		}
 		if pretty {
 			output = zerolog.ConsoleWriter{Out: os.Stderr, NoColor: false,
