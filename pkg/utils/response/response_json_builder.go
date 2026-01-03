@@ -9,19 +9,17 @@ import (
 )
 
 type body struct {
-	ErrorCode  int                    `json:"code,omitempty"`
-	Message    string                 `json:"message"`
-	Data       interface{}            `json:"data,omitempty"`
-	Errors     []validator.FieldError `json:"errors,omitempty"`
-	Error      string                 `json:"error,omitempty"`
-	ServerTime string                 `json:"serverTime"`
+	Code       int         `json:"code"`
+	Message    string      `json:"message"`
+	Data       interface{} `json:"data,omitempty"`
+	Errors     interface{} `json:"errors,omitempty"` // For validation OR general errors
+	ServerTime string      `json:"serverTime"`
 }
 
 func Base(ctx echo.Context, httpCode int, message string, data interface{}, errorCode int, err error) error {
-
 	date := time.Now().Format(time.RFC1123)
 	bodyResponse := body{
-		ErrorCode:  errorCode,
+		Code:       httpCode,
 		Message:    message,
 		ServerTime: date,
 	}
@@ -31,19 +29,17 @@ func Base(ctx echo.Context, httpCode int, message string, data interface{}, erro
 	}
 
 	if err != nil {
-		// Check if it's ValidationErrors
 		if validationErr, ok := err.(*validator.ValidationErrors); ok {
 			bodyResponse.Errors = validationErr.Errors
 			bodyResponse.Message = "Validation failed"
 		} else {
-			bodyResponse.Error = err.Error()
+			bodyResponse.Errors = map[string]string{
+				"message": err.Error(),
+			}
 		}
 	}
 
-	//added header for standard response
-	//https://developer.mozilla.org/en-US/docs/Glossary/Response_header
 	ctx.Response().Header().Add("date", date)
-
 	return ctx.JSON(httpCode, bodyResponse)
 }
 

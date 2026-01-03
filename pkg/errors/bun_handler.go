@@ -1,4 +1,4 @@
-package errorhandler
+package errors
 
 import (
 	"database/sql"

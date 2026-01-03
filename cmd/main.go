@@ -10,7 +10,7 @@ import (
 	"ichi-go/internal/infra"
 	"ichi-go/internal/infra/queue/rabbitmq"
 	"ichi-go/internal/middlewares"
-	"ichi-go/pkg/errorhandler"
+	errors2 "ichi-go/pkg/errors"
 	"ichi-go/pkg/logger"
 	"net/http"
 	"os"
@@ -69,7 +69,7 @@ func main() {
 	// Setup web routes and error handler
 	server.SetupRestRoutes(injector, e, cfg)
 	server.SetupWebRoutes(e, cfg.Schema())
-	errorhandler.Setup(e)
+	errors2.Setup(e)
 
 	// Log all routes
 	for _, route := range e.Routes() {

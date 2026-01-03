@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"fmt"
 	authDto "ichi-go/internal/applications/auth/dto"
 	authService "ichi-go/internal/applications/auth/service"
 	"ichi-go/pkg/authenticator"
@@ -46,10 +47,9 @@ func (c *AuthController) Login(eCtx echo.Context) error {
 	loginResponse, err := c.service.Login(eCtx.Request().Context(), req)
 	if err != nil {
 		logger.Errorf("Login failed: %v", err)
-		return response.Error(eCtx, http.StatusUnauthorized, err)
+		return err
+		//return response.Error(eCtx, http.StatusUnauthorized, err)
 	}
-
-	logger.Infof("User logged in successfully: %s", req.Email)
 	return response.Success(eCtx, loginResponse)
 }
 
@@ -70,12 +70,13 @@ func (c *AuthController) Register(eCtx echo.Context) error {
 
 	err := appValidator.BindAndValidate(eCtx, &req)
 	if err != nil {
-		return response.Error(eCtx, http.StatusBadRequest, err)
+		return err
+		//return response.Error(eCtx, http.StatusBadRequest, err)
 	}
 
 	registerResponse, err := c.service.Register(eCtx.Request().Context(), req)
 	if err != nil {
-		return response.Error(eCtx, http.StatusBadRequest, err)
+		return err
 	}
 
 	return response.Created(eCtx, registerResponse)
@@ -100,14 +101,14 @@ func (c *AuthController) RefreshToken(eCtx echo.Context) error {
 	// Bind and validate with automatic language detection
 	if err := appValidator.BindAndValidate(eCtx, &req); err != nil {
 		logger.Errorf("Refresh token request validation failed: %v", err)
-		return err // Already formatted as JSON
+		return err
 	}
 
 	// Refresh tokens
 	refreshResponse, err := c.service.RefreshToken(eCtx.Request().Context(), req)
 	if err != nil {
 		logger.Errorf("Token refresh failed: %v", err)
-		return response.Error(eCtx, http.StatusUnauthorized, err)
+		return err
 	}
 
 	logger.Infof("Token refreshed successfully")
@@ -143,8 +144,10 @@ func (c *AuthController) Logout(eCtx echo.Context) error {
 // @Failure      500  {object}  response.ErrorResponse                            "Internal server error"
 // @Router       /auth/me [get]
 func (c *AuthController) Me(eCtx echo.Context) error {
+	fmt.Println("AuthController.Me called")
 	// Get auth context from middleware
 	authCtx, ok := eCtx.Get("auth").(*authenticator.AuthContext)
+	logger.Debugf("AuthController.Me: authCtx=%+v, ok=%v", authCtx, ok)
 	if !ok {
 		return response.Error(eCtx, http.StatusUnauthorized,
 			echo.NewHTTPError(http.StatusUnauthorized, "unauthorized"))
@@ -153,8 +156,8 @@ func (c *AuthController) Me(eCtx echo.Context) error {
 	// Get user info
 	user, err := c.service.Me(eCtx.Request().Context(), *authCtx)
 	if err != nil {
-		logger.Errorf("Failed to get user info: %v", err)
-		return response.Error(eCtx, http.StatusInternalServerError, err)
+		logger.Errorf("Failed to retrieve user profile: %v", err)
+		return err
 	}
 
 	return response.Success(eCtx, user)

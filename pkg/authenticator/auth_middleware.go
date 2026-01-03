@@ -1,13 +1,10 @@
 package authenticator
 
 import (
-	"ichi-go/pkg/utils/response"
-	"net/http"
-
 	"github.com/labstack/echo/v4"
 )
 
-// Authenticate middleware tries all enabled auth methods
+// AuthenticateMiddleware Authenticate middleware tries all enabled auth methods
 func (a *Authenticator) AuthenticateMiddleware(options ...AuthOption) echo.MiddlewareFunc {
 	opts := &authOptions{guestAllowed: false}
 	for _, opt := range options {
@@ -40,7 +37,7 @@ func (a *Authenticator) AuthenticateMiddleware(options ...AuthOption) echo.Middl
 				if opts.guestAllowed {
 					return next(c)
 				}
-				return response.Error(c, http.StatusUnauthorized, err)
+				return err
 			}
 
 			// Store auth context

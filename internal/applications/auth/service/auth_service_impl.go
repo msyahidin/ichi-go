@@ -2,13 +2,13 @@ package auth
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	authDto "ichi-go/internal/applications/auth/dto"
 	userDto "ichi-go/internal/applications/user/dto"
 	userRepo "ichi-go/internal/applications/user/repository"
 	"ichi-go/internal/infra/queue/rabbitmq"
 	"ichi-go/pkg/authenticator"
+	pkgErrors "ichi-go/pkg/errors"
 	"ichi-go/pkg/logger"
 	"time"
 
@@ -17,30 +17,37 @@ import (
 
 // Login authenticates user and returns tokens
 func (s *ServiceImpl) Login(ctx context.Context, req authDto.LoginRequest) (*authDto.LoginResponse, error) {
-	// Get user by email
 	user, err := s.GetUserByEmail(ctx, req.Email)
 	if err != nil {
-		return nil, fmt.Errorf("invalid credentials: %w", err)
+		return nil, pkgErrors.AuthService(pkgErrors.ErrCodeInvalidCredentials).
+			With("email", req.Email).
+			Hint("Invalid email or password").
+			Wrap(err)
 	}
 
 	if user == nil {
-		return nil, errors.New("invalid credentials")
+		return nil, pkgErrors.AuthService(pkgErrors.ErrCodeUserNotFound).
+			With("email", req.Email).
+			Hint("Invalid email or password").
+			Errorf("user not found")
 	}
 
-	// Verify password
 	if !s.VerifyPassword(user.Password, req.Password) {
-		return nil, errors.New("invalid credentials")
+		return nil, pkgErrors.AuthService(pkgErrors.ErrCodeInvalidCredentials).
+			With("email", req.Email).
+			With("user_id", user.ID).
+			Hint("Invalid email or password").
+			Errorf("password verification failed")
 	}
 
-	// Generate tokens
 	tokenPair, err := s.jwtAuth.GenerateTokens(uint64(user.ID))
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate tokens: %w", err)
+		return nil, pkgErrors.AuthService(pkgErrors.ErrCodeTokenGenFailed).
+			With("user_id", user.ID).
+			Hint("Failed to generate authentication tokens").
+			Wrap(err)
 	}
 
-	// TODO: Store refresh token in database or cache if needed
-
-	// Build response
 	response := &authDto.LoginResponse{
 		User: authDto.UserInfo{
 			ID:        uint64(user.ID),
@@ -59,46 +66,52 @@ func (s *ServiceImpl) Login(ctx context.Context, req authDto.LoginRequest) (*aut
 
 // Register creates new user and returns tokens
 func (s *ServiceImpl) Register(ctx context.Context, req authDto.RegisterRequest) (*authDto.RegisterResponse, error) {
-	// Check if user already exists
 	existingUser, _ := s.GetUserByEmail(ctx, req.Email)
 	if existingUser != nil {
-		return nil, errors.New("user with this email already exists")
+		return nil, pkgErrors.AuthService(pkgErrors.ErrCodeUserExists).
+			With("email", req.Email).
+			Hint("Email already registered").
+			Errorf("user already exists")
 	}
 
-	// Hash password
 	hashedPassword, err := s.HashPassword(req.Password)
 	if err != nil {
-		return nil, fmt.Errorf("failed to hash password: %w", err)
+		return nil, pkgErrors.AuthService(pkgErrors.ErrCodePasswordHashFailed).
+			With("email", req.Email).
+			Hint("Failed to process password").
+			Wrap(err)
 	}
 
-	// Create user model
 	newUser := userRepo.UserModel{
 		Name:     req.Name,
 		Email:    req.Email,
 		Password: hashedPassword,
 	}
 
-	// Save user to database
 	userID, err := s.userRepo.Create(ctx, newUser)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create user: %w", err)
+		return nil, pkgErrors.AuthService(pkgErrors.ErrCodeDatabase).
+			With("email", req.Email).
+			Hint("Failed to create user account").
+			Wrap(err)
 	}
 
-	// Get created user
 	user, err := s.userRepo.GetById(ctx, uint64(userID))
 	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve created user: %w", err)
+		return nil, pkgErrors.AuthService(pkgErrors.ErrCodeDatabase).
+			With("user_id", userID).
+			Hint("Failed to retrieve created user").
+			Wrap(err)
 	}
 
-	// Generate tokens
 	tokenPair, err := s.jwtAuth.GenerateTokens(uint64(user.ID))
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate tokens: %w", err)
+		return nil, pkgErrors.AuthService(pkgErrors.ErrCodeTokenGenFailed).
+			With("user_id", user.ID).
+			Hint("Failed to generate authentication tokens").
+			Wrap(err)
 	}
 
-	// TODO: Store refresh token in database or cache if needed
-
-	// Build response
 	response := &authDto.RegisterResponse{
 		User: authDto.UserInfo{
 			ID:        uint64(user.ID),
@@ -113,8 +126,10 @@ func (s *ServiceImpl) Register(ctx context.Context, req authDto.RegisterRequest)
 	}
 
 	if err := s.EnqueueWelcomeNotification(ctx, uint32(userID)); err != nil {
-		// Log but don't fail user creation
-		logger.Errorf("Failed to queue welcome notification: %v", err)
+		logger.Errorf("%v", pkgErrors.Queue(pkgErrors.ErrCodeNotificationFailed).
+			With("user_id", userID).
+			Hint("Welcome notification could not be queued").
+			Wrap(err))
 	}
 
 	return response, nil
@@ -122,35 +137,35 @@ func (s *ServiceImpl) Register(ctx context.Context, req authDto.RegisterRequest)
 
 // RefreshToken validates refresh token and generates new token pair
 func (s *ServiceImpl) RefreshToken(ctx context.Context, req authDto.RefreshTokenRequest) (*authDto.RefreshTokenResponse, error) {
-	// Validate refresh token and get user ID
 	userID, err := s.jwtAuth.ValidateRefreshToken(req.RefreshToken)
 	if err != nil {
-		return nil, fmt.Errorf("invalid refresh token: %w", err)
+		return nil, pkgErrors.AuthService(pkgErrors.ErrCodeInvalidToken).
+			Hint("Invalid or expired refresh token").
+			Wrap(err)
 	}
 
-	// Verify user still exists
 	user, err := s.userRepo.GetById(ctx, userID)
 	if err != nil || user == nil {
-		return nil, errors.New("user not found")
+		return nil, pkgErrors.AuthService(pkgErrors.ErrCodeUserNotFound).
+			With("user_id", userID).
+			Hint("User not found").
+			Errorf("user not found")
 	}
 
-	// Generate new token pair
 	tokenPair, err := s.jwtAuth.GenerateTokens(userID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate tokens: %w", err)
+		return nil, pkgErrors.AuthService(pkgErrors.ErrCodeTokenGenFailed).
+			With("user_id", userID).
+			Hint("Failed to generate new tokens").
+			Wrap(err)
 	}
 
-	// TODO: Update stored refresh token in database or cache if needed
-
-	// Build response
-	response := &authDto.RefreshTokenResponse{
+	return &authDto.RefreshTokenResponse{
 		AccessToken:  tokenPair.AccessToken,
 		RefreshToken: tokenPair.RefreshToken,
 		TokenType:    tokenPair.TokenType,
 		ExpiresIn:    tokenPair.ExpiresIn,
-	}
-
-	return response, nil
+	}, nil
 }
 
 // GetUserByEmail retrieves user by email address
@@ -177,20 +192,26 @@ func (s *ServiceImpl) VerifyPassword(hashedPassword, password string) bool {
 func (s *ServiceImpl) Me(ctx context.Context, authCtx authenticator.AuthContext) (*authDto.UserInfo, error) {
 	user, err := s.userRepo.GetById(ctx, authCtx.UserID.ID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get user info: %w", err)
-	}
-	if user == nil {
-		return nil, errors.New("user not found")
+		return nil, pkgErrors.AuthService(pkgErrors.ErrCodeDatabase).
+			With("user_id", authCtx.UserID.ID).
+			WithContext(ctx).
+			Hint("Failed to retrieve user profile").
+			Wrap(err)
 	}
 
-	userInfo := &authDto.UserInfo{
+	if user == nil {
+		return nil, pkgErrors.AuthService(pkgErrors.ErrCodeUserNotFound).
+			With("user_id", authCtx.UserID.ID).
+			Hint("User profile not found").
+			Errorf("user not found")
+	}
+
+	return &authDto.UserInfo{
 		ID:        uint64(user.ID),
 		Name:      user.Name,
 		Email:     user.Email,
 		CreatedAt: user.CreatedAt,
-	}
-
-	return userInfo, nil
+	}, nil
 }
 
 // EnqueueWelcomeNotification PublishWelcomeNotification Producer publishes message to queue
@@ -202,7 +223,7 @@ func (s *ServiceImpl) EnqueueWelcomeNotification(ctx context.Context, userID uin
 
 	user, err := s.userRepo.GetById(ctx, uint64(userID))
 	if err != nil {
-		return fmt.Errorf("failed to get user: %w", err)
+		return err
 	}
 
 	message := userDto.WelcomeNotificationMessage{
@@ -217,7 +238,7 @@ func (s *ServiceImpl) EnqueueWelcomeNotification(ctx context.Context, userID uin
 	}
 	if err := s.producer.Publish(ctx, "user.welcome", message, opts); err != nil {
 		logger.Errorf("Failed to publish welcome notification: %v", err)
-		return fmt.Errorf("failed to publish: %w", err)
+		return err
 	}
 	return nil
 }
