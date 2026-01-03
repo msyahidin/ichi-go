@@ -75,7 +75,7 @@ func (c *AuthController) Register(eCtx echo.Context) error {
 
 	registerResponse, err := c.service.Register(eCtx.Request().Context(), req)
 	if err != nil {
-		return response.Error(eCtx, http.StatusBadRequest, err)
+		return err
 	}
 
 	return response.Created(eCtx, registerResponse)

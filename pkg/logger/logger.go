@@ -45,7 +45,7 @@ func GetInstance() *Logger {
 		if err != nil {
 			level = zerolog.InfoLevel
 		}
-		zerolog.ErrorStackMarshaler = oopszerolog.OopsStackMarshaller
+		//zerolog.ErrorStackMarshaler = oopszerolog.OopsStackMarshaller
 		zerolog.ErrorMarshalFunc = oopszerolog.OopsMarshalFunc
 		debug := viper.GetBool("app.debug")
 		if debug {
