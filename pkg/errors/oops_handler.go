@@ -55,19 +55,41 @@ func mapErrorCodeToHTTP(code interface{}) int {
 	codeStr := fmt.Sprintf("%v", code)
 
 	switch codeStr {
+	// Auth - 401 Unauthorized
+	case ErrCodeInvalidCredentials,
+		ErrCodeInvalidToken,
+		ErrCodeTokenExpired,
+		ErrCodeUnauthorized:
+		return http.StatusUnauthorized
+
+	// Auth - 400 Bad Request
+	case ErrCodePasswordWeak:
+		return http.StatusBadRequest
+
+	// Auth - 404 Not Found
+	case ErrCodeUserNotFound,
+		ErrCodeNotFound:
+		return http.StatusNotFound
+
+	// Auth - 409 Conflict
 	case ErrCodeUserExists:
-		return http.StatusConflict // 409
-	case ErrCodeInvalidCredentials:
-		return http.StatusUnauthorized // 401
-	case ErrCodeUserNotFound:
-		return http.StatusNotFound // 404
-	case ErrCodeInvalidToken:
-		return http.StatusUnauthorized // 401
+		return http.StatusConflict
+
+	// Validation - 400 Bad Request
 	case ErrCodeValidation:
-		return http.StatusBadRequest // 400
-	case ErrCodeDatabase:
-		return http.StatusInternalServerError // 500
+		return http.StatusBadRequest
+
+	// Infrastructure - 500 Internal Server Error
+	case ErrCodeDatabase,
+		ErrCodeCache,
+		ErrCodeQueue,
+		ErrCodeInternal,
+		ErrCodePasswordHashFailed,
+		ErrCodeTokenGenFailed,
+		ErrCodeNotificationFailed:
+		return http.StatusInternalServerError
+
 	default:
-		return http.StatusInternalServerError // 500
+		return http.StatusInternalServerError
 	}
 }

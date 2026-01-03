@@ -246,15 +246,15 @@ build: ## Build the application
 	@go build -o bin/ichi-go cmd/main.go
 	@echo "$(COLOR_SUCCESS)✅ Build completed: bin/ichi-go$(COLOR_RESET)"
 
-test: ## Run tests
-	@echo "$(COLOR_INFO)🧪 Running tests...$(COLOR_RESET)"
-	@go test ./... -v
-
-test-coverage: ## Run tests with coverage
-	@echo "$(COLOR_INFO)🧪 Running tests with coverage...$(COLOR_RESET)"
-	@go test ./... -coverprofile=coverage.out
-	@go tool cover -html=coverage.out -o coverage.html
-	@echo "$(COLOR_SUCCESS)✅ Coverage report: coverage.html$(COLOR_RESET)"
+#test: ## Run tests
+#	@echo "$(COLOR_INFO)🧪 Running tests...$(COLOR_RESET)"
+#	@go test ./... -v
+#
+#test-coverage: ## Run tests with coverage
+#	@echo "$(COLOR_INFO)🧪 Running tests with coverage...$(COLOR_RESET)"
+#	@go test ./... -coverprofile=coverage.out
+#	@go tool cover -html=coverage.out -o coverage.html
+#	@echo "$(COLOR_SUCCESS)✅ Coverage report: coverage.html$(COLOR_RESET)"
 
 lint: ## Run linter
 	@echo "$(COLOR_INFO)🔍 Running linter...$(COLOR_RESET)"
@@ -308,3 +308,209 @@ help: ## Display this help message
 	@echo ""
 
 .DEFAULT_GOAL := help
+
+# Testing Makefile Targets for ichi-go
+# Add these to your main Makefile
+
+##@ Testing
+
+.PHONY: test test-unit test-integration test-auth test-coverage test-verbose test-race test-bench test-clean
+
+# Colors for output
+COLOR_TEST = \033[35m
+
+test: ## Run all tests
+	@echo "$(COLOR_INFO)🧪 Running all tests...$(COLOR_RESET)"
+	@go test ./... -v
+	@echo "$(COLOR_SUCCESS)✅ All tests passed$(COLOR_RESET)"
+
+test-unit: ## Run unit tests only
+	@echo "$(COLOR_INFO)🧪 Running unit tests...$(COLOR_RESET)"
+	@go test ./internal/applications/*/service/... ./pkg/... -v -short
+	@echo "$(COLOR_SUCCESS)✅ Unit tests passed$(COLOR_RESET)"
+
+test-integration: ## Run integration tests only
+	@echo "$(COLOR_INFO)🧪 Running integration tests...$(COLOR_RESET)"
+	@go test ./... -v -run Integration
+	@echo "$(COLOR_SUCCESS)✅ Integration tests passed$(COLOR_RESET)"
+
+test-auth: ## Run auth service tests only
+	@echo "$(COLOR_INFO)🔐 Running auth service tests...$(COLOR_RESET)"
+	@go test ./internal/applications/auth/service/... -v
+	@echo "$(COLOR_SUCCESS)✅ Auth tests passed$(COLOR_RESET)"
+
+test-coverage: ## Run tests with coverage report
+	@echo "$(COLOR_INFO)📊 Running tests with coverage...$(COLOR_RESET)"
+	@go test ./... -cover -coverprofile=coverage.out
+	@go tool cover -func=coverage.out
+	@go tool cover -html=coverage.out -o coverage.html
+	@echo "$(COLOR_SUCCESS)✅ Coverage report generated: coverage.html$(COLOR_RESET)"
+	@echo "$(COLOR_INFO)📈 Opening coverage report in browser...$(COLOR_RESET)"
+	@open coverage.html 2>/dev/null || xdg-open coverage.html 2>/dev/null || echo "Please open coverage.html manually"
+
+test-coverage-auth: ## Run auth service tests with coverage
+	@echo "$(COLOR_INFO)📊 Running auth tests with coverage...$(COLOR_RESET)"
+	@go test ./internal/applications/auth/service/... -cover -coverprofile=auth_coverage.out
+	@go tool cover -func=auth_coverage.out
+	@go tool cover -html=auth_coverage.out -o auth_coverage.html
+	@echo "$(COLOR_SUCCESS)✅ Auth coverage report generated: auth_coverage.html$(COLOR_RESET)"
+
+test-verbose: ## Run tests with verbose output
+	@echo "$(COLOR_INFO)🧪 Running tests with verbose output...$(COLOR_RESET)"
+	@go test ./... -v -count=1
+
+test-race: ## Run tests with race detector
+	@echo "$(COLOR_WARNING)⚠️  Running tests with race detector...$(COLOR_RESET)"
+	@go test ./... -race -v
+	@echo "$(COLOR_SUCCESS)✅ No race conditions detected$(COLOR_RESET)"
+
+test-bench: ## Run benchmark tests
+	@echo "$(COLOR_INFO)⚡ Running benchmark tests...$(COLOR_RESET)"
+	@go test ./... -bench=. -benchmem -run=^$
+	@echo "$(COLOR_SUCCESS)✅ Benchmarks completed$(COLOR_RESET)"
+
+test-bench-auth: ## Run auth service benchmarks
+	@echo "$(COLOR_TEST)⚡ Running auth service benchmarks...$(COLOR_RESET)"
+	@go test ./internal/applications/auth/service/... -bench=. -benchmem -run=^$
+
+test-watch: ## Watch and run tests on file changes (requires entr)
+	@echo "$(COLOR_INFO)👀 Watching for changes...$(COLOR_RESET)"
+	@echo "$(COLOR_WARNING)Requires 'entr' to be installed$(COLOR_RESET)"
+	@find . -name '*.go' | entr -c go test ./... -v
+
+test-clean: ## Clean test cache and coverage files
+	@echo "$(COLOR_WARNING)🧹 Cleaning test artifacts...$(COLOR_RESET)"
+	@go clean -testcache
+	@rm -f coverage.out coverage.html auth_coverage.out auth_coverage.html
+	@rm -f *.test
+	@echo "$(COLOR_SUCCESS)✅ Test artifacts cleaned$(COLOR_RESET)"
+
+test-failfast: ## Run tests and stop on first failure
+	@echo "$(COLOR_INFO)🧪 Running tests with fail-fast...$(COLOR_RESET)"
+	@go test ./... -v -failfast
+
+test-timeout: ## Run tests with custom timeout (default: 30s)
+	@echo "$(COLOR_INFO)⏱️  Running tests with 30s timeout...$(COLOR_RESET)"
+	@go test ./... -v -timeout 30s
+
+test-json: ## Run tests with JSON output
+	@echo "$(COLOR_INFO)📄 Running tests with JSON output...$(COLOR_RESET)"
+	@go test ./... -json > test-results.json
+	@echo "$(COLOR_SUCCESS)✅ Results saved to test-results.json$(COLOR_RESET)"
+
+test-profile: ## Run tests and generate CPU profile
+	@echo "$(COLOR_INFO)🔬 Running tests with CPU profiling...$(COLOR_RESET)"
+	@go test ./... -cpuprofile=cpu.prof -memprofile=mem.prof
+	@echo "$(COLOR_SUCCESS)✅ Profiles generated: cpu.prof, mem.prof$(COLOR_RESET)"
+	@echo "$(COLOR_INFO)💡 Analyze with: go tool pprof cpu.prof$(COLOR_RESET)"
+
+test-list: ## List all available tests
+	@echo "$(COLOR_INFO)📋 Available tests:$(COLOR_RESET)"
+	@go test ./... -list . 2>/dev/null | grep -v "^ok" | grep -v "^?"
+
+test-deps: ## Check test dependencies
+	@echo "$(COLOR_INFO)📦 Checking test dependencies...$(COLOR_RESET)"
+	@go list -f '{{.TestImports}}' ./... | tr ' ' '\n' | sort -u | grep -v "^$"
+
+##@ Test Generators
+
+test-generate-mocks: ## Generate mocks for testing
+	@echo "$(COLOR_INFO)🎭 Generating mocks...$(COLOR_RESET)"
+	@go install github.com/vektra/mockery/v2@latest
+	@mockery --all --dir internal/applications --output mocks --keeptree
+	@echo "$(COLOR_SUCCESS)✅ Mocks generated in ./mocks$(COLOR_RESET)"
+
+##@ Quick Test Commands
+
+qt: test ## Quick alias for test
+qta: test-auth ## Quick alias for test-auth
+qtc: test-coverage ## Quick alias for test-coverage
+qtca: test-coverage-auth ## Quick alias for auth coverage
+qtr: test-race ## Quick alias for test-race
+qtb: test-bench ## Quick alias for benchmark
+
+##@ CI/CD Testing
+
+test-ci: ## Run tests in CI environment
+	@echo "$(COLOR_INFO)🤖 Running tests for CI...$(COLOR_RESET)"
+	@go test ./... -v -race -coverprofile=coverage.out -covermode=atomic
+	@go tool cover -func=coverage.out
+	@echo "$(COLOR_SUCCESS)✅ CI tests completed$(COLOR_RESET)"
+
+test-ci-short: ## Run fast tests for CI
+	@echo "$(COLOR_INFO)🤖 Running short tests for CI...$(COLOR_RESET)"
+	@go test ./... -short -race -coverprofile=coverage.out
+	@echo "$(COLOR_SUCCESS)✅ Short CI tests completed$(COLOR_RESET)"
+
+##@ Test Reports
+
+test-report: test-coverage ## Generate comprehensive test report
+	@echo "$(COLOR_INFO)📊 Generating test report...$(COLOR_RESET)"
+	@mkdir -p reports
+	@go test ./... -v -json > reports/test-results.json
+	@go test ./... -coverprofile=reports/coverage.out
+	@go tool cover -html=reports/coverage.out -o reports/coverage.html
+	@go tool cover -func=reports/coverage.out > reports/coverage.txt
+	@echo "$(COLOR_SUCCESS)✅ Reports generated in ./reports/$(COLOR_RESET)"
+	@echo "$(COLOR_INFO)📁 Files:$(COLOR_RESET)"
+	@echo "   - reports/test-results.json"
+	@echo "   - reports/coverage.html"
+	@echo "   - reports/coverage.txt"
+
+##@ Test Help
+
+test-help: ## Show detailed testing help
+	@echo "$(COLOR_INFO)╔════════════════════════════════════════════════╗$(COLOR_RESET)"
+	@echo "$(COLOR_INFO)║          Testing Commands Help                 ║$(COLOR_RESET)"
+	@echo "$(COLOR_INFO)╚════════════════════════════════════════════════╝$(COLOR_RESET)"
+	@echo ""
+	@echo "$(COLOR_SUCCESS)📚 Basic Commands:$(COLOR_RESET)"
+	@echo "  $(COLOR_INFO)make test$(COLOR_RESET)              - Run all tests"
+	@echo "  $(COLOR_INFO)make test-unit$(COLOR_RESET)         - Run unit tests only"
+	@echo "  $(COLOR_INFO)make test-auth$(COLOR_RESET)         - Run auth service tests"
+	@echo "  $(COLOR_INFO)make test-coverage$(COLOR_RESET)     - Generate coverage report"
+	@echo ""
+	@echo "$(COLOR_SUCCESS)🔍 Advanced Commands:$(COLOR_RESET)"
+	@echo "  $(COLOR_INFO)make test-race$(COLOR_RESET)         - Detect race conditions"
+	@echo "  $(COLOR_INFO)make test-bench$(COLOR_RESET)        - Run benchmarks"
+	@echo "  $(COLOR_INFO)make test-verbose$(COLOR_RESET)      - Verbose output"
+	@echo "  $(COLOR_INFO)make test-failfast$(COLOR_RESET)     - Stop on first failure"
+	@echo ""
+	@echo "$(COLOR_SUCCESS)⚡ Quick Aliases:$(COLOR_RESET)"
+	@echo "  $(COLOR_INFO)make qt$(COLOR_RESET)                - Alias for test"
+	@echo "  $(COLOR_INFO)make qta$(COLOR_RESET)               - Alias for test-auth"
+	@echo "  $(COLOR_INFO)make qtc$(COLOR_RESET)               - Alias for test-coverage"
+	@echo "  $(COLOR_INFO)make qtr$(COLOR_RESET)               - Alias for test-race"
+	@echo ""
+	@echo "$(COLOR_SUCCESS)🤖 CI/CD Commands:$(COLOR_RESET)"
+	@echo "  $(COLOR_INFO)make test-ci$(COLOR_RESET)           - Full CI test suite"
+	@echo "  $(COLOR_INFO)make test-ci-short$(COLOR_RESET)     - Quick CI tests"
+	@echo ""
+	@echo "$(COLOR_SUCCESS)💡 Tips:$(COLOR_RESET)"
+	@echo "  • Run $(COLOR_INFO)make test-coverage$(COLOR_RESET) before committing"
+	@echo "  • Use $(COLOR_INFO)make test-race$(COLOR_RESET) to catch concurrency issues"
+	@echo "  • Run $(COLOR_INFO)make test-bench$(COLOR_RESET) to monitor performance"
+	@echo "  • Use $(COLOR_INFO)make test-clean$(COLOR_RESET) if tests behave oddly"
+	@echo ""
+
+# Example GitHub Actions workflow
+.PHONY: test-github-actions
+test-github-actions: ## Show example GitHub Actions config
+	@echo "$(COLOR_INFO)Example GitHub Actions workflow:$(COLOR_RESET)"
+	@cat << 'EOF'
+name: Tests
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v4
+        with:
+          go-version: '1.24'
+      - name: Run tests
+        run: make test-ci
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage.out

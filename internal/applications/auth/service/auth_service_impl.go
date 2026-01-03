@@ -42,8 +42,9 @@ func (s *ServiceImpl) Login(ctx context.Context, req authDto.LoginRequest) (*aut
 
 	tokenPair, err := s.jwtAuth.GenerateTokens(uint64(user.ID))
 	if err != nil {
-		return nil, pkgErrors.AuthService(pkgErrors.ErrCodeInternal).
+		return nil, pkgErrors.AuthService(pkgErrors.ErrCodeTokenGenFailed).
 			With("user_id", user.ID).
+			Hint("Failed to generate authentication tokens").
 			Wrap(err)
 	}
 
@@ -75,7 +76,9 @@ func (s *ServiceImpl) Register(ctx context.Context, req authDto.RegisterRequest)
 
 	hashedPassword, err := s.HashPassword(req.Password)
 	if err != nil {
-		return nil, pkgErrors.AuthService(pkgErrors.ErrCodeInternal).
+		return nil, pkgErrors.AuthService(pkgErrors.ErrCodePasswordHashFailed).
+			With("email", req.Email).
+			Hint("Failed to process password").
 			Wrap(err)
 	}
 
@@ -89,6 +92,7 @@ func (s *ServiceImpl) Register(ctx context.Context, req authDto.RegisterRequest)
 	if err != nil {
 		return nil, pkgErrors.AuthService(pkgErrors.ErrCodeDatabase).
 			With("email", req.Email).
+			Hint("Failed to create user account").
 			Wrap(err)
 	}
 
@@ -96,13 +100,15 @@ func (s *ServiceImpl) Register(ctx context.Context, req authDto.RegisterRequest)
 	if err != nil {
 		return nil, pkgErrors.AuthService(pkgErrors.ErrCodeDatabase).
 			With("user_id", userID).
+			Hint("Failed to retrieve created user").
 			Wrap(err)
 	}
 
 	tokenPair, err := s.jwtAuth.GenerateTokens(uint64(user.ID))
 	if err != nil {
-		return nil, pkgErrors.AuthService(pkgErrors.ErrCodeInternal).
+		return nil, pkgErrors.AuthService(pkgErrors.ErrCodeTokenGenFailed).
 			With("user_id", user.ID).
+			Hint("Failed to generate authentication tokens").
 			Wrap(err)
 	}
 
@@ -120,8 +126,9 @@ func (s *ServiceImpl) Register(ctx context.Context, req authDto.RegisterRequest)
 	}
 
 	if err := s.EnqueueWelcomeNotification(ctx, uint32(userID)); err != nil {
-		logger.Errorf("%v", pkgErrors.Queue("NOTIFICATION_FAILED").
+		logger.Errorf("%v", pkgErrors.Queue(pkgErrors.ErrCodeNotificationFailed).
 			With("user_id", userID).
+			Hint("Welcome notification could not be queued").
 			Wrap(err))
 	}
 
@@ -147,8 +154,9 @@ func (s *ServiceImpl) RefreshToken(ctx context.Context, req authDto.RefreshToken
 
 	tokenPair, err := s.jwtAuth.GenerateTokens(userID)
 	if err != nil {
-		return nil, pkgErrors.AuthService(pkgErrors.ErrCodeInternal).
+		return nil, pkgErrors.AuthService(pkgErrors.ErrCodeTokenGenFailed).
 			With("user_id", userID).
+			Hint("Failed to generate new tokens").
 			Wrap(err)
 	}
 
@@ -187,12 +195,14 @@ func (s *ServiceImpl) Me(ctx context.Context, authCtx authenticator.AuthContext)
 		return nil, pkgErrors.AuthService(pkgErrors.ErrCodeDatabase).
 			With("user_id", authCtx.UserID.ID).
 			WithContext(ctx).
+			Hint("Failed to retrieve user profile").
 			Wrap(err)
 	}
 
 	if user == nil {
 		return nil, pkgErrors.AuthService(pkgErrors.ErrCodeUserNotFound).
 			With("user_id", authCtx.UserID.ID).
+			Hint("User profile not found").
 			Errorf("user not found")
 	}
 

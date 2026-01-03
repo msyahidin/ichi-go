@@ -47,10 +47,9 @@ func (c *AuthController) Login(eCtx echo.Context) error {
 	loginResponse, err := c.service.Login(eCtx.Request().Context(), req)
 	if err != nil {
 		logger.Errorf("Login failed: %v", err)
-		return response.Error(eCtx, http.StatusUnauthorized, err)
+		return err
+		//return response.Error(eCtx, http.StatusUnauthorized, err)
 	}
-
-	logger.Infof("User logged in successfully: %s", req.Email)
 	return response.Success(eCtx, loginResponse)
 }
 
@@ -71,7 +70,8 @@ func (c *AuthController) Register(eCtx echo.Context) error {
 
 	err := appValidator.BindAndValidate(eCtx, &req)
 	if err != nil {
-		return response.Error(eCtx, http.StatusBadRequest, err)
+		return err
+		//return response.Error(eCtx, http.StatusBadRequest, err)
 	}
 
 	registerResponse, err := c.service.Register(eCtx.Request().Context(), req)
