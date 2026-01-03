@@ -1,4 +1,4 @@
-package errorhandler
+package errors
 
 import "github.com/labstack/echo/v4"
 

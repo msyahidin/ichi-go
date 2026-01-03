@@ -213,7 +213,7 @@ func (s *ServiceImpl) EnqueueWelcomeNotification(ctx context.Context, userID uin
 
 	user, err := s.userRepo.GetById(ctx, uint64(userID))
 	if err != nil {
-		return fmt.Errorf("failed to get user: %w", err)
+		return err
 	}
 
 	message := userDto.WelcomeNotificationMessage{
@@ -228,7 +228,7 @@ func (s *ServiceImpl) EnqueueWelcomeNotification(ctx context.Context, userID uin
 	}
 	if err := s.producer.Publish(ctx, "user.welcome", message, opts); err != nil {
 		logger.Errorf("Failed to publish welcome notification: %v", err)
-		return fmt.Errorf("failed to publish: %w", err)
+		return err
 	}
 	return nil
 }

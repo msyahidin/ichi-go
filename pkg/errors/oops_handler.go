@@ -1,44 +1,41 @@
-package errorhandler
+package errors
 
 import (
-	"errors"
 	"fmt"
-	"github.com/samber/oops"
-	pkgErrors "ichi-go/pkg/errors"
-	"net/http"
-
 	"github.com/labstack/echo/v4"
+	"github.com/samber/oops"
 	"ichi-go/pkg/logger"
 	"ichi-go/pkg/utils/response"
 	appValidator "ichi-go/pkg/validator"
+	"net/http"
 )
 
-func Setup(e *echo.Echo) {
-	e.HTTPErrorHandler = customErrorHandler
+type OopsErrorHandler struct {
 }
 
-func customErrorHandler(err error, c echo.Context) {
+func NewOppsHandler() *OopsErrorHandler {
+	return &OopsErrorHandler{}
+}
 
+func (h *OopsErrorHandler) Handle(err error, c echo.Context) error {
 	if c.Response().Committed {
-		return
+		return nil
 	}
-
 	code := http.StatusInternalServerError
-	message := err.Error()
-	fmt.Println("Custom Error Handler Invoked:", message) // this line not logged
-	// Handle Echo HTTP errors
-	var he *echo.HTTPError
-	if errors.As(err, &he) {
-		code = he.Code
-		message = fmt.Sprintf("%v", he.Message)
-	}
+
+	//// Handle Echo HTTP errors
+	//var he *echo.HTTPError
+	//if errors.As(err, &he) {
+	//	code = he.Code
+	//	message := fmt.Sprintf("%v", he.Message)
+	//}
 
 	// Handle validation errors
 	if validationErr := appValidator.GetValidationError(err); validationErr != nil {
 		code = http.StatusBadRequest
 		logger.Warnf("Validation error: %v", err)
 		response.Error(c, code, err)
-		return
+		return err
 	}
 	if oopsErr, ok := oops.AsOops(err); ok {
 		code = mapErrorCodeToHTTP(oopsErr.Code())
@@ -51,23 +48,24 @@ func customErrorHandler(err error, c echo.Context) {
 	}
 
 	response.Error(c, code, err)
+	return err
 }
 
 func mapErrorCodeToHTTP(code interface{}) int {
 	codeStr := fmt.Sprintf("%v", code)
 
 	switch codeStr {
-	case pkgErrors.ErrCodeUserExists:
+	case ErrCodeUserExists:
 		return http.StatusConflict // 409
-	case pkgErrors.ErrCodeInvalidCredentials:
+	case ErrCodeInvalidCredentials:
 		return http.StatusUnauthorized // 401
-	case pkgErrors.ErrCodeUserNotFound:
+	case ErrCodeUserNotFound:
 		return http.StatusNotFound // 404
-	case pkgErrors.ErrCodeInvalidToken:
+	case ErrCodeInvalidToken:
 		return http.StatusUnauthorized // 401
-	case pkgErrors.ErrCodeValidation:
+	case ErrCodeValidation:
 		return http.StatusBadRequest // 400
-	case pkgErrors.ErrCodeDatabase:
+	case ErrCodeDatabase:
 		return http.StatusInternalServerError // 500
 	default:
 		return http.StatusInternalServerError // 500

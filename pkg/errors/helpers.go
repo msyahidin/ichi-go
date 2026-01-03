@@ -93,9 +93,9 @@ func ExternalAPI(code string) oops.OopsErrorBuilder {
 // ============================================================================
 
 // Internal - Generic internal error
-func Internal(code string) oops.OopsErrorBuilder {
+func Internal(domain string, code string) oops.OopsErrorBuilder {
 	return oops.Code(code).
-		In(serviceName).
+		In(domain).
 		Tags("internal")
 }
 

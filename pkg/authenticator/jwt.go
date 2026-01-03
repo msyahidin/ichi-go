@@ -1,6 +1,7 @@
 package authenticator
 
 import (
+	pkgErrors "ichi-go/pkg/errors"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -50,21 +51,30 @@ type JWTClaimsValidator func(claims jwt.MapClaims) error
 func (a *JWTAuthenticator) Authenticate(c echo.Context) (*AuthContext, error) {
 	tokenString, err := ExtractToken(c, *a.config)
 	if err != nil {
-		return nil, err
+		return nil, pkgErrors.AuthService(pkgErrors.ErrCodeInvalidToken).
+			Hint("Token not found in request").
+			Wrap(err)
 	}
 
 	token, err := ParseToken(tokenString, *a.config)
 	if err != nil {
-		return nil, err
+		return nil, pkgErrors.AuthService(pkgErrors.ErrCodeInvalidToken).
+			Hint("Invalid token format").
+			Wrap(err)
 	}
+
 	claims, err := ValidateToken(token, *a.config)
 	if err != nil {
-		return nil, err
+		return nil, pkgErrors.AuthService(pkgErrors.ErrCodeTokenExpired).
+			Hint("Token validation failed").
+			Wrap(err)
 	}
 
 	user, err := GetUserIdFromMapClaims(claims)
 	if err != nil {
-		return nil, err
+		return nil, pkgErrors.AuthService(pkgErrors.ErrCodeInvalidToken).
+			Hint("Invalid user claims").
+			Wrap(err)
 	}
 
 	return &AuthContext{UserID: user}, nil
@@ -85,22 +95,25 @@ func (a *JWTAuthenticator) GenerateTokens(userID uint64) (*TokenPair, error) {
 // ValidateRefreshToken validates a refresh token and returns the user ID
 // This is useful for token refresh endpoints
 func (a *JWTAuthenticator) ValidateRefreshToken(tokenString string) (uint64, error) {
-	// Parse the refresh token
 	token, err := ParseToken(tokenString, *a.config)
 	if err != nil {
-		return 0, err
+		return 0, pkgErrors.AuthService(pkgErrors.ErrCodeInvalidToken).
+			Hint("Invalid refresh token format").
+			Wrap(err)
 	}
 
-	// Validate the token
 	claims, err := ValidateToken(token, *a.config)
 	if err != nil {
-		return 0, err
+		return 0, pkgErrors.AuthService(pkgErrors.ErrCodeTokenExpired).
+			Hint("Refresh token expired or invalid").
+			Wrap(err)
 	}
 
-	// Extract user ID
 	user, err := GetUserIdFromMapClaims(claims)
 	if err != nil {
-		return 0, err
+		return 0, pkgErrors.AuthService(pkgErrors.ErrCodeInvalidToken).
+			Hint("Invalid user claims in refresh token").
+			Wrap(err)
 	}
 
 	return user.ID, nil
