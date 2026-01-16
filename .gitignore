@@ -9,6 +9,7 @@
 
 .idea
 .cursor
+.claude
 
 *.log*
 

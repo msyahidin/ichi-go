@@ -90,10 +90,14 @@ auth:
     refresh_token_ttl: "720h" # 30 days for development
     leeway_duration: "5m"     # More lenient for dev
     skip_paths:
+      - "/health"
+      - "/health/live"
+      - "/health/ready"
       - "/api/v1/auth/*"
       - "/api/v1/public/*"
       - "/swagger/*"
       - "/debug/*"
+      - "/docs/*"
     private_key: "path to private key"
     public_key: "path to public key"
 

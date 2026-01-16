@@ -273,24 +273,169 @@ clean: ## Clean build artifacts and generated files
 
 ##@ Docker
 
+IMAGE_NAME := ichi-go
+IMAGE_TAG := latest
+COMPOSE_PROD := docker-compose.yml
+COMPOSE_DEV := docker-compose.dev.yml
+
 docker-build: ## Build Docker image
 	@echo "$(COLOR_INFO)🐳 Building Docker image...$(COLOR_RESET)"
-	@docker build -t ichi-go:latest .
+	@docker build -t $(IMAGE_NAME):$(IMAGE_TAG) .
+	@echo "$(COLOR_SUCCESS)✅ Docker image built: $(IMAGE_NAME):$(IMAGE_TAG)$(COLOR_RESET)"
+
+docker-build-dev: ## Build development Docker image
+	@echo "$(COLOR_INFO)🐳 Building development Docker image...$(COLOR_RESET)"
+	@docker build -f Dockerfile.dev -t $(IMAGE_NAME):dev .
+	@echo "$(COLOR_SUCCESS)✅ Development image built$(COLOR_RESET)"
+
+
+docker-build-dev-no-cache: ## Build development Docker image
+	@echo "$(COLOR_INFO)🐳 Building development Docker image...$(COLOR_RESET)"
+	@docker build --no-cache -f Dockerfile.dev -t $(IMAGE_NAME):dev .
+	@echo "$(COLOR_SUCCESS)✅ Development image built$(COLOR_RESET)"
+
+docker-build-no-cache: ## Build Docker image without cache
+	@echo "$(COLOR_INFO)🐳 Building Docker image (no cache)...$(COLOR_RESET)"
+	@docker build --no-cache -t $(IMAGE_NAME):$(IMAGE_TAG) .
 	@echo "$(COLOR_SUCCESS)✅ Docker image built$(COLOR_RESET)"
 
 docker-run: ## Run Docker container
 	@echo "$(COLOR_INFO)🐳 Running Docker container...$(COLOR_RESET)"
-	@docker run -p 8080:8080 ichi-go:latest
+	@docker run -p 8080:8080 -p 8081:8081 $(IMAGE_NAME):$(IMAGE_TAG)
 
-docker-compose-up: ## Start Docker Compose services
-	@echo "$(COLOR_INFO)🐳 Starting Docker Compose services...$(COLOR_RESET)"
-	@docker-compose up -d
+docker-up: ## Start production Docker Compose services
+	@echo "$(COLOR_INFO)🐳 Starting production services...$(COLOR_RESET)"
+	@docker-compose -f $(COMPOSE_PROD) up -d
 	@echo "$(COLOR_SUCCESS)✅ Services started$(COLOR_RESET)"
+	@echo "$(COLOR_INFO)📍 API: http://localhost:8080$(COLOR_RESET)"
+	@echo "$(COLOR_INFO)📍 Swagger: http://localhost:8080/swagger/index.html$(COLOR_RESET)"
 
-docker-compose-down: ## Stop Docker Compose services
-	@echo "$(COLOR_WARNING)🐳 Stopping Docker Compose services...$(COLOR_RESET)"
-	@docker-compose down
+docker-up-dev: ## Start development Docker Compose services with hot reload
+	@echo "$(COLOR_INFO)🐳 Starting development services...$(COLOR_RESET)"
+	@docker-compose -f $(COMPOSE_DEV) up
+	@echo "$(COLOR_SUCCESS)✅ Development services started$(COLOR_RESET)"
+
+docker-down: ## Stop Docker Compose services
+	@echo "$(COLOR_WARNING)🐳 Stopping services...$(COLOR_RESET)"
+	@docker-compose -f $(COMPOSE_PROD) down
+	@docker-compose -f $(COMPOSE_DEV) down
 	@echo "$(COLOR_SUCCESS)✅ Services stopped$(COLOR_RESET)"
+
+docker-restart: ## Restart Docker services
+	@echo "$(COLOR_INFO)🔄 Restarting services...$(COLOR_RESET)"
+	@docker-compose -f $(COMPOSE_PROD) restart
+	@echo "$(COLOR_SUCCESS)✅ Services restarted$(COLOR_RESET)"
+
+docker-logs: ## View Docker logs
+	@docker-compose -f $(COMPOSE_PROD) logs -f
+
+docker-logs-app: ## View app container logs only
+	@docker-compose -f $(COMPOSE_PROD) logs -f app
+
+docker-ps: ## Show Docker container status
+	@docker-compose -f $(COMPOSE_PROD) ps
+
+docker-shell: ## Open shell in app container
+	@echo "$(COLOR_INFO)🐚 Opening shell in app container...$(COLOR_RESET)"
+	@docker-compose -f $(COMPOSE_PROD) exec app sh
+
+docker-shell-root: ## Open shell as root in app container
+	@echo "$(COLOR_INFO)🐚 Opening root shell in app container...$(COLOR_RESET)"
+	@docker-compose -f $(COMPOSE_PROD) exec -u root app sh
+
+docker-clean: ## Remove containers, volumes, and images
+	@echo "$(COLOR_WARNING)🧹 Cleaning Docker resources...$(COLOR_RESET)"
+	@docker-compose -f $(COMPOSE_PROD) down -v --rmi all
+	@docker-compose -f $(COMPOSE_DEV) down -v --rmi all
+	@echo "$(COLOR_SUCCESS)✅ Docker resources cleaned$(COLOR_RESET)"
+
+docker-prune: ## Remove unused Docker resources
+	@echo "$(COLOR_WARNING)🧹 Pruning unused Docker resources...$(COLOR_RESET)"
+	@docker system prune -a -f --volumes
+	@echo "$(COLOR_SUCCESS)✅ Docker resources pruned$(COLOR_RESET)"
+
+docker-health: ## Check service health
+	@echo "$(COLOR_INFO)🏥 Checking service health...$(COLOR_RESET)"
+	@docker-compose -f $(COMPOSE_PROD) ps
+	@echo ""
+	@echo "$(COLOR_INFO)📊 Health endpoint:$(COLOR_RESET)"
+	@curl -s http://localhost:8080/health | jq . 2>/dev/null || curl -s http://localhost:8080/health || echo "App not responding"
+
+docker-migrate-up: ## Run database migrations in container
+	@echo "$(COLOR_INFO)⬆️  Running migrations in container...$(COLOR_RESET)"
+	@docker-compose -f $(COMPOSE_PROD) exec app goose -dir db/migrations/schema mysql "ichi_user:ichi_password@tcp(mysql:3306)/ichi_db" up
+	@echo "$(COLOR_SUCCESS)✅ Migrations completed$(COLOR_RESET)"
+
+docker-migrate-down: ## Rollback last migration in container
+	@echo "$(COLOR_WARNING)⬇️  Rolling back migration in container...$(COLOR_RESET)"
+	@docker-compose -f $(COMPOSE_PROD) exec app goose -dir db/migrations/schema mysql "ichi_user:ichi_password@tcp(mysql:3306)/ichi_db" down
+	@echo "$(COLOR_SUCCESS)✅ Rollback completed$(COLOR_RESET)"
+
+docker-seed: ## Run database seeds in container
+	@echo "$(COLOR_INFO)🌱 Running seeds in container...$(COLOR_RESET)"
+	@docker-compose -f $(COMPOSE_PROD) exec app goose -dir db/migrations/seeds mysql "ichi_user:ichi_password@tcp(mysql:3306)/ichi_db" up
+	@echo "$(COLOR_SUCCESS)✅ Seeds completed$(COLOR_RESET)"
+
+docker-mysql: ## Access MySQL shell in container
+	@docker-compose -f $(COMPOSE_PROD) exec mysql mysql -u ichi_user -pichi_password ichi_db
+
+docker-redis: ## Access Redis CLI in container
+	@docker-compose -f $(COMPOSE_PROD) exec redis redis-cli
+
+docker-rabbitmq: ## Show RabbitMQ status
+	@docker-compose -f $(COMPOSE_PROD) exec rabbitmq rabbitmqctl status
+
+docker-deploy: ## Deploy using automation script
+	@echo "$(COLOR_INFO)🚀 Deploying with automation script...$(COLOR_RESET)"
+	@./scripts/deploy-docker.sh production
+
+docker-deploy-dev: ## Deploy development environment
+	@echo "$(COLOR_INFO)🚀 Deploying development environment...$(COLOR_RESET)"
+	@./scripts/deploy-docker.sh dev
+
+docker-stats: ## Show Docker container resource usage
+	@docker stats
+
+docker-swagger: ## Regenerate Swagger docs in container
+	@echo "$(COLOR_INFO)📝 Regenerating Swagger docs in container...$(COLOR_RESET)"
+	@docker-compose -f $(COMPOSE_PROD) exec app swag init -g cmd/main.go -o docs --parseDependency --parseInternal
+	@echo "$(COLOR_SUCCESS)✅ Swagger docs regenerated$(COLOR_RESET)"
+
+docker-help: ## Show Docker commands help
+	@echo "$(COLOR_INFO)╔════════════════════════════════════════════════╗$(COLOR_RESET)"
+	@echo "$(COLOR_INFO)║          Docker Commands Help                  ║$(COLOR_RESET)"
+	@echo "$(COLOR_INFO)╚════════════════════════════════════════════════╝$(COLOR_RESET)"
+	@echo ""
+	@echo "$(COLOR_SUCCESS)🐳 Build Commands:$(COLOR_RESET)"
+	@echo "  $(COLOR_INFO)make docker-build$(COLOR_RESET)          - Build production image"
+	@echo "  $(COLOR_INFO)make docker-build-dev$(COLOR_RESET)      - Build development image"
+	@echo "  $(COLOR_INFO)make docker-build-no-cache$(COLOR_RESET) - Build without cache"
+	@echo ""
+	@echo "$(COLOR_SUCCESS)🚀 Run Commands:$(COLOR_RESET)"
+	@echo "  $(COLOR_INFO)make docker-up$(COLOR_RESET)             - Start production services"
+	@echo "  $(COLOR_INFO)make docker-up-dev$(COLOR_RESET)         - Start dev services (hot reload)"
+	@echo "  $(COLOR_INFO)make docker-down$(COLOR_RESET)           - Stop all services"
+	@echo "  $(COLOR_INFO)make docker-restart$(COLOR_RESET)        - Restart services"
+	@echo ""
+	@echo "$(COLOR_SUCCESS)🔧 Management Commands:$(COLOR_RESET)"
+	@echo "  $(COLOR_INFO)make docker-logs$(COLOR_RESET)           - View all logs"
+	@echo "  $(COLOR_INFO)make docker-shell$(COLOR_RESET)          - Open app shell"
+	@echo "  $(COLOR_INFO)make docker-health$(COLOR_RESET)         - Check health status"
+	@echo "  $(COLOR_INFO)make docker-ps$(COLOR_RESET)             - Show containers"
+	@echo ""
+	@echo "$(COLOR_SUCCESS)🗄️  Database Commands:$(COLOR_RESET)"
+	@echo "  $(COLOR_INFO)make docker-migrate-up$(COLOR_RESET)     - Run migrations"
+	@echo "  $(COLOR_INFO)make docker-seed$(COLOR_RESET)           - Run seeds"
+	@echo "  $(COLOR_INFO)make docker-mysql$(COLOR_RESET)          - MySQL shell"
+	@echo ""
+	@echo "$(COLOR_SUCCESS)🧹 Cleanup Commands:$(COLOR_RESET)"
+	@echo "  $(COLOR_INFO)make docker-clean$(COLOR_RESET)          - Remove containers & volumes"
+	@echo "  $(COLOR_INFO)make docker-prune$(COLOR_RESET)          - Prune unused resources"
+	@echo ""
+	@echo "$(COLOR_SUCCESS)📚 Quick Start:$(COLOR_RESET)"
+	@echo "  1. $(COLOR_INFO)make docker-deploy$(COLOR_RESET)      - Automated deployment"
+	@echo "  2. View Swagger: $(COLOR_INFO)http://localhost:8080/swagger/index.html$(COLOR_RESET)"
+	@echo ""
 
 ##@ Help
 

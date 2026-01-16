@@ -1,0 +1,80 @@
+# Git
+.git
+.gitignore
+
+# IDEs
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Local development
+config.local.yaml
+config.dev.yaml
+*.local.*
+
+# Build artifacts
+bin/
+dist/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test files
+*_test.go
+testdata/
+coverage.out
+*.test
+
+# Air (hot reload)
+tmp/
+# .air.toml is needed for development Docker image
+
+# Dependencies
+vendor/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.log
+*.tmp
+*.pid
+
+# Documentation (generated)
+docs/swagger.yaml
+docs/swagger.json
+
+# Environment files (security)
+.env
+.env.*
+!.env.example
+
+# Docker
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.circleci/
+
+# Mocks and generated code
+mocks/
+*.mock.go
+
+# Coverage reports
+coverage.html
+coverage.txt
+
+# Makefile
+Makefile
+
+# README
+README.md
+CLAUDE.md
+LICENSE
