@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  # Development app with hot reload
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: ichi-go-dev
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    environment:
+      APP_ENV: local
+    volumes:
+      - .:/app
+      - go-modules:/go/pkg/mod
+    depends_on:
+      - mysql
+      - redis
+      - rabbitmq
+    networks:
+      - ichi-network
+
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: ichi-go-mysql-dev
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: mydb
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_dev_data:/var/lib/mysql
+    networks:
+      - ichi-network
+    command: --default-authentication-plugin=mysql_native_password
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: ichi-go-redis-dev
+    ports:
+      - "6379:6379"
+    networks:
+      - ichi-network
+
+  # RabbitMQ
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: ichi-go-rabbitmq-dev
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - ./docker/rabbitmq/enabled_plugins:/etc/rabbitmq/enabled_plugins:ro
+    networks:
+      - ichi-network
+
+networks:
+  ichi-network:
+    driver: bridge
+
+volumes:
+  mysql_dev_data:
+  go-modules:

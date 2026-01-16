@@ -60,7 +60,28 @@ A production-ready Go backend template built on clean architecture principles, d
 
 ## 🚀 Getting Started
 
-### Prerequisites
+### Quick Start with Docker (Recommended)
+
+The fastest way to get started is using Docker:
+
+```bash
+# 1. Update production config
+nano config.production.yaml
+# Change JWT secret and sensitive values
+
+# 2. Deploy everything
+make docker-deploy
+
+# 3. Access
+# API: http://localhost:8080
+# Swagger: http://localhost:8080/swagger/index.html
+```
+
+**📚 See [README.Docker.md](./README.Docker.md) for complete Docker deployment guide**
+
+### Local Development Setup
+
+#### Prerequisites
 ```bash
 # Required
 go >= 1.24
@@ -73,7 +94,7 @@ make
 air  # for hot reload
 ```
 
-### Installation
+#### Installation
 
 1. **Clone and setup**
 ```bash
