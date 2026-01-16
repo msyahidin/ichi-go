@@ -1,0 +1,54 @@
+package validators
+
+import (
+	ut "github.com/go-playground/universal-translator"
+	"github.com/go-playground/validator/v10"
+	appValidator "ichi-go/pkg/validator"
+)
+
+func RegisterHealthValidators(av *appValidator.AppValidator) error {
+	v := av.GetValidator()
+
+	// TODO: Register custom validation functions
+	// if err := v.RegisterValidation("custom_rule", validateCustomRule); err != nil {
+	//     return err
+	// }
+
+	// Register translations for each supported language
+	for _, lang := range []string{"en", "id"} {
+		trans := av.GetTranslator(lang)
+		// TODO: Register custom translations
+		// if err := registerCustomTranslation(v, trans, lang); err != nil {
+		//     return err
+		// }
+		_ = trans
+	}
+
+	return nil
+}
+
+// Example custom validator function:
+// func validateCustomRule(fl validator.FieldLevel) bool {
+//     value := fl.Field().String()
+//     return len(value) > 0
+// }
+
+// Example translation registration:
+// func registerCustomTranslation(v *validator.Validate, trans ut.Translator, lang string) error {
+//     var message string
+//     switch lang {
+//     case "id":
+//         message = "{0} tidak valid"
+//     default:
+//         message = "{0} is invalid"
+//     }
+//     return v.RegisterTranslation("custom_rule", trans,
+//         func(ut ut.Translator) error {
+//             return ut.Add("custom_rule", message, true)
+//         },
+//         func(ut ut.Translator, fe validator.FieldError) string {
+//             t, _ := ut.T("custom_rule", fe.Field())
+//             return t
+//         },
+//     )
+// }

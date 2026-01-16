@@ -191,10 +191,10 @@ func TestGetStrategy(t *testing.T) {
 }
 
 func TestNewDateVersion(t *testing.T) {
-	version := NewDateVersion(2026, 1)
+	version := NewDateVersion(2026, 1, "")
 	assert.Equal(t, APIVersion("2026-01"), version)
 
-	version = NewDateVersion(2026, 12)
+	version = NewDateVersion(2026, 12, "")
 	assert.Equal(t, APIVersion("2026-12"), version)
 }
 
@@ -209,7 +209,7 @@ func TestNewDateDailyVersion(t *testing.T) {
 func TestGetCurrentDateVersion(t *testing.T) {
 	version := GetCurrentDateVersion()
 	now := time.Now()
-	expected := NewDateVersion(now.Year(), int(now.Month()))
+	expected := NewDateVersion(now.Year(), int(now.Month()), "-")
 	assert.Equal(t, expected, version)
 }
 

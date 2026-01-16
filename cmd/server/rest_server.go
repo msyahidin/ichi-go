@@ -5,6 +5,7 @@ import (
 	echoSwagger "github.com/swaggo/echo-swagger"
 	"ichi-go/config"
 	"ichi-go/internal/applications/auth"
+	healthapp "ichi-go/internal/applications/health"
 	"ichi-go/internal/applications/user"
 	"ichi-go/pkg/authenticator"
 	"ichi-go/pkg/logger"
@@ -22,6 +23,7 @@ func SetupRestRoutes(injector do.Injector, e *echo.Echo, cfg *config.Config) {
 	appAuth := authenticator.New(cfg.Auth())
 	user.Register(injector, cfg.App().Name, e, appAuth)
 	auth.Register(injector, cfg.App().Name, e, appAuth)
+	healthapp.Register(injector, e, cfg)
 }
 
 func GetServiceName(configApp config.AppConfig) string {
