@@ -414,11 +414,31 @@ test-deps: ## Check test dependencies
 
 ##@ Test Generators
 
-test-generate-mocks: ## Generate mocks for testing
-	@echo "$(COLOR_INFO)🎭 Generating mocks...$(COLOR_RESET)"
-	@go install github.com/vektra/mockery/v2@latest
-	@mockery --all --dir internal/applications --output mocks --keeptree
-	@echo "$(COLOR_SUCCESS)✅ Mocks generated in ./mocks$(COLOR_RESET)"
+test-install-mockery: ## Install mockery tool (v3.6+)
+	@echo "$(COLOR_INFO)📦 Installing mockery v3...$(COLOR_RESET)"
+	@go install github.com/vektra/mockery/v3@latest
+	@echo "$(COLOR_SUCCESS)✅ Mockery v3 installed$(COLOR_RESET)"
+
+test-generate-mocks: test-install-mockery ## Generate mocks using portable script (works with any module name)
+	@echo "$(COLOR_INFO)🎭 Generating mocks (module-agnostic)...$(COLOR_RESET)"
+	@./scripts/generate-mocks.sh
+	@echo "$(COLOR_SUCCESS)✅ Mocks generated successfully$(COLOR_RESET)"
+
+test-generate-mocks-config: test-install-mockery ## Generate mocks using .mockery.yaml (requires module name update)
+	@echo "$(COLOR_INFO)🎭 Generating mocks from .mockery.yaml...$(COLOR_RESET)"
+	@mockery --config .mockery.yaml
+	@echo "$(COLOR_SUCCESS)✅ Mocks generated successfully$(COLOR_RESET)"
+
+test-generate-mocks-all: test-install-mockery ## Generate all mocks (force regenerate)
+	@echo "$(COLOR_INFO)🎭 Force regenerating all mocks...$(COLOR_RESET)"
+	@rm -rf internal/*/mocks pkg/*/mocks
+	@./scripts/generate-mocks.sh
+	@echo "$(COLOR_SUCCESS)✅ All mocks regenerated$(COLOR_RESET)"
+
+test-clean-mocks: ## Clean generated mock files
+	@echo "$(COLOR_WARNING)🧹 Cleaning mock files...$(COLOR_RESET)"
+	@find . -type d -name "mocks" -exec rm -rf {} + 2>/dev/null || true
+	@echo "$(COLOR_SUCCESS)✅ Mock files cleaned$(COLOR_RESET)"
 
 ##@ Quick Test Commands
 

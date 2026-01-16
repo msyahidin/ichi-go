@@ -1,0 +1,60 @@
+# Mockery v3.6.1 Configuration
+# For v3.6+, mockery requires full module paths, but we use a script-based approach
+# See Makefile for the dynamic generation approach
+
+# Global settings
+filename: "mock_{{.InterfaceName | snakecase}}.go"
+dir: "{{.InterfaceDir}}/mocks"
+
+# For v3.6+, use command line instead of config file for package discovery
+# Run: mockery --dir ./internal/applications/auth/service --all --output ./internal/applications/auth/service/mocks
+
+# Packages to scan
+packages:
+  ichi-go/internal/applications/auth/service:
+    config:
+      all: true
+
+  ichi-go/internal/applications/auth/repository:
+    config:
+      all: true
+
+  ichi-go/internal/applications/user/service:
+    config:
+      all: true
+
+  ichi-go/internal/applications/user/repository:
+    config:
+      all: true
+
+  ichi-go/internal/applications/order/service:
+    config:
+      all: true
+
+  ichi-go/internal/applications/order/repository:
+    config:
+      all: true
+
+  ichi-go/internal/infra/database:
+    config:
+      all: true
+
+  ichi-go/internal/infra/cache:
+    config:
+      all: true
+
+  ichi-go/internal/infra/queue/rabbitmq:
+    config:
+      all: true
+
+  ichi-go/pkg/authenticator:
+    config:
+      all: true
+
+  ichi-go/pkg/validator:
+    config:
+      all: true
+
+  ichi-go/pkg/logger:
+    config:
+      all: true
