@@ -5,6 +5,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+	"net/http/httptest"
 	"os"
 	"testing"
 	"time"
@@ -399,9 +400,9 @@ func TestExtractToken(t *testing.T) {
 
 	// Create Echo context with token
 	e := echo.New()
-	req := echo.NewRequest("GET", "/", nil)
+	req := httptest.NewRequest("GET", "/", nil)
 	req.Header.Set("Authorization", "Bearer test-token-12345")
-	rec := echo.NewResponseRecorder()
+	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 
 	// Extract token
