@@ -95,7 +95,7 @@ func copyRequestID(next echo.HandlerFunc) echo.HandlerFunc {
 }
 
 func AppRequestTimeOut(configHttp *httpConfig.Config) echo.MiddlewareFunc {
-	return middleware.TimeoutWithConfig(middleware.TimeoutConfig{
+	return middleware.ContextTimeoutWithConfig(middleware.ContextTimeoutConfig{
 		Timeout: time.Duration(configHttp.Timeout) * time.Second,
 	})
 }

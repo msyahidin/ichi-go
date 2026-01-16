@@ -1,13 +1,11 @@
 package validators
 
 import (
-	ut "github.com/go-playground/universal-translator"
-	"github.com/go-playground/validator/v10"
 	appValidator "ichi-go/pkg/validator"
 )
 
 func RegisterHealthValidators(av *appValidator.AppValidator) error {
-	v := av.GetValidator()
+	_ = av.GetValidator()
 
 	// TODO: Register custom validation functions
 	// if err := v.RegisterValidation("custom_rule", validateCustomRule); err != nil {

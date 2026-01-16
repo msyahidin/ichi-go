@@ -1,8 +1,8 @@
 module ichi-go
 
-go 1.24.6
+go 1.25
 
-toolchain go1.24.11
+toolchain go1.25.0
 
 require (
 	github.com/dranikpg/dto-mapper v0.2.1
@@ -12,7 +12,7 @@ require (
 	github.com/go-sql-driver/mysql v1.9.3
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/google/uuid v1.6.0
-	github.com/labstack/echo/v4 v4.14.0
+	github.com/labstack/echo/v4 v4.15.0
 	github.com/labstack/gommon v0.4.2
 	github.com/pierrec/lz4/v4 v4.1.23
 	github.com/pressly/goose/v3 v3.26.0
@@ -60,7 +60,6 @@ require (
 	github.com/mfridman/interpolate v0.0.2 // indirect
 	github.com/oklog/ulid/v2 v2.1.1 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/puzpuzpuz/xsync/v3 v3.5.1 // indirect
 	github.com/sagikazarmark/locafero v0.11.0 // indirect
