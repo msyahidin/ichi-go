@@ -8,6 +8,8 @@ import (
 	"ichi-go/pkg/health"
 )
 
+var Domain = "health"
+
 type HealthController struct {
 	service *service.HealthService
 }
@@ -17,11 +19,12 @@ func NewHealthController(service *service.HealthService) *HealthController {
 }
 
 // RegisterRoutes registers health check routes (NO versioning, NO auth)
-func (c *HealthController) RegisterRoutes(e *echo.Echo) {
+func (c *HealthController) RegisterRoutes(e *echo.Echo, serviceName string) {
 	// Health check endpoints - bypass auth and versioning
-	e.GET("/health", c.GetHealth)
-	e.GET("/health/live", c.GetLiveness)
-	e.GET("/health/ready", c.GetReadiness)
+	group := e.Group("/" + serviceName + "/api/" + Domain)
+	group.GET("/", c.GetHealth)
+	group.GET("/live", c.GetLiveness)
+	group.GET("/ready", c.GetReadiness)
 }
 
 // GetHealth godoc

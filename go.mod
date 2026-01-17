@@ -5,6 +5,7 @@ go 1.25
 toolchain go1.25.0
 
 require (
+	github.com/casbin/casbin/v3 v3.9.0
 	github.com/dranikpg/dto-mapper v0.2.1
 	github.com/go-playground/locales v0.14.1
 	github.com/go-playground/universal-translator v0.18.1
@@ -12,6 +13,7 @@ require (
 	github.com/go-sql-driver/mysql v1.9.3
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/google/uuid v1.6.0
+	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/labstack/echo/v4 v4.15.0
 	github.com/labstack/gommon v0.4.2
 	github.com/pierrec/lz4/v4 v4.1.23
@@ -29,6 +31,7 @@ require (
 	github.com/uptrace/bun v1.2.16
 	github.com/uptrace/bun/dialect/mysqldialect v1.2.16
 	github.com/vmihailenco/msgpack/v5 v5.4.1
+	github.com/wagslane/go-rabbitmq v0.15.0
 	golang.org/x/crypto v0.46.0
 	resty.dev/v3 v3.0.0-beta.5
 )
@@ -36,6 +39,8 @@ require (
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/KyleBanks/depth v1.2.1 // indirect
+	github.com/bmatcuk/doublestar/v4 v4.6.1 // indirect
+	github.com/casbin/govaluate v1.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect

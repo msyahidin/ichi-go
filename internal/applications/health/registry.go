@@ -13,7 +13,7 @@ import (
 	"ichi-go/pkg/health"
 )
 
-func Register(injector do.Injector, e *echo.Echo, cfg *config.Config) {
+func Register(injector do.Injector, serviceName string, e *echo.Echo, cfg *config.Config) {
 	// Create health checkers
 	db := do.MustInvoke[*bun.DB](injector)
 	redisClient := do.MustInvoke[*redis.Client](injector)
@@ -40,6 +40,5 @@ func Register(injector do.Injector, e *echo.Echo, cfg *config.Config) {
 	// Create controller
 	healthController := controller.NewHealthController(healthService)
 
-	// Register routes (NO auth, NO versioning)
-	healthController.RegisterRoutes(e)
+	healthController.RegisterRoutes(e, serviceName)
 }
