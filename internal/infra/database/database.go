@@ -14,7 +14,7 @@ import (
 )
 
 func GetDsn(dbConfig *Config) string {
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true",
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true&multiStatements=true",
 		dbConfig.User,
 		dbConfig.Password,
 		dbConfig.Host,

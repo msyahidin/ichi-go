@@ -2,17 +2,19 @@ package server
 
 import (
 	"encoding/json"
-	echoSwagger "github.com/swaggo/echo-swagger"
-	"ichi-go/config"
-	"ichi-go/internal/applications/auth"
-	healthapp "ichi-go/internal/applications/health"
-	"ichi-go/internal/applications/user"
-	"ichi-go/pkg/authenticator"
-	"ichi-go/pkg/logger"
 	"os"
 
 	"github.com/labstack/echo/v4"
 	"github.com/samber/do/v2"
+	echoSwagger "github.com/swaggo/echo-swagger"
+
+	"ichi-go/config"
+	"ichi-go/internal/applications/auth"
+	healthapp "ichi-go/internal/applications/health"
+	rbacapp "ichi-go/internal/applications/rbac"
+	"ichi-go/internal/applications/user"
+	"ichi-go/pkg/authenticator"
+	"ichi-go/pkg/logger"
 )
 
 func SetupRestRoutes(injector do.Injector, e *echo.Echo, cfg *config.Config) {
@@ -21,9 +23,12 @@ func SetupRestRoutes(injector do.Injector, e *echo.Echo, cfg *config.Config) {
 		logger.Errorf("Failed to initialize JWT keys: %v", err)
 	}
 	appAuth := authenticator.New(cfg.Auth())
+
+	// Register application domains
 	user.Register(injector, cfg.App().Name, e, appAuth)
 	auth.Register(injector, cfg.App().Name, e, appAuth)
-	healthapp.Register(injector, e, cfg)
+	rbacapp.Register(injector, cfg.App().Name, e, appAuth) // RBAC domain
+	healthapp.Register(injector, cfg.App().Name, e, cfg)
 }
 
 func GetServiceName(configApp config.AppConfig) string {

@@ -7,6 +7,7 @@ import (
 	"ichi-go/internal/infra/queue"
 	"ichi-go/pkg/authenticator"
 	httpConfig "ichi-go/pkg/http"
+	"ichi-go/pkg/rbac"
 	"ichi-go/pkg/validator"
 	"ichi-go/pkg/versioning"
 	"os"
@@ -32,6 +33,7 @@ type Schema struct {
 	Auth       authenticator.Config
 	Validator  validator.Config
 	Versioning versioning.Config
+	RBAC       rbac.Config
 }
 
 type Config struct {
@@ -153,6 +155,11 @@ func (c *Config) Versioning() *versioning.Config {
 	return &c.schema.Versioning
 }
 
+func (c *Config) RBAC() *rbac.Config {
+	c.ensureLoaded()
+	return &c.schema.RBAC
+}
+
 func (c *Config) ensureLoaded() {
 	if c == nil {
 		panic("config receiver is nil")
@@ -200,6 +207,7 @@ func setDefault() {
 	httpConfig.SetDefault()
 	queue.SetDefault()
 	authenticator.SetDefault()
+	rbac.SetDefault()
 }
 
 func SetDebugMode(e *echo.Echo, debug bool) {

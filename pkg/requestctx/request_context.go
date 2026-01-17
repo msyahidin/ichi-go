@@ -2,6 +2,7 @@ package requestctx
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"net/http"
 	"strings"
@@ -32,6 +33,9 @@ type RequestContext struct {
 	// TODO Auth
 	//ValidatedClaims jwt.Claims `json:"validated_claims,omitempty"`
 
+	// RBAC - Multi-tenant context
+	TenantID string `json:"tenant_id,omitempty"`
+
 	// Meta
 	RequestID     string            `json:"request_id,omitempty"`
 	CorrelationID string            `json:"correlation_id,omitempty"`
@@ -60,6 +64,8 @@ func FromRequest(r *http.Request) *RequestContext {
 
 		UserID:   defaultIfEmpty(h.Get("X-User-Id"), "default_id"),
 		UserUUID: defaultIfEmpty(h.Get("X-User-Uuid"), "default_uuid"),
+
+		TenantID: h.Get("X-Tenant-Id"), // Multi-tenant context
 
 		RequestID:     h.Get("X-Request-Id"),
 		CorrelationID: h.Get("X-Correlation-Id"),
@@ -122,4 +128,37 @@ func GetUserID(ctx context.Context) string {
 		return ""
 	}
 	return rc.UserID
+}
+
+// GetUserIDAsInt64 returns the user ID as int64 (for RBAC)
+func GetUserIDAsInt64(ctx context.Context) int64 {
+	rc := FromContext(ctx)
+	if rc == nil || rc.UserID == "" {
+		return 0
+	}
+	// Try to parse the user ID as int64
+	var id int64
+	_, err := fmt.Sscanf(rc.UserID, "%d", &id)
+	if err != nil {
+		return 0
+	}
+	return id
+}
+
+// GetTenantID returns the tenant ID from context
+func GetTenantID(ctx context.Context) string {
+	rc := FromContext(ctx)
+	if rc == nil {
+		return ""
+	}
+	return rc.TenantID
+}
+
+// SetTenantID sets the tenant ID in the request context
+func SetTenantID(ctx context.Context, tenantID string) context.Context {
+	rc := FromContext(ctx)
+	if rc != nil {
+		rc.TenantID = tenantID
+	}
+	return NewContext(ctx, rc)
 }

@@ -101,6 +101,94 @@ auth:
     private_key: "path to private key"
     public_key: "path to public key"
 
+# =============================================================================
+# RBAC Configuration (Role-Based Access Control)
+# =============================================================================
+rbac:
+  # Deployment mode determines how tenant isolation works
+  # - "multi_tenant": Strict tenant isolation, tenant_id required in all requests
+  # - "single_tenant": Auto-inject default tenant, simplified for admin tools
+  # - "hybrid": Optional tenant_id with fallback to default (RECOMMENDED)
+  mode: "hybrid"
+
+  # Default tenant used in single_tenant and hybrid modes
+  # When tenant_id is not provided, this value is used
+  default_tenant: "system"
+
+  # Path to Casbin RBAC model configuration
+  model_path: "config/rbac_model.conf"
+
+  # Performance tuning
+  performance:
+    # Loading strategy for policies
+    # - "full": Load all policies into memory (best for single-tenant/small deployments)
+    # - "filtered": Load only specific tenant policies (best for multi-tenant)
+    # - "adaptive": Auto-switch based on policy count (switches at adaptive_threshold)
+    loading_strategy: "filtered"
+
+    # How long filtered policies stay in enforcer before reload
+    filtered_ttl: "10m"
+
+    # Max concurrent permission checks
+    max_concurrent: 50
+
+    # Threshold for adaptive mode (policy count)
+    # If total policies < threshold, use "full", else use "filtered"
+    adaptive_threshold: 5000
+
+  # Multi-tier caching configuration
+  cache:
+    # Enable/disable all caching (set false for debugging)
+    enabled: true
+
+    # L1 in-memory cache TTL (LRU cache)
+    memory_ttl: "60s"
+
+    # L2 Redis cache TTL (with LZ4 compression)
+    redis_ttl: "5m"
+
+    # Max entries in L1 memory cache
+    max_size: 10000
+
+    # Enable LZ4 compression for Redis cache
+    compression: true
+
+  # Audit logging for compliance (SOC2/GDPR)
+  audit:
+    # Enable/disable audit logging
+    enabled: true
+
+    # Log every CheckPermission call (HIGH VOLUME - use for debugging only)
+    # For production, use sample_rate instead
+    log_decisions: false
+
+    # Log policy/role changes (RECOMMENDED for compliance)
+    log_mutations: true
+
+    # Retention period in days (2555 = 7 years for SOC2 compliance)
+    retention_days: 2555
+
+    # Anonymize PII (hash email addresses with SHA-256 for GDPR)
+    anonymize_pii: true
+
+    # Sample rate for decision logging (0.0 - 1.0)
+    # 0.01 = log 1% of permission checks, 1.0 = log all
+    sample_rate: 0.01
+
+  # Feature flags for optional functionality
+  features:
+    # Enable time-bound role assignments with auto-expiration
+    time_bound_roles: false
+
+    # Enable platform admin user impersonation
+    impersonation: false
+
+    # Enable multi-party approval workflows for sensitive operations
+    approval_workflows: false
+
+    # Enable fine-grained resource-level ABAC (Attribute-Based Access Control)
+    resource_level_abac: false
+
 pkgclient:
   pokemon_api:
     base_url: "https://pokeapi.co/api/v2"
@@ -170,3 +258,4 @@ queue:
         auto_ack: false
         exclusive: false
         consumer_tag: "welcome_notifier_v1"
+
