@@ -2,7 +2,7 @@ package user
 
 import (
 	"context"
-	"ichi-go/internal/applications/user/repository"
+	user "ichi-go/internal/applications/user/repository"
 )
 
 type Service interface {

@@ -34,7 +34,7 @@ type AuditLog struct {
 	PolicyAfter  interface{} `bun:"policy_after,type:json" json:"policy_after,omitempty"`
 
 	// Authorization decision
-	Decision       *string `bun:"decision" json:"decision,omitempty"`           // allow, deny
+	Decision       *string `bun:"decision" json:"decision,omitempty"` // allow, deny
 	DecisionReason *string `bun:"decision_reason" json:"decision_reason,omitempty"`
 
 	// Metadata
@@ -54,12 +54,12 @@ func (AuditLog) TableName() string {
 
 // Action types
 const (
-	ActionPolicyAdded        = "policy_added"
-	ActionPolicyRemoved      = "policy_removed"
-	ActionRoleAssigned       = "role_assigned"
-	ActionRoleRevoked        = "role_revoked"
-	ActionPermissionChecked  = "permission_checked"
-	ActionPermissionDenied   = "permission_denied"
+	ActionPolicyAdded       = "policy_added"
+	ActionPolicyRemoved     = "policy_removed"
+	ActionRoleAssigned      = "role_assigned"
+	ActionRoleRevoked       = "role_revoked"
+	ActionPermissionChecked = "permission_checked"
+	ActionPermissionDenied  = "permission_denied"
 )
 
 // Actor types

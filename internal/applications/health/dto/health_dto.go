@@ -6,11 +6,9 @@ import (
 	"ichi-go/internal/applications/health/repository"
 )
 
-
 type HealthRequest struct {
 	// TODO: Add your fields here
 }
-
 
 type HealthResponse struct {
 	ID        int64     `json:"id"`
@@ -34,4 +32,3 @@ func HealthResponseFromModel(m *repository.HealthModel) *HealthResponse {
 		// Description: m.Description,
 	}
 }
-

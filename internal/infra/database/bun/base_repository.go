@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/uptrace/bun"
 	"ichi-go/pkg/logger"
 	"time"
+
+	"github.com/uptrace/bun"
 )
 
 type BaseRepository[T any] struct {

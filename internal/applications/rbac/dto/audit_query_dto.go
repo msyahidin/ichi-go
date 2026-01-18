@@ -69,8 +69,8 @@ type DecisionStats struct {
 
 // ActorStat represents statistics for an actor
 type ActorStat struct {
-	ActorID     string `json:"actor_id"`
-	EventCount  int    `json:"event_count"`
+	ActorID      string    `json:"actor_id"`
+	EventCount   int       `json:"event_count"`
 	LastActivity time.Time `json:"last_activity"`
 }
 
@@ -83,8 +83,8 @@ type ExportAuditLogsRequest struct {
 
 // ExportAuditLogsResponse represents the response for export request
 type ExportAuditLogsResponse struct {
-	FilePath     string    `json:"file_path"`
-	RecordCount  int       `json:"record_count"`
-	ExportedAt   time.Time `json:"exported_at"`
-	Format       string    `json:"format"`
+	FilePath    string    `json:"file_path"`
+	RecordCount int       `json:"record_count"`
+	ExportedAt  time.Time `json:"exported_at"`
+	Format      string    `json:"format"`
 }

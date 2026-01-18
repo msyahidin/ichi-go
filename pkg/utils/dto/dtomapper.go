@@ -2,8 +2,9 @@ package mapper
 
 import (
 	"fmt"
-	"github.com/dranikpg/dto-mapper"
 	"ichi-go/pkg/logger"
+
+	"github.com/dranikpg/dto-mapper"
 )
 
 type Mapper struct {

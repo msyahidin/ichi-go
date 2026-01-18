@@ -1,7 +1,6 @@
 package rbac
 
 import (
-	"github.com/redis/go-redis/v9"
 	"ichi-go/config"
 	"ichi-go/internal/applications/rbac/controllers"
 	"ichi-go/internal/applications/rbac/repositories"
@@ -10,6 +9,8 @@ import (
 	"ichi-go/internal/infra/authz/enforcer"
 	"ichi-go/internal/infra/queue/rabbitmq"
 	"ichi-go/pkg/logger"
+
+	"github.com/redis/go-redis/v9"
 
 	"github.com/samber/do/v2"
 	"github.com/uptrace/bun"

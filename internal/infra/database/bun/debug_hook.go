@@ -2,9 +2,10 @@ package bun
 
 import (
 	"context"
-	"github.com/uptrace/bun"
 	"ichi-go/pkg/logger"
 	"time"
+
+	"github.com/uptrace/bun"
 )
 
 type DebugHook struct{}

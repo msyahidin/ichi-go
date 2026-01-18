@@ -3,8 +3,9 @@ package repository
 import (
 	"context"
 
-	"github.com/uptrace/bun"
 	bunBase "ichi-go/internal/infra/database/bun"
+
+	"github.com/uptrace/bun"
 )
 
 type HealthModel struct {
@@ -34,4 +35,3 @@ func (r *RepositoryImpl) Get(ctx context.Context) error {
 	// TODO: Implement database logic
 	return nil
 }
-

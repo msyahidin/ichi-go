@@ -2,10 +2,11 @@ package bun
 
 import (
 	"context"
-	"github.com/uptrace/bun"
 	"ichi-go/pkg/requestctx"
 	"strconv"
 	"time"
+
+	"github.com/uptrace/bun"
 )
 
 type CoreModel struct {

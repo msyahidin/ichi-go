@@ -8,8 +8,9 @@ import (
 	"ichi-go/internal/applications/rbac/models"
 	"ichi-go/internal/applications/rbac/services"
 
-	"github.com/labstack/echo/v4"
 	"ichi-go/pkg/utils/response"
+
+	"github.com/labstack/echo/v4"
 )
 
 // RoleController handles role management endpoints
@@ -24,8 +25,22 @@ func NewRoleController(roleService *services.RoleService) *RoleController {
 	}
 }
 
-// GetRoles retrieves all roles with filtering
-// GET /api/v1/rbac/roles
+// GetRoles godoc
+//
+//	@Summary		Get roles
+//	@Description	Retrieve all roles with optional filtering by tenant or global scope, with pagination
+//	@Tags			RBAC - Roles
+//	@Accept			json
+//	@Produce		json
+//	@Param			tenant_id	query		string	false	"Filter by tenant ID"
+//	@Param			global_only	query		bool	false	"Only global roles"
+//	@Param			page		query		int		false	"Page number"			default(1)
+//	@Param			page_size	query		int		false	"Page size (max 100)"	default(20)
+//	@Success		200			{object}	response.SuccessResponse{data=dto.GetRolesResponse}
+//	@Failure		400			{object}	response.ErrorResponse
+//	@Failure		500			{object}	response.ErrorResponse
+//	@Security		BearerAuth
+//	@Router			/v1/rbac/roles [get]
 func (c *RoleController) GetRoles(ctx echo.Context) error {
 	var req dto.GetRolesRequest
 
@@ -88,8 +103,19 @@ func (c *RoleController) GetRoles(ctx echo.Context) error {
 	return response.Success(ctx, resp)
 }
 
-// GetRole retrieves a single role by ID
-// GET /api/v1/rbac/roles/:id
+// GetRole godoc
+//
+//	@Summary		Get role by ID
+//	@Description	Retrieve a single role by its ID
+//	@Tags			RBAC - Roles
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		int	true	"Role ID"
+//	@Success		200	{object}	response.SuccessResponse{data=dto.RoleResponse}
+//	@Failure		400	{object}	response.ErrorResponse
+//	@Failure		404	{object}	response.ErrorResponse
+//	@Security		BearerAuth
+//	@Router			/v1/rbac/roles/{id} [get]
 func (c *RoleController) GetRole(ctx echo.Context) error {
 	id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {
@@ -104,8 +130,19 @@ func (c *RoleController) GetRole(ctx echo.Context) error {
 	return response.Success(ctx, c.toRoleResponse(role))
 }
 
-// GetRoleWithPermissions retrieves a role with its permissions
-// GET /api/v1/rbac/roles/:id/permissions
+// GetRoleWithPermissions godoc
+//
+//	@Summary		Get role with permissions
+//	@Description	Retrieve a role with all its associated permissions
+//	@Tags			RBAC - Roles
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		int	true	"Role ID"
+//	@Success		200	{object}	response.SuccessResponse{data=dto.RoleWithPermissionsResponse}
+//	@Failure		400	{object}	response.ErrorResponse
+//	@Failure		404	{object}	response.ErrorResponse
+//	@Security		BearerAuth
+//	@Router			/v1/rbac/roles/{id}/permissions [get]
 func (c *RoleController) GetRoleWithPermissions(ctx echo.Context) error {
 	id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {
@@ -126,8 +163,19 @@ func (c *RoleController) GetRoleWithPermissions(ctx echo.Context) error {
 	return response.Success(ctx, resp)
 }
 
-// CreateRole creates a new role
-// POST /api/v1/rbac/roles
+// CreateRole godoc
+//
+//	@Summary		Create role
+//	@Description	Create a new role (global or tenant-specific)
+//	@Tags			RBAC - Roles
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		dto.CreateRoleRequest	true	"Create role request"
+//	@Success		200		{object}	response.SuccessResponse{data=dto.RoleResponse}
+//	@Failure		400		{object}	response.ErrorResponse
+//	@Failure		500		{object}	response.ErrorResponse
+//	@Security		BearerAuth
+//	@Router			/v1/rbac/roles [post]
 func (c *RoleController) CreateRole(ctx echo.Context) error {
 	var req dto.CreateRoleRequest
 
@@ -155,8 +203,21 @@ func (c *RoleController) CreateRole(ctx echo.Context) error {
 	return response.Success(ctx, c.toRoleResponse(role))
 }
 
-// UpdateRole updates an existing role
-// PUT /api/v1/rbac/roles/:id
+// UpdateRole godoc
+//
+//	@Summary		Update role
+//	@Description	Update an existing role's name or description
+//	@Tags			RBAC - Roles
+//	@Accept			json
+//	@Produce		json
+//	@Param			id		path		int						true	"Role ID"
+//	@Param			request	body		dto.UpdateRoleRequest	true	"Update role request"
+//	@Success		200		{object}	response.SuccessResponse{data=dto.RoleResponse}
+//	@Failure		400		{object}	response.ErrorResponse
+//	@Failure		404		{object}	response.ErrorResponse
+//	@Failure		500		{object}	response.ErrorResponse
+//	@Security		BearerAuth
+//	@Router			/v1/rbac/roles/{id} [put]
 func (c *RoleController) UpdateRole(ctx echo.Context) error {
 	id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {
@@ -195,8 +256,19 @@ func (c *RoleController) UpdateRole(ctx echo.Context) error {
 	return response.Success(ctx, c.toRoleResponse(role))
 }
 
-// DeleteRole deletes a role
-// DELETE /api/v1/rbac/roles/:id
+// DeleteRole godoc
+//
+//	@Summary		Delete role
+//	@Description	Soft delete a role (marks as deleted)
+//	@Tags			RBAC - Roles
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		int	true	"Role ID"
+//	@Success		200	{object}	response.SuccessResponse{data=dto.MessageResponse}
+//	@Failure		400	{object}	response.ErrorResponse
+//	@Failure		500	{object}	response.ErrorResponse
+//	@Security		BearerAuth
+//	@Router			/v1/rbac/roles/{id} [delete]
 func (c *RoleController) DeleteRole(ctx echo.Context) error {
 	id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {

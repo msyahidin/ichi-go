@@ -4,9 +4,10 @@ import (
 	"regexp"
 	"unicode"
 
+	appValidator "ichi-go/pkg/validator"
+
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
-	appValidator "ichi-go/pkg/validator"
 )
 
 // RegisterAuthValidators registers authentication-specific validators

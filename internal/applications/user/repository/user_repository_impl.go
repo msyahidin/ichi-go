@@ -2,10 +2,11 @@ package user
 
 import (
 	"context"
-	upbun "github.com/uptrace/bun"
 	"ichi-go/internal/infra/database/bun"
 	pkgErrors "ichi-go/pkg/errors"
 	"ichi-go/pkg/logger"
+
+	upbun "github.com/uptrace/bun"
 )
 
 type RepositoryImpl struct {
@@ -33,6 +34,7 @@ func (r *RepositoryImpl) FindByEmail(ctx context.Context, email string) (*UserMo
 		return nil, pkgErrors.Database(pkgErrors.ErrCodeDatabase).
 			With("operation", "get_user").
 			With("user_email", email).
+			Code(404).
 			Wrap(err)
 	}
 	return data, nil

@@ -6,11 +6,11 @@ import "errors"
 
 var (
 	// Role errors
-	ErrRoleNotFound        = errors.New("role not found")
-	ErrRoleAlreadyExists   = errors.New("role already exists")
-	ErrRoleIsSystemRole    = errors.New("cannot modify system role")
-	ErrRoleHasUsers        = errors.New("role has assigned users")
-	ErrInvalidRoleSlug     = errors.New("invalid role slug format")
+	ErrRoleNotFound      = errors.New("role not found")
+	ErrRoleAlreadyExists = errors.New("role already exists")
+	ErrRoleIsSystemRole  = errors.New("cannot modify system role")
+	ErrRoleHasUsers      = errors.New("role has assigned users")
+	ErrInvalidRoleSlug   = errors.New("invalid role slug format")
 
 	// Permission errors
 	ErrPermissionNotFound      = errors.New("permission not found")
@@ -29,29 +29,29 @@ var (
 	ErrPolicyLoadFailed    = errors.New("failed to load policies")
 
 	// Audit errors
-	ErrAuditLogNotFound    = errors.New("audit log not found")
-	ErrAuditExportFailed   = errors.New("failed to export audit logs")
-	ErrAuditCleanupFailed  = errors.New("failed to cleanup old audit logs")
+	ErrAuditLogNotFound   = errors.New("audit log not found")
+	ErrAuditExportFailed  = errors.New("failed to export audit logs")
+	ErrAuditCleanupFailed = errors.New("failed to cleanup old audit logs")
 
 	// Enforcement errors
-	ErrEnforcementFailed   = errors.New("permission check failed")
-	ErrCacheMiss           = errors.New("cache miss")
-	ErrCacheInvalidation   = errors.New("failed to invalidate cache")
+	ErrEnforcementFailed = errors.New("permission check failed")
+	ErrCacheMiss         = errors.New("cache miss")
+	ErrCacheInvalidation = errors.New("failed to invalidate cache")
 
 	// Tenant errors
-	ErrTenantNotFound      = errors.New("tenant not found")
-	ErrInvalidTenantID     = errors.New("invalid tenant ID")
+	ErrTenantNotFound           = errors.New("tenant not found")
+	ErrInvalidTenantID          = errors.New("invalid tenant ID")
 	ErrTenantIsolationViolation = errors.New("tenant isolation violation")
 
 	// Validation errors
-	ErrValidationFailed    = errors.New("validation failed")
+	ErrValidationFailed     = errors.New("validation failed")
 	ErrMissingRequiredField = errors.New("missing required field")
-	ErrInvalidFieldValue   = errors.New("invalid field value")
+	ErrInvalidFieldValue    = errors.New("invalid field value")
 
 	// Authorization errors
-	ErrUnauthorized        = errors.New("unauthorized")
-	ErrForbidden           = errors.New("forbidden")
-	ErrPermissionDenied    = errors.New("permission denied")
+	ErrUnauthorized     = errors.New("unauthorized")
+	ErrForbidden        = errors.New("forbidden")
+	ErrPermissionDenied = errors.New("permission denied")
 
 	// Database errors
 	ErrDatabaseConnection  = errors.New("database connection failed")
@@ -59,17 +59,17 @@ var (
 	ErrDatabaseTransaction = errors.New("database transaction failed")
 
 	// Circuit breaker errors
-	ErrCircuitBreakerOpen  = errors.New("circuit breaker is open")
+	ErrCircuitBreakerOpen    = errors.New("circuit breaker is open")
 	ErrCircuitBreakerTimeout = errors.New("circuit breaker timeout")
 )
 
 // Error codes for API responses
 const (
 	// Role error codes
-	CodeRoleNotFound        = "ROLE_NOT_FOUND"
-	CodeRoleAlreadyExists   = "ROLE_ALREADY_EXISTS"
-	CodeRoleIsSystemRole    = "ROLE_IS_SYSTEM_ROLE"
-	CodeRoleHasUsers        = "ROLE_HAS_USERS"
+	CodeRoleNotFound      = "ROLE_NOT_FOUND"
+	CodeRoleAlreadyExists = "ROLE_ALREADY_EXISTS"
+	CodeRoleIsSystemRole  = "ROLE_IS_SYSTEM_ROLE"
+	CodeRoleHasUsers      = "ROLE_HAS_USERS"
 
 	// Permission error codes
 	CodePermissionNotFound      = "PERMISSION_NOT_FOUND"
@@ -90,14 +90,14 @@ const (
 	CodePermissionDenied  = "PERMISSION_DENIED"
 
 	// Tenant error codes
-	CodeTenantNotFound             = "TENANT_NOT_FOUND"
-	CodeInvalidTenantID            = "INVALID_TENANT_ID"
-	CodeTenantIsolationViolation   = "TENANT_ISOLATION_VIOLATION"
+	CodeTenantNotFound           = "TENANT_NOT_FOUND"
+	CodeInvalidTenantID          = "INVALID_TENANT_ID"
+	CodeTenantIsolationViolation = "TENANT_ISOLATION_VIOLATION"
 
 	// Validation error codes
-	CodeValidationFailed    = "VALIDATION_FAILED"
+	CodeValidationFailed     = "VALIDATION_FAILED"
 	CodeMissingRequiredField = "MISSING_REQUIRED_FIELD"
-	CodeInvalidFieldValue   = "INVALID_FIELD_VALUE"
+	CodeInvalidFieldValue    = "INVALID_FIELD_VALUE"
 
 	// Authorization error codes
 	CodeUnauthorized = "UNAUTHORIZED"

@@ -44,13 +44,13 @@ const (
 
 // Platform permission slugs (Layer 1 - Global)
 const (
-	PlatformAdminAccess     = "platform:admin:access"
-	PlatformSettingsManage  = "platform:settings:manage"
-	PlatformUsersManage     = "platform:users:manage"
-	PlatformTenantsManage   = "platform:tenants:manage"
-	PlatformSystemMonitor   = "platform:system:monitor"
-	PlatformAuditView       = "platform:audit:view"
-	PlatformReportsView     = "platform:reports:view"
+	PlatformAdminAccess    = "platform:admin:access"
+	PlatformSettingsManage = "platform:settings:manage"
+	PlatformUsersManage    = "platform:users:manage"
+	PlatformTenantsManage  = "platform:tenants:manage"
+	PlatformSystemMonitor  = "platform:system:monitor"
+	PlatformAuditView      = "platform:audit:view"
+	PlatformReportsView    = "platform:reports:view"
 )
 
 // RBAC permission slugs (Layer 2 - Tenant-scoped)

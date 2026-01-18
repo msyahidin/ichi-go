@@ -2,12 +2,13 @@ package errors
 
 import (
 	"fmt"
-	"github.com/labstack/echo/v4"
-	"github.com/samber/oops"
 	"ichi-go/pkg/logger"
 	"ichi-go/pkg/utils/response"
 	appValidator "ichi-go/pkg/validator"
 	"net/http"
+
+	"github.com/labstack/echo/v4"
+	"github.com/samber/oops"
 )
 
 type OopsErrorHandler struct {

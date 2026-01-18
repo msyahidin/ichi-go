@@ -22,35 +22,35 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// @title           Ichi-Go API
-// @version         1.0
-// @description     A production-ready Go backend template built on clean architecture principles.
-// @description     Features include JWT authentication with multiple algorithms (HMAC, RSA, ECDSA),
-// @description     multi-language validation (English/Indonesian), RabbitMQ message queuing,
-// @description     Redis caching with LZ4 compression, and comprehensive error handling.
+//	@title			Ichi-Go API
+//	@version		1.0
+//	@description	A production-ready Go backend template built on clean architecture principles.
+//	@description	Features include JWT authentication with multiple algorithms (HMAC, RSA, ECDSA),
+//	@description	multi-language validation (English/Indonesian), RabbitMQ message queuing,
+//	@description	Redis caching with LZ4 compression, and comprehensive error handling.
 
-// @contact.name   API Support
-// @contact.email  support@ichi-go.dev
+//	@contact.name	API Support
+//	@contact.email	support@ichi-go.dev
 
-// @license.name  MIT
-// @license.url   https://opensource.org/licenses/MIT
+//	@license.name	MIT
+//	@license.url	https://opensource.org/licenses/MIT
 
-// @host      localhost:8080
-// @BasePath  /ichi-go/api
+//	@host		localhost:8080
+//	@BasePath	/ichi-go/api
 
-// @securityDefinitions.apikey BearerAuth
-// @in header
-// @name Authorization
-// @description Type "Bearer" followed by a space and JWT token.
+//	@securityDefinitions.apikey	BearerAuth
+//	@in							header
+//	@name						Authorization
+//	@description				Type "Bearer" followed by a space and JWT token.
 
-// @tag.name Auth
-// @tag.description Authentication and authorization endpoints including login, register, token refresh, and user profile
+//	@tag.name			Auth
+//	@tag.description	Authentication and authorization endpoints including login, register, token refresh, and user profile
 
-// @tag.name Users
-// @tag.description User management endpoints
+//	@tag.name			Users
+//	@tag.description	User management endpoints
 
-// @externalDocs.description  OpenAPI Specification
-// @externalDocs.url          https://swagger.io/specification/
+//	@externalDocs.description	OpenAPI Specification
+//	@externalDocs.url			https://swagger.io/specification/
 
 func main() {
 	injector := do.New()

@@ -1,8 +1,9 @@
 package errors
 
 import (
-	"github.com/labstack/echo/v4"
 	"ichi-go/pkg/logger"
+
+	"github.com/labstack/echo/v4"
 )
 
 //func Setup(e *echo.Echo) {

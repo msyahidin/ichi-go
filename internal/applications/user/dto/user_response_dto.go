@@ -1,8 +1,9 @@
 package dto
 
 import (
-	"github.com/uptrace/bun"
 	"time"
+
+	"github.com/uptrace/bun"
 )
 
 type UserGetResponse struct {

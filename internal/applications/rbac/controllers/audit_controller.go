@@ -11,8 +11,9 @@ import (
 	"ichi-go/internal/applications/rbac/repositories"
 	"ichi-go/internal/applications/rbac/services"
 
-	"github.com/labstack/echo/v4"
 	"ichi-go/pkg/utils/response"
+
+	"github.com/labstack/echo/v4"
 )
 
 // AuditController handles audit log endpoints
@@ -27,8 +28,29 @@ func NewAuditController(auditService *services.AuditService) *AuditController {
 	}
 }
 
-// QueryAuditLogs retrieves audit logs with filtering
-// GET /api/v1/rbac/audit/logs
+// QueryAuditLogs godoc
+//
+//	@Summary		Query audit logs
+//	@Description	Retrieve audit logs with comprehensive filtering and pagination options
+//	@Tags			RBAC - Audit
+//	@Accept			json
+//	@Produce		json
+//	@Param			tenant_id		query		string	false	"Filter by tenant ID"
+//	@Param			actor_id		query		string	false	"Filter by actor ID"
+//	@Param			subject_id		query		string	false	"Filter by subject ID"
+//	@Param			action			query		string	false	"Filter by action type"
+//	@Param			decision		query		string	false	"Filter by decision (allowed/denied)"
+//	@Param			start_date		query		string	false	"Filter by start date (RFC3339)"
+//	@Param			end_date		query		string	false	"Filter by end date (RFC3339)"
+//	@Param			page			query		int		false	"Page number"				default(1)
+//	@Param			page_size		query		int		false	"Page size (max 100)"		default(20)
+//	@Param			sort_by			query		string	false	"Sort field"				default("timestamp")
+//	@Param			sort_direction	query		string	false	"Sort direction (asc/desc)"	default("desc")
+//	@Success		200				{object}	response.SuccessResponse{data=dto.GetAuditLogsResponse}
+//	@Failure		400				{object}	response.ErrorResponse
+//	@Failure		500				{object}	response.ErrorResponse
+//	@Security		BearerAuth
+//	@Router			/v1/rbac/audit/logs [get]
 func (c *AuditController) QueryAuditLogs(ctx echo.Context) error {
 	var req dto.AuditQueryRequest
 
@@ -102,8 +124,21 @@ func (c *AuditController) QueryAuditLogs(ctx echo.Context) error {
 	return response.Success(ctx, resp)
 }
 
-// GetAuditStats retrieves audit statistics for a tenant
-// GET /api/v1/rbac/audit/stats
+// GetAuditStats godoc
+//
+//	@Summary		Get audit statistics
+//	@Description	Retrieve audit statistics including event counts by action, decision stats, and performance metrics
+//	@Tags			RBAC - Audit
+//	@Accept			json
+//	@Produce		json
+//	@Param			tenant_id	query		string	true	"Tenant ID"
+//	@Param			start_date	query		string	false	"Start date (RFC3339)"
+//	@Param			end_date	query		string	false	"End date (RFC3339)"
+//	@Success		200			{object}	response.SuccessResponse{data=dto.AuditStatsResponse}
+//	@Failure		400			{object}	response.ErrorResponse
+//	@Failure		500			{object}	response.ErrorResponse
+//	@Security		BearerAuth
+//	@Router			/v1/rbac/audit/stats [get]
 func (c *AuditController) GetAuditStats(ctx echo.Context) error {
 	var req dto.AuditStatsRequest
 
@@ -148,8 +183,19 @@ func (c *AuditController) GetAuditStats(ctx echo.Context) error {
 	return response.Success(ctx, resp)
 }
 
-// ExportAuditLogs exports audit logs to CSV or JSON
-// POST /api/v1/rbac/audit/export
+// ExportAuditLogs godoc
+//
+//	@Summary		Export audit logs
+//	@Description	Export audit logs to CSV or JSON format with optional filtering
+//	@Tags			RBAC - Audit
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		dto.ExportAuditLogsRequest	true	"Export audit logs request"
+//	@Success		200		{object}	response.SuccessResponse{data=dto.ExportAuditLogsResponse}
+//	@Failure		400		{object}	response.ErrorResponse
+//	@Failure		500		{object}	response.ErrorResponse
+//	@Security		BearerAuth
+//	@Router			/v1/rbac/audit/export [post]
 func (c *AuditController) ExportAuditLogs(ctx echo.Context) error {
 	var req dto.ExportAuditLogsRequest
 
@@ -219,8 +265,18 @@ func (c *AuditController) ExportAuditLogs(ctx echo.Context) error {
 	return response.Success(ctx, resp)
 }
 
-// GetRecentMutations retrieves recent policy/role changes
-// GET /api/v1/rbac/audit/mutations
+// GetRecentMutations godoc
+//
+//	@Summary		Get recent mutations
+//	@Description	Retrieve recent policy and role mutations (additions, removals, assignments, revocations)
+//	@Tags			RBAC - Audit
+//	@Accept			json
+//	@Produce		json
+//	@Param			tenant_id	query		string	false	"Filter by tenant ID"
+//	@Success		200			{object}	response.SuccessResponse{data=dto.GetAuditLogsResponse}
+//	@Failure		500			{object}	response.ErrorResponse
+//	@Security		BearerAuth
+//	@Router			/v1/rbac/audit/mutations [get]
 func (c *AuditController) GetRecentMutations(ctx echo.Context) error {
 	tenantID := ctx.QueryParam("tenant_id")
 	limit := 50 // Default limit
@@ -262,8 +318,18 @@ func (c *AuditController) GetRecentMutations(ctx echo.Context) error {
 	return response.Success(ctx, resp)
 }
 
-// GetRecentDecisions retrieves recent permission check decisions
-// GET /api/v1/rbac/audit/decisions
+// GetRecentDecisions godoc
+//
+//	@Summary		Get recent permission decisions
+//	@Description	Retrieve recent permission check decisions (allowed/denied) with performance metrics
+//	@Tags			RBAC - Audit
+//	@Accept			json
+//	@Produce		json
+//	@Param			tenant_id	query		string	false	"Filter by tenant ID"
+//	@Success		200			{object}	response.SuccessResponse{data=dto.GetAuditLogsResponse}
+//	@Failure		500			{object}	response.ErrorResponse
+//	@Security		BearerAuth
+//	@Router			/v1/rbac/audit/decisions [get]
 func (c *AuditController) GetRecentDecisions(ctx echo.Context) error {
 	tenantID := ctx.QueryParam("tenant_id")
 	limit := 50 // Default limit

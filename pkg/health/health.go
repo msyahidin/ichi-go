@@ -25,11 +25,11 @@ type ComponentHealth struct {
 
 // HealthResponse represents the overall health status
 type HealthResponse struct {
-	Status     Status                      `json:"status"`
-	Version    string                      `json:"version"`
-	Uptime     time.Duration               `json:"uptime_seconds"`
-	Timestamp  time.Time                   `json:"timestamp"`
-	Components map[string]ComponentHealth  `json:"components,omitempty"`
+	Status     Status                     `json:"status"`
+	Version    string                     `json:"version"`
+	Uptime     time.Duration              `json:"uptime_seconds"`
+	Timestamp  time.Time                  `json:"timestamp"`
+	Components map[string]ComponentHealth `json:"components,omitempty"`
 }
 
 // Checker is the interface for checking component health

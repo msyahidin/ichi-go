@@ -3,8 +3,9 @@ package errors
 import (
 	"database/sql"
 	"errors"
-	"github.com/labstack/echo/v4"
 	"ichi-go/pkg/logger"
+
+	"github.com/labstack/echo/v4"
 )
 
 type BunErrorHandler struct {

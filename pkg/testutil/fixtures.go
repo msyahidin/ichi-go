@@ -335,12 +335,12 @@ func InvalidEmailCases() []string {
 // InvalidPasswordCases returns common invalid password test cases
 func InvalidPasswordCases() []string {
 	return []string{
-		"",           // empty
-		"short",      // too short
-		"password",   // no uppercase
-		"PASSWORD",   // no lowercase
-		"Password",   // no number
-		"Pass123",    // no special char (depending on validation rules)
+		"",         // empty
+		"short",    // too short
+		"password", // no uppercase
+		"PASSWORD", // no lowercase
+		"Password", // no number
+		"Pass123",  // no special char (depending on validation rules)
 	}
 }
 

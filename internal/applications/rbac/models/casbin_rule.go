@@ -12,12 +12,12 @@ type CasbinRule struct {
 
 	ID    int64  `bun:"id,pk,autoincrement" json:"id"`
 	Ptype string `bun:"ptype,notnull" json:"ptype"` // p (policy) or g (grouping)
-	V0    string `bun:"v0" json:"v0"`                // subject (user or role)
-	V1    string `bun:"v1" json:"v1"`                // domain (tenant_id)
-	V2    string `bun:"v2" json:"v2"`                // object (resource)
-	V3    string `bun:"v3" json:"v3"`                // action
-	V4    string `bun:"v4" json:"v4"`                // reserved
-	V5    string `bun:"v5" json:"v5"`                // reserved
+	V0    string `bun:"v0" json:"v0"`               // subject (user or role)
+	V1    string `bun:"v1" json:"v1"`               // domain (tenant_id)
+	V2    string `bun:"v2" json:"v2"`               // object (resource)
+	V3    string `bun:"v3" json:"v3"`               // action
+	V4    string `bun:"v4" json:"v4"`               // reserved
+	V5    string `bun:"v5" json:"v5"`               // reserved
 
 	CreatedAt time.Time `bun:"created_at,nullzero,notnull,default:current_timestamp" json:"created_at"`
 }

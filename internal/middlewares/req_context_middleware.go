@@ -1,8 +1,9 @@
 package middlewares
 
 import (
-	"github.com/labstack/echo/v4"
 	"ichi-go/pkg/requestctx"
+
+	"github.com/labstack/echo/v4"
 )
 
 type ContextKey string

@@ -4,9 +4,10 @@ import (
 	"context"
 	"time"
 
+	"ichi-go/internal/infra/queue/rabbitmq"
+
 	"github.com/redis/go-redis/v9"
 	"github.com/uptrace/bun"
-	"ichi-go/internal/infra/queue/rabbitmq"
 )
 
 // DatabaseChecker checks database connectivity

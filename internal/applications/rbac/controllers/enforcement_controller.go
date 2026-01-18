@@ -23,8 +23,19 @@ func NewEnforcementController(enforcementService *services.EnforcementService) *
 	}
 }
 
-// CheckPermission handles single permission check requests
-// POST /api/v1/rbac/enforce/check
+// CheckPermission godoc
+//
+//	@Summary		Check user permission
+//	@Description	Check if a user has permission to perform an action on a resource
+//	@Tags			RBAC - Enforcement
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		dto.CheckPermissionRequest	true	"Permission check request"
+//	@Success		200		{object}	response.SuccessResponse{data=dto.CheckPermissionResponse}
+//	@Failure		400		{object}	response.ErrorResponse
+//	@Failure		500		{object}	response.ErrorResponse
+//	@Security		BearerAuth
+//	@Router			/v1/rbac/enforce/check [post]
 func (c *EnforcementController) CheckPermission(ctx echo.Context) error {
 	var req dto.CheckPermissionRequest
 
@@ -61,8 +72,19 @@ func (c *EnforcementController) CheckPermission(ctx echo.Context) error {
 	return response.Success(ctx, resp)
 }
 
-// CheckBatchPermissions handles batch permission check requests
-// POST /api/v1/rbac/enforce/batch
+// CheckBatchPermissions godoc
+//
+//	@Summary		Check multiple permissions in batch
+//	@Description	Check multiple resource-action permissions for a user in a single request
+//	@Tags			RBAC - Enforcement
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		dto.BatchCheckPermissionRequest	true	"Batch permission check request"
+//	@Success		200		{object}	response.SuccessResponse{data=dto.BatchCheckPermissionResponse}
+//	@Failure		400		{object}	response.ErrorResponse
+//	@Failure		500		{object}	response.ErrorResponse
+//	@Security		BearerAuth
+//	@Router			/v1/rbac/enforce/batch [post]
 func (c *EnforcementController) CheckBatchPermissions(ctx echo.Context) error {
 	var req dto.BatchCheckPermissionRequest
 
@@ -101,8 +123,20 @@ func (c *EnforcementController) CheckBatchPermissions(ctx echo.Context) error {
 	return response.Success(ctx, resp)
 }
 
-// GetMyPermissions retrieves all permissions for the current user
-// GET /api/v1/rbac/enforce/my-permissions
+// GetMyPermissions godoc
+//
+//	@Summary		Get current user's permissions
+//	@Description	Retrieve all permissions for the authenticated user in a specific tenant
+//	@Tags			RBAC - Enforcement
+//	@Accept			json
+//	@Produce		json
+//	@Param			tenant_id	query		string	false	"Tenant ID (uses request context if not provided)"
+//	@Success		200			{object}	response.SuccessResponse{data=dto.GetUserPermissionsResponse}
+//	@Failure		400			{object}	response.ErrorResponse
+//	@Failure		401			{object}	response.ErrorResponse
+//	@Failure		500			{object}	response.ErrorResponse
+//	@Security		BearerAuth
+//	@Router			/v1/rbac/enforce/my-permissions [get]
 func (c *EnforcementController) GetMyPermissions(ctx echo.Context) error {
 	// Get user ID from request context
 	userID := requestctx.GetUserIDAsInt64(ctx.Request().Context())

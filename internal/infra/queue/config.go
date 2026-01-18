@@ -1,8 +1,9 @@
 package queue
 
 import (
-	"github.com/spf13/viper"
 	"ichi-go/internal/infra/queue/rabbitmq"
+
+	"github.com/spf13/viper"
 )
 
 // Config holds queue system configuration.

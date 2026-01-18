@@ -2,8 +2,9 @@ package http
 
 import (
 	"net/http"
-	"resty.dev/v3"
 	"time"
+
+	"resty.dev/v3"
 )
 
 type ClientOptions struct {

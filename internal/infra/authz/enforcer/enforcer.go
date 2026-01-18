@@ -4,12 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/uptrace/bun"
 	"ichi-go/internal/infra/authz/adapter"
 	"ichi-go/pkg/logger"
 	"ichi-go/pkg/rbac"
 	"sync"
 	"time"
+
+	"github.com/uptrace/bun"
 
 	"github.com/casbin/casbin/v3"
 	"github.com/casbin/casbin/v3/model"

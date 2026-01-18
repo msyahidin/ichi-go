@@ -1,8 +1,9 @@
 package middlewares
 
 import (
-	"github.com/labstack/echo/v4"
 	appValidator "ichi-go/pkg/validator"
+
+	"github.com/labstack/echo/v4"
 )
 
 // ValidatorMiddleware provides Echo with our custom validator

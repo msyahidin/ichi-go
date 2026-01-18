@@ -1,8 +1,9 @@
 package bun
 
 import (
-	"github.com/uptrace/bun"
 	"time"
+
+	"github.com/uptrace/bun"
 )
 
 type QueryScope func(*bun.SelectQuery) *bun.SelectQuery

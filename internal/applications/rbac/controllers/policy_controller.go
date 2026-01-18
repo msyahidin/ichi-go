@@ -7,8 +7,9 @@ import (
 	"ichi-go/internal/applications/rbac/services"
 	"ichi-go/pkg/requestctx"
 
-	"github.com/labstack/echo/v4"
 	"ichi-go/pkg/utils/response"
+
+	"github.com/labstack/echo/v4"
 )
 
 // PolicyController handles policy management endpoints
@@ -23,8 +24,22 @@ func NewPolicyController(policyService *services.PolicyService) *PolicyControlle
 	}
 }
 
-// GetPolicies retrieves policies with filtering and pagination
-// GET /api/v1/rbac/policies
+// GetPolicies godoc
+//
+//	@Summary		Get policies
+//	@Description	Retrieve policies with optional filtering by tenant or role with pagination
+//	@Tags			RBAC - Policies
+//	@Accept			json
+//	@Produce		json
+//	@Param			tenant_id	query		string	false	"Filter by tenant ID"
+//	@Param			role		query		string	false	"Filter by role slug"
+//	@Param			page		query		int		false	"Page number"			default(1)
+//	@Param			page_size	query		int		false	"Page size (max 100)"	default(20)
+//	@Success		200			{object}	response.SuccessResponse{data=dto.GetPoliciesResponse}
+//	@Failure		400			{object}	response.ErrorResponse
+//	@Failure		500			{object}	response.ErrorResponse
+//	@Security		BearerAuth
+//	@Router			/v1/rbac/policies [get]
 func (c *PolicyController) GetPolicies(ctx echo.Context) error {
 	var req dto.GetPoliciesRequest
 
@@ -98,8 +113,20 @@ func (c *PolicyController) GetPolicies(ctx echo.Context) error {
 	return response.Success(ctx, resp)
 }
 
-// AddPolicy adds a new policy
-// POST /api/v1/rbac/policies
+// AddPolicy godoc
+//
+//	@Summary		Add policy
+//	@Description	Add a new permission policy for a role in a tenant
+//	@Tags			RBAC - Policies
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		dto.AddPolicyRequest	true	"Add policy request"
+//	@Success		200		{object}	response.SuccessResponse{data=dto.MessageResponse}
+//	@Failure		400		{object}	response.ErrorResponse
+//	@Failure		401		{object}	response.ErrorResponse
+//	@Failure		500		{object}	response.ErrorResponse
+//	@Security		BearerAuth
+//	@Router			/v1/rbac/policies [post]
 func (c *PolicyController) AddPolicy(ctx echo.Context) error {
 	var req dto.AddPolicyRequest
 
@@ -134,8 +161,20 @@ func (c *PolicyController) AddPolicy(ctx echo.Context) error {
 	return response.Success(ctx, dto.NewMessageResponse("Policy added successfully"))
 }
 
-// RemovePolicy removes a policy
-// DELETE /api/v1/rbac/policies
+// RemovePolicy godoc
+//
+//	@Summary		Remove policy
+//	@Description	Remove a permission policy from a role in a tenant
+//	@Tags			RBAC - Policies
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		dto.RemovePolicyRequest	true	"Remove policy request"
+//	@Success		200		{object}	response.SuccessResponse{data=dto.MessageResponse}
+//	@Failure		400		{object}	response.ErrorResponse
+//	@Failure		401		{object}	response.ErrorResponse
+//	@Failure		500		{object}	response.ErrorResponse
+//	@Security		BearerAuth
+//	@Router			/v1/rbac/policies [delete]
 func (c *PolicyController) RemovePolicy(ctx echo.Context) error {
 	var req dto.RemovePolicyRequest
 
@@ -170,8 +209,18 @@ func (c *PolicyController) RemovePolicy(ctx echo.Context) error {
 	return response.Success(ctx, dto.NewMessageResponse("Policy removed successfully"))
 }
 
-// GetPolicyCount returns policy count statistics
-// GET /api/v1/rbac/policies/count
+// GetPolicyCount godoc
+//
+//	@Summary		Get policy count
+//	@Description	Get total count of policies, optionally filtered by tenant
+//	@Tags			RBAC - Policies
+//	@Accept			json
+//	@Produce		json
+//	@Param			tenant_id	query		string	false	"Filter by tenant ID"
+//	@Success		200			{object}	response.SuccessResponse{data=dto.PolicyCountResponse}
+//	@Failure		500			{object}	response.ErrorResponse
+//	@Security		BearerAuth
+//	@Router			/v1/rbac/policies/count [get]
 func (c *PolicyController) GetPolicyCount(ctx echo.Context) error {
 	tenantID := ctx.QueryParam("tenant_id")
 
@@ -201,8 +250,18 @@ func (c *PolicyController) GetPolicyCount(ctx echo.Context) error {
 	return response.Success(ctx, resp)
 }
 
-// ReloadPolicies reloads all policies from database
-// POST /api/v1/rbac/policies/reload
+// ReloadPolicies godoc
+//
+//	@Summary		Reload policies
+//	@Description	Reload all policies from database into Casbin enforcer (admin operation)
+//	@Tags			RBAC - Policies
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	response.SuccessResponse{data=dto.MessageResponse}
+//	@Failure		401	{object}	response.ErrorResponse
+//	@Failure		500	{object}	response.ErrorResponse
+//	@Security		BearerAuth
+//	@Router			/v1/rbac/policies/reload [post]
 func (c *PolicyController) ReloadPolicies(ctx echo.Context) error {
 	// Get actor ID from context
 	actorID := requestctx.GetUserIDAsInt64(ctx.Request().Context())

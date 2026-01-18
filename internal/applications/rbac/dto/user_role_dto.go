@@ -4,11 +4,11 @@ import "time"
 
 // AssignRoleRequest represents a request to assign a role to a user
 type AssignRoleRequest struct {
-	UserID   int64   `json:"user_id" validate:"required,min=1"`
-	RoleSlug string  `json:"role_slug" validate:"required"`
-	TenantID string  `json:"tenant_id" validate:"required"`
+	UserID    int64      `json:"user_id" validate:"required,min=1"`
+	RoleSlug  string     `json:"role_slug" validate:"required"`
+	TenantID  string     `json:"tenant_id" validate:"required"`
 	ExpiresAt *time.Time `json:"expires_at,omitempty"`
-	Reason   string  `json:"reason,omitempty" validate:"omitempty,max=500"`
+	Reason    string     `json:"reason,omitempty" validate:"omitempty,max=500"`
 }
 
 // RevokeRoleRequest represents a request to revoke a role from a user
