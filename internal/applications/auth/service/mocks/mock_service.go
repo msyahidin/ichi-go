@@ -6,8 +6,8 @@ package auth
 
 import (
 	"context"
-	"ichi-go/internal/applications/auth/dto"
-	"ichi-go/internal/applications/user/repository"
+	auth "ichi-go/internal/applications/auth/dto"
+	user "ichi-go/internal/applications/user/repository"
 
 	mock "github.com/stretchr/testify/mock"
 )

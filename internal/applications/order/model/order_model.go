@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/uptrace/bun"
 	bunCore "ichi-go/internal/infra/database/bun"
+
+	"github.com/uptrace/bun"
 )
 
 // Order represents a customer order in the system.

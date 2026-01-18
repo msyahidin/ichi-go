@@ -1,8 +1,9 @@
 package user
 
 import (
-	upbun "github.com/uptrace/bun"
 	"ichi-go/internal/infra/database/bun"
+
+	upbun "github.com/uptrace/bun"
 )
 
 type UserModel struct {

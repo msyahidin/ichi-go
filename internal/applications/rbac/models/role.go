@@ -10,13 +10,13 @@ import (
 type Role struct {
 	bun.BaseModel `bun:"table:rbac_roles,alias:rr"`
 
-	ID          int64   `bun:"id,pk,autoincrement" json:"id"`
-	Name        string  `bun:"name,notnull" json:"name"`
-	Slug        string  `bun:"slug,notnull" json:"slug"`
-	Description *string `bun:"description" json:"description,omitempty"`
-	TenantID    *string `bun:"tenant_id" json:"tenant_id,omitempty"` // NULL for global roles
-	Level       int     `bun:"level,notnull,default:0" json:"level"`
-	IsSystemRole bool   `bun:"is_system_role,notnull,default:false" json:"is_system_role"`
+	ID           int64   `bun:"id,pk,autoincrement" json:"id"`
+	Name         string  `bun:"name,notnull" json:"name"`
+	Slug         string  `bun:"slug,notnull" json:"slug"`
+	Description  *string `bun:"description" json:"description,omitempty"`
+	TenantID     *string `bun:"tenant_id" json:"tenant_id,omitempty"` // NULL for global roles
+	Level        int     `bun:"level,notnull,default:0" json:"level"`
+	IsSystemRole bool    `bun:"is_system_role,notnull,default:false" json:"is_system_role"`
 
 	CreatedAt time.Time  `bun:"created_at,nullzero,notnull,default:current_timestamp" json:"created_at"`
 	UpdatedAt time.Time  `bun:"updated_at,nullzero,notnull,default:current_timestamp" json:"updated_at"`

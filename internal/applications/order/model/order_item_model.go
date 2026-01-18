@@ -2,6 +2,7 @@ package model
 
 import (
 	"context"
+
 	"github.com/uptrace/bun"
 
 	bunCore "ichi-go/internal/infra/database/bun"

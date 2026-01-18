@@ -110,6 +110,506 @@ definitions:
         example: John Doe
         type: string
     type: object
+  ichi-go_internal_applications_rbac_dto.ActorStat:
+    properties:
+      actor_id:
+        type: string
+      event_count:
+        type: integer
+      last_activity:
+        type: string
+    type: object
+  ichi-go_internal_applications_rbac_dto.AddPolicyRequest:
+    properties:
+      action:
+        type: string
+      reason:
+        type: string
+      resource:
+        type: string
+      role:
+        type: string
+      tenant_id:
+        type: string
+    required:
+    - action
+    - resource
+    - role
+    - tenant_id
+    type: object
+  ichi-go_internal_applications_rbac_dto.AssignRoleRequest:
+    properties:
+      expires_at:
+        type: string
+      reason:
+        maxLength: 500
+        type: string
+      role_slug:
+        type: string
+      tenant_id:
+        type: string
+      user_id:
+        minimum: 1
+        type: integer
+    required:
+    - role_slug
+    - tenant_id
+    - user_id
+    type: object
+  ichi-go_internal_applications_rbac_dto.AuditLogResponse:
+    properties:
+      action:
+        type: string
+      actor_id:
+        type: string
+      actor_type:
+        type: string
+      decision:
+        type: string
+      decision_reason:
+        type: string
+      event_id:
+        type: string
+      latency_ms:
+        type: integer
+      policy_after:
+        additionalProperties: true
+        type: object
+      policy_before:
+        additionalProperties: true
+        type: object
+      reason:
+        type: string
+      resource_id:
+        type: string
+      resource_type:
+        type: string
+      subject_id:
+        type: string
+      tenant_id:
+        type: string
+      timestamp:
+        type: string
+    type: object
+  ichi-go_internal_applications_rbac_dto.AuditStatsResponse:
+    properties:
+      average_latency_ms:
+        type: number
+      decision_stats:
+        $ref: '#/definitions/ichi-go_internal_applications_rbac_dto.DecisionStats'
+      events_by_action:
+        additionalProperties:
+          type: integer
+        type: object
+      top_actors:
+        items:
+          $ref: '#/definitions/ichi-go_internal_applications_rbac_dto.ActorStat'
+        type: array
+      total_events:
+        type: integer
+    type: object
+  ichi-go_internal_applications_rbac_dto.BatchCheckPermissionRequest:
+    properties:
+      checks:
+        items:
+          $ref: '#/definitions/ichi-go_internal_applications_rbac_dto.BatchPermissionCheck'
+        minItems: 1
+        type: array
+      tenant_id:
+        type: string
+      user_id:
+        minimum: 1
+        type: integer
+    required:
+    - checks
+    - tenant_id
+    - user_id
+    type: object
+  ichi-go_internal_applications_rbac_dto.BatchCheckPermissionResponse:
+    properties:
+      results:
+        additionalProperties:
+          type: boolean
+        type: object
+    type: object
+  ichi-go_internal_applications_rbac_dto.BatchPermissionCheck:
+    properties:
+      action:
+        type: string
+      resource:
+        type: string
+    required:
+    - action
+    - resource
+    type: object
+  ichi-go_internal_applications_rbac_dto.CheckPermissionRequest:
+    properties:
+      action:
+        type: string
+      resource:
+        type: string
+      tenant_id:
+        type: string
+      user_id:
+        minimum: 1
+        type: integer
+    required:
+    - action
+    - resource
+    - tenant_id
+    - user_id
+    type: object
+  ichi-go_internal_applications_rbac_dto.CheckPermissionResponse:
+    properties:
+      allowed:
+        type: boolean
+      reason:
+        type: string
+    type: object
+  ichi-go_internal_applications_rbac_dto.CreateRoleRequest:
+    properties:
+      description:
+        maxLength: 500
+        type: string
+      name:
+        maxLength: 100
+        minLength: 3
+        type: string
+      permissions:
+        items:
+          type: integer
+        type: array
+      slug:
+        maxLength: 50
+        minLength: 2
+        type: string
+      tenant_id:
+        type: string
+    required:
+    - name
+    - slug
+    type: object
+  ichi-go_internal_applications_rbac_dto.DecisionStats:
+    properties:
+      allowed:
+        type: integer
+      denied:
+        type: integer
+      total_decisions:
+        type: integer
+    type: object
+  ichi-go_internal_applications_rbac_dto.ExportAuditLogsRequest:
+    properties:
+      action:
+        type: string
+      actor_id:
+        type: string
+      decision:
+        enum:
+        - allow
+        - deny
+        type: string
+      end_date:
+        type: string
+      file_name:
+        type: string
+      format:
+        enum:
+        - csv
+        - json
+        type: string
+      page:
+        minimum: 1
+        type: integer
+      page_size:
+        maximum: 100
+        minimum: 1
+        type: integer
+      resource_id:
+        type: string
+      resource_type:
+        type: string
+      sort_by:
+        enum:
+        - timestamp
+        - action
+        - actor_id
+        type: string
+      sort_direction:
+        enum:
+        - asc
+        - desc
+        type: string
+      start_date:
+        type: string
+      subject_id:
+        type: string
+      tenant_id:
+        type: string
+    required:
+    - format
+    type: object
+  ichi-go_internal_applications_rbac_dto.ExportAuditLogsResponse:
+    properties:
+      exported_at:
+        type: string
+      file_path:
+        type: string
+      format:
+        type: string
+      record_count:
+        type: integer
+    type: object
+  ichi-go_internal_applications_rbac_dto.GetAuditLogsResponse:
+    properties:
+      logs:
+        items:
+          $ref: '#/definitions/ichi-go_internal_applications_rbac_dto.AuditLogResponse'
+        type: array
+      total:
+        type: integer
+    type: object
+  ichi-go_internal_applications_rbac_dto.GetPoliciesResponse:
+    properties:
+      policies:
+        items:
+          $ref: '#/definitions/ichi-go_internal_applications_rbac_dto.PolicyResponse'
+        type: array
+      total:
+        type: integer
+    type: object
+  ichi-go_internal_applications_rbac_dto.GetRolesResponse:
+    properties:
+      roles:
+        items:
+          $ref: '#/definitions/ichi-go_internal_applications_rbac_dto.RoleResponse'
+        type: array
+      total:
+        type: integer
+    type: object
+  ichi-go_internal_applications_rbac_dto.GetUserPermissionsResponse:
+    properties:
+      permissions:
+        items:
+          type: string
+        type: array
+    type: object
+  ichi-go_internal_applications_rbac_dto.GetUserRolesResponse:
+    properties:
+      roles:
+        items:
+          $ref: '#/definitions/ichi-go_internal_applications_rbac_dto.UserRoleResponse'
+        type: array
+      total:
+        type: integer
+    type: object
+  ichi-go_internal_applications_rbac_dto.GetUsersWithRoleResponse:
+    properties:
+      total:
+        type: integer
+      users:
+        items:
+          $ref: '#/definitions/ichi-go_internal_applications_rbac_dto.UserRoleResponse'
+        type: array
+    type: object
+  ichi-go_internal_applications_rbac_dto.MessageResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  ichi-go_internal_applications_rbac_dto.PermissionResponse:
+    properties:
+      action:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      module:
+        type: string
+      name:
+        type: string
+      resource:
+        type: string
+      slug:
+        type: string
+    type: object
+  ichi-go_internal_applications_rbac_dto.PolicyCountResponse:
+    properties:
+      by_tenant:
+        type: integer
+      global_policy:
+        type: integer
+      total:
+        type: integer
+    type: object
+  ichi-go_internal_applications_rbac_dto.PolicyResponse:
+    properties:
+      action:
+        type: string
+      resource:
+        type: string
+      role:
+        type: string
+      tenant_id:
+        type: string
+    type: object
+  ichi-go_internal_applications_rbac_dto.RemovePolicyRequest:
+    properties:
+      action:
+        type: string
+      reason:
+        type: string
+      resource:
+        type: string
+      role:
+        type: string
+      tenant_id:
+        type: string
+    required:
+    - action
+    - resource
+    - role
+    - tenant_id
+    type: object
+  ichi-go_internal_applications_rbac_dto.RevokeRoleRequest:
+    properties:
+      reason:
+        maxLength: 500
+        type: string
+      role_slug:
+        type: string
+      tenant_id:
+        type: string
+      user_id:
+        minimum: 1
+        type: integer
+    required:
+    - role_slug
+    - tenant_id
+    - user_id
+    type: object
+  ichi-go_internal_applications_rbac_dto.RoleResponse:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      is_system_role:
+        type: boolean
+      name:
+        type: string
+      slug:
+        type: string
+      tenant_id:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  ichi-go_internal_applications_rbac_dto.RoleWithPermissionsResponse:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      is_system_role:
+        type: boolean
+      name:
+        type: string
+      permissions:
+        items:
+          $ref: '#/definitions/ichi-go_internal_applications_rbac_dto.PermissionResponse'
+        type: array
+      slug:
+        type: string
+      tenant_id:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  ichi-go_internal_applications_rbac_dto.UpdateRoleRequest:
+    properties:
+      description:
+        maxLength: 500
+        type: string
+      name:
+        maxLength: 100
+        minLength: 3
+        type: string
+      permissions:
+        items:
+          type: integer
+        type: array
+    type: object
+  ichi-go_internal_applications_rbac_dto.UserRoleResponse:
+    properties:
+      assigned_at:
+        type: string
+      assigned_by:
+        type: integer
+      expires_at:
+        type: string
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      role_id:
+        type: integer
+      role_name:
+        type: string
+      role_slug:
+        type: string
+      tenant_id:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  ichi-go_pkg_health.ComponentHealth:
+    properties:
+      checked_at:
+        type: string
+      latency_ms:
+        $ref: '#/definitions/time.Duration'
+      message:
+        type: string
+      name:
+        type: string
+      status:
+        $ref: '#/definitions/ichi-go_pkg_health.Status'
+    type: object
+  ichi-go_pkg_health.HealthResponse:
+    properties:
+      components:
+        additionalProperties:
+          $ref: '#/definitions/ichi-go_pkg_health.ComponentHealth'
+        type: object
+      status:
+        $ref: '#/definitions/ichi-go_pkg_health.Status'
+      timestamp:
+        type: string
+      uptime_seconds:
+        $ref: '#/definitions/time.Duration'
+      version:
+        type: string
+    type: object
+  ichi-go_pkg_health.Status:
+    enum:
+    - healthy
+    - unhealthy
+    - degraded
+    type: string
+    x-enum-varnames:
+    - StatusHealthy
+    - StatusUnhealthy
+    - StatusDegraded
   ichi-go_pkg_utils_response.ErrorDetail:
     description: Detailed error information
     properties:
@@ -143,6 +643,27 @@ definitions:
         example: true
         type: boolean
     type: object
+  time.Duration:
+    enum:
+    - -9223372036854775808
+    - 9223372036854775807
+    - 1
+    - 1000
+    - 1000000
+    - 1000000000
+    - 60000000000
+    - 3600000000000
+    format: int64
+    type: integer
+    x-enum-varnames:
+    - minDuration
+    - maxDuration
+    - Nanosecond
+    - Microsecond
+    - Millisecond
+    - Second
+    - Minute
+    - Hour
 externalDocs:
   description: OpenAPI Specification
   url: https://swagger.io/specification/
@@ -162,7 +683,7 @@ info:
   title: Ichi-Go API
   version: "1.0"
 paths:
-  /auth/login:
+  /202601/auth/login:
     post:
       consumes:
       - application/json
@@ -349,6 +870,1037 @@ paths:
       summary: Register new user
       tags:
       - Auth
+  /health:
+    get:
+      description: Returns basic service health status and uptime
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_health.HealthResponse'
+      summary: Basic health check
+      tags:
+      - Health
+  /health/live:
+    get:
+      description: Fast health check for Kubernetes liveness probe
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_health.HealthResponse'
+      summary: Kubernetes liveness probe
+      tags:
+      - Health
+  /health/ready:
+    get:
+      description: Checks all dependencies (database, redis, rabbitmq) for readiness
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: All dependencies healthy
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_health.HealthResponse'
+        "503":
+          description: One or more dependencies unhealthy
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_health.HealthResponse'
+      summary: Kubernetes readiness probe
+      tags:
+      - Health
+  /v1/rbac/audit/decisions:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve recent permission check decisions (allowed/denied) with
+        performance metrics
+      parameters:
+      - description: Filter by tenant ID
+        in: query
+        name: tenant_id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/ichi-go_pkg_utils_response.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/ichi-go_internal_applications_rbac_dto.GetAuditLogsResponse'
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get recent permission decisions
+      tags:
+      - RBAC - Audit
+  /v1/rbac/audit/export:
+    post:
+      consumes:
+      - application/json
+      description: Export audit logs to CSV or JSON format with optional filtering
+      parameters:
+      - description: Export audit logs request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/ichi-go_internal_applications_rbac_dto.ExportAuditLogsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/ichi-go_pkg_utils_response.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/ichi-go_internal_applications_rbac_dto.ExportAuditLogsResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Export audit logs
+      tags:
+      - RBAC - Audit
+  /v1/rbac/audit/logs:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve audit logs with comprehensive filtering and pagination
+        options
+      parameters:
+      - description: Filter by tenant ID
+        in: query
+        name: tenant_id
+        type: string
+      - description: Filter by actor ID
+        in: query
+        name: actor_id
+        type: string
+      - description: Filter by subject ID
+        in: query
+        name: subject_id
+        type: string
+      - description: Filter by action type
+        in: query
+        name: action
+        type: string
+      - description: Filter by decision (allowed/denied)
+        in: query
+        name: decision
+        type: string
+      - description: Filter by start date (RFC3339)
+        in: query
+        name: start_date
+        type: string
+      - description: Filter by end date (RFC3339)
+        in: query
+        name: end_date
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size (max 100)
+        in: query
+        name: page_size
+        type: integer
+      - default: '"timestamp"'
+        description: Sort field
+        in: query
+        name: sort_by
+        type: string
+      - default: '"desc"'
+        description: Sort direction (asc/desc)
+        in: query
+        name: sort_direction
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/ichi-go_pkg_utils_response.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/ichi-go_internal_applications_rbac_dto.GetAuditLogsResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Query audit logs
+      tags:
+      - RBAC - Audit
+  /v1/rbac/audit/mutations:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve recent policy and role mutations (additions, removals,
+        assignments, revocations)
+      parameters:
+      - description: Filter by tenant ID
+        in: query
+        name: tenant_id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/ichi-go_pkg_utils_response.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/ichi-go_internal_applications_rbac_dto.GetAuditLogsResponse'
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get recent mutations
+      tags:
+      - RBAC - Audit
+  /v1/rbac/audit/stats:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve audit statistics including event counts by action, decision
+        stats, and performance metrics
+      parameters:
+      - description: Tenant ID
+        in: query
+        name: tenant_id
+        required: true
+        type: string
+      - description: Start date (RFC3339)
+        in: query
+        name: start_date
+        type: string
+      - description: End date (RFC3339)
+        in: query
+        name: end_date
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/ichi-go_pkg_utils_response.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/ichi-go_internal_applications_rbac_dto.AuditStatsResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get audit statistics
+      tags:
+      - RBAC - Audit
+  /v1/rbac/enforce/batch:
+    post:
+      consumes:
+      - application/json
+      description: Check multiple resource-action permissions for a user in a single
+        request
+      parameters:
+      - description: Batch permission check request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/ichi-go_internal_applications_rbac_dto.BatchCheckPermissionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/ichi-go_pkg_utils_response.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/ichi-go_internal_applications_rbac_dto.BatchCheckPermissionResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Check multiple permissions in batch
+      tags:
+      - RBAC - Enforcement
+  /v1/rbac/enforce/check:
+    post:
+      consumes:
+      - application/json
+      description: Check if a user has permission to perform an action on a resource
+      parameters:
+      - description: Permission check request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/ichi-go_internal_applications_rbac_dto.CheckPermissionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/ichi-go_pkg_utils_response.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/ichi-go_internal_applications_rbac_dto.CheckPermissionResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Check user permission
+      tags:
+      - RBAC - Enforcement
+  /v1/rbac/enforce/my-permissions:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all permissions for the authenticated user in a specific
+        tenant
+      parameters:
+      - description: Tenant ID (uses request context if not provided)
+        in: query
+        name: tenant_id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/ichi-go_pkg_utils_response.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/ichi-go_internal_applications_rbac_dto.GetUserPermissionsResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get current user's permissions
+      tags:
+      - RBAC - Enforcement
+  /v1/rbac/policies:
+    delete:
+      consumes:
+      - application/json
+      description: Remove a permission policy from a role in a tenant
+      parameters:
+      - description: Remove policy request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/ichi-go_internal_applications_rbac_dto.RemovePolicyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/ichi-go_pkg_utils_response.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/ichi-go_internal_applications_rbac_dto.MessageResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Remove policy
+      tags:
+      - RBAC - Policies
+    get:
+      consumes:
+      - application/json
+      description: Retrieve policies with optional filtering by tenant or role with
+        pagination
+      parameters:
+      - description: Filter by tenant ID
+        in: query
+        name: tenant_id
+        type: string
+      - description: Filter by role slug
+        in: query
+        name: role
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size (max 100)
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/ichi-go_pkg_utils_response.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/ichi-go_internal_applications_rbac_dto.GetPoliciesResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get policies
+      tags:
+      - RBAC - Policies
+    post:
+      consumes:
+      - application/json
+      description: Add a new permission policy for a role in a tenant
+      parameters:
+      - description: Add policy request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/ichi-go_internal_applications_rbac_dto.AddPolicyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/ichi-go_pkg_utils_response.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/ichi-go_internal_applications_rbac_dto.MessageResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Add policy
+      tags:
+      - RBAC - Policies
+  /v1/rbac/policies/count:
+    get:
+      consumes:
+      - application/json
+      description: Get total count of policies, optionally filtered by tenant
+      parameters:
+      - description: Filter by tenant ID
+        in: query
+        name: tenant_id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/ichi-go_pkg_utils_response.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/ichi-go_internal_applications_rbac_dto.PolicyCountResponse'
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get policy count
+      tags:
+      - RBAC - Policies
+  /v1/rbac/policies/reload:
+    post:
+      consumes:
+      - application/json
+      description: Reload all policies from database into Casbin enforcer (admin operation)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/ichi-go_pkg_utils_response.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/ichi-go_internal_applications_rbac_dto.MessageResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Reload policies
+      tags:
+      - RBAC - Policies
+  /v1/rbac/roles:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all roles with optional filtering by tenant or global
+        scope, with pagination
+      parameters:
+      - description: Filter by tenant ID
+        in: query
+        name: tenant_id
+        type: string
+      - description: Only global roles
+        in: query
+        name: global_only
+        type: boolean
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size (max 100)
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/ichi-go_pkg_utils_response.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/ichi-go_internal_applications_rbac_dto.GetRolesResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get roles
+      tags:
+      - RBAC - Roles
+    post:
+      consumes:
+      - application/json
+      description: Create a new role (global or tenant-specific)
+      parameters:
+      - description: Create role request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/ichi-go_internal_applications_rbac_dto.CreateRoleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/ichi-go_pkg_utils_response.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/ichi-go_internal_applications_rbac_dto.RoleResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create role
+      tags:
+      - RBAC - Roles
+  /v1/rbac/roles/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Soft delete a role (marks as deleted)
+      parameters:
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/ichi-go_pkg_utils_response.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/ichi-go_internal_applications_rbac_dto.MessageResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete role
+      tags:
+      - RBAC - Roles
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a single role by its ID
+      parameters:
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/ichi-go_pkg_utils_response.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/ichi-go_internal_applications_rbac_dto.RoleResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get role by ID
+      tags:
+      - RBAC - Roles
+    put:
+      consumes:
+      - application/json
+      description: Update an existing role's name or description
+      parameters:
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Update role request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/ichi-go_internal_applications_rbac_dto.UpdateRoleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/ichi-go_pkg_utils_response.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/ichi-go_internal_applications_rbac_dto.RoleResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update role
+      tags:
+      - RBAC - Roles
+  /v1/rbac/roles/{id}/permissions:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a role with all its associated permissions
+      parameters:
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/ichi-go_pkg_utils_response.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/ichi-go_internal_applications_rbac_dto.RoleWithPermissionsResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get role with permissions
+      tags:
+      - RBAC - Roles
+  /v1/rbac/roles/{roleId}/users:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all users that have been assigned a specific role in a
+        tenant
+      parameters:
+      - description: Role ID
+        in: path
+        name: roleId
+        required: true
+        type: integer
+      - description: Tenant ID (uses request context if not provided)
+        in: query
+        name: tenant_id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/ichi-go_pkg_utils_response.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/ichi-go_internal_applications_rbac_dto.GetUsersWithRoleResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get users with role
+      tags:
+      - RBAC - User Roles
+  /v1/rbac/users/{userId}/roles:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all roles assigned to a specific user in a tenant
+      parameters:
+      - description: User ID
+        in: path
+        name: userId
+        required: true
+        type: integer
+      - description: Tenant ID (uses request context if not provided)
+        in: query
+        name: tenant_id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/ichi-go_pkg_utils_response.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/ichi-go_internal_applications_rbac_dto.GetUserRolesResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get user roles
+      tags:
+      - RBAC - User Roles
+    post:
+      consumes:
+      - application/json
+      description: Assign a role to a user in a specific tenant
+      parameters:
+      - description: User ID
+        in: path
+        name: userId
+        required: true
+        type: integer
+      - description: Assign role request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/ichi-go_internal_applications_rbac_dto.AssignRoleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/ichi-go_pkg_utils_response.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/ichi-go_internal_applications_rbac_dto.MessageResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Assign role to user
+      tags:
+      - RBAC - User Roles
+  /v1/rbac/users/{userId}/roles/{roleSlug}:
+    delete:
+      consumes:
+      - application/json
+      description: Revoke a role assignment from a user in a specific tenant
+      parameters:
+      - description: User ID
+        in: path
+        name: userId
+        required: true
+        type: integer
+      - description: Role slug
+        in: path
+        name: roleSlug
+        required: true
+        type: string
+      - description: Revoke role request (optional tenant_id and reason)
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/ichi-go_internal_applications_rbac_dto.RevokeRoleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/ichi-go_pkg_utils_response.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/ichi-go_internal_applications_rbac_dto.MessageResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Revoke role from user
+      tags:
+      - RBAC - User Roles
+  /v1/rbac/users/{userId}/roles/active:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve only active (non-expired) roles for a specific user in
+        a tenant
+      parameters:
+      - description: User ID
+        in: path
+        name: userId
+        required: true
+        type: integer
+      - description: Tenant ID (uses request context if not provided)
+        in: query
+        name: tenant_id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/ichi-go_pkg_utils_response.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/ichi-go_internal_applications_rbac_dto.GetUserRolesResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ichi-go_pkg_utils_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get active user roles
+      tags:
+      - RBAC - User Roles
 securityDefinitions:
   BearerAuth:
     description: Type "Bearer" followed by a space and JWT token.

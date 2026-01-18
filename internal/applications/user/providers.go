@@ -1,14 +1,15 @@
 package user
 
 import (
-	"github.com/redis/go-redis/v9"
-	"github.com/samber/do/v2"
-	"github.com/uptrace/bun"
 	"ichi-go/config"
 	user "ichi-go/internal/applications/user/controller"
 	userRepo "ichi-go/internal/applications/user/repository"
 	userService "ichi-go/internal/applications/user/service"
 	"ichi-go/pkg/clients/pokemonapi"
+
+	"github.com/redis/go-redis/v9"
+	"github.com/samber/do/v2"
+	"github.com/uptrace/bun"
 
 	"ichi-go/internal/infra/cache"
 	"ichi-go/internal/infra/queue/rabbitmq"

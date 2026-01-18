@@ -1,8 +1,9 @@
 package http
 
 import (
-	"github.com/spf13/viper"
 	"time"
+
+	"github.com/spf13/viper"
 )
 
 type CorsConfig struct {

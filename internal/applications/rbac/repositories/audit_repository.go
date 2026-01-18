@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/uptrace/bun"
 	"ichi-go/internal/applications/rbac/models"
+
+	"github.com/uptrace/bun"
 )
 
 // AuditRepository handles audit log database operations

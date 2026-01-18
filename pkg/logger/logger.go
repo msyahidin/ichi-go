@@ -14,7 +14,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog"
-	"github.com/samber/oops/loggers/zerolog"
+	oopszerolog "github.com/samber/oops/loggers/zerolog"
 	"github.com/spf13/viper"
 )
 

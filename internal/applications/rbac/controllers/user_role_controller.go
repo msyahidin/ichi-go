@@ -10,8 +10,9 @@ import (
 	"ichi-go/internal/applications/rbac/services"
 	"ichi-go/pkg/requestctx"
 
-	"github.com/labstack/echo/v4"
 	"ichi-go/pkg/utils/response"
+
+	"github.com/labstack/echo/v4"
 )
 
 // UserRoleController handles user role assignment endpoints
@@ -26,8 +27,20 @@ func NewUserRoleController(userRoleService *services.UserRoleService) *UserRoleC
 	}
 }
 
-// GetUserRoles retrieves all roles for a user
-// GET /api/v1/rbac/users/:userId/roles
+// GetUserRoles godoc
+//
+//	@Summary		Get user roles
+//	@Description	Retrieve all roles assigned to a specific user in a tenant
+//	@Tags			RBAC - User Roles
+//	@Accept			json
+//	@Produce		json
+//	@Param			userId		path		int		true	"User ID"
+//	@Param			tenant_id	query		string	false	"Tenant ID (uses request context if not provided)"
+//	@Success		200			{object}	response.SuccessResponse{data=dto.GetUserRolesResponse}
+//	@Failure		400			{object}	response.ErrorResponse
+//	@Failure		500			{object}	response.ErrorResponse
+//	@Security		BearerAuth
+//	@Router			/v1/rbac/users/{userId}/roles [get]
 func (c *UserRoleController) GetUserRoles(ctx echo.Context) error {
 	userID, err := strconv.ParseInt(ctx.Param("userId"), 10, 64)
 	if err != nil {
@@ -63,8 +76,20 @@ func (c *UserRoleController) GetUserRoles(ctx echo.Context) error {
 	return response.Success(ctx, resp)
 }
 
-// GetActiveUserRoles retrieves active (non-expired) roles for a user
-// GET /api/v1/rbac/users/:userId/roles/active
+// GetActiveUserRoles godoc
+//
+//	@Summary		Get active user roles
+//	@Description	Retrieve only active (non-expired) roles for a specific user in a tenant
+//	@Tags			RBAC - User Roles
+//	@Accept			json
+//	@Produce		json
+//	@Param			userId		path		int		true	"User ID"
+//	@Param			tenant_id	query		string	false	"Tenant ID (uses request context if not provided)"
+//	@Success		200			{object}	response.SuccessResponse{data=dto.GetUserRolesResponse}
+//	@Failure		400			{object}	response.ErrorResponse
+//	@Failure		500			{object}	response.ErrorResponse
+//	@Security		BearerAuth
+//	@Router			/v1/rbac/users/{userId}/roles/active [get]
 func (c *UserRoleController) GetActiveUserRoles(ctx echo.Context) error {
 	userID, err := strconv.ParseInt(ctx.Param("userId"), 10, 64)
 	if err != nil {
@@ -100,8 +125,21 @@ func (c *UserRoleController) GetActiveUserRoles(ctx echo.Context) error {
 	return response.Success(ctx, resp)
 }
 
-// AssignRole assigns a role to a user
-// POST /api/v1/rbac/users/:userId/roles
+// AssignRole godoc
+//
+//	@Summary		Assign role to user
+//	@Description	Assign a role to a user in a specific tenant
+//	@Tags			RBAC - User Roles
+//	@Accept			json
+//	@Produce		json
+//	@Param			userId	path		int						true	"User ID"
+//	@Param			request	body		dto.AssignRoleRequest	true	"Assign role request"
+//	@Success		200		{object}	response.SuccessResponse{data=dto.MessageResponse}
+//	@Failure		400		{object}	response.ErrorResponse
+//	@Failure		401		{object}	response.ErrorResponse
+//	@Failure		500		{object}	response.ErrorResponse
+//	@Security		BearerAuth
+//	@Router			/v1/rbac/users/{userId}/roles [post]
 func (c *UserRoleController) AssignRole(ctx echo.Context) error {
 	userID, err := strconv.ParseInt(ctx.Param("userId"), 10, 64)
 	if err != nil {
@@ -143,8 +181,22 @@ func (c *UserRoleController) AssignRole(ctx echo.Context) error {
 	return response.Success(ctx, dto.NewMessageResponse("Role assigned successfully"))
 }
 
-// RevokeRole revokes a role from a user
-// DELETE /api/v1/rbac/users/:userId/roles/:roleSlug
+// RevokeRole godoc
+//
+//	@Summary		Revoke role from user
+//	@Description	Revoke a role assignment from a user in a specific tenant
+//	@Tags			RBAC - User Roles
+//	@Accept			json
+//	@Produce		json
+//	@Param			userId		path		int						true	"User ID"
+//	@Param			roleSlug	path		string					true	"Role slug"
+//	@Param			request		body		dto.RevokeRoleRequest	true	"Revoke role request (optional tenant_id and reason)"
+//	@Success		200			{object}	response.SuccessResponse{data=dto.MessageResponse}
+//	@Failure		400			{object}	response.ErrorResponse
+//	@Failure		401			{object}	response.ErrorResponse
+//	@Failure		500			{object}	response.ErrorResponse
+//	@Security		BearerAuth
+//	@Router			/v1/rbac/users/{userId}/roles/{roleSlug} [delete]
 func (c *UserRoleController) RevokeRole(ctx echo.Context) error {
 	userID, err := strconv.ParseInt(ctx.Param("userId"), 10, 64)
 	if err != nil {
@@ -197,8 +249,20 @@ func (c *UserRoleController) RevokeRole(ctx echo.Context) error {
 	return response.Success(ctx, dto.NewMessageResponse("Role revoked successfully"))
 }
 
-// GetUsersWithRole retrieves all users that have a specific role
-// GET /api/v1/rbac/roles/:roleId/users
+// GetUsersWithRole godoc
+//
+//	@Summary		Get users with role
+//	@Description	Retrieve all users that have been assigned a specific role in a tenant
+//	@Tags			RBAC - User Roles
+//	@Accept			json
+//	@Produce		json
+//	@Param			roleId		path		int		true	"Role ID"
+//	@Param			tenant_id	query		string	false	"Tenant ID (uses request context if not provided)"
+//	@Success		200			{object}	response.SuccessResponse{data=dto.GetUsersWithRoleResponse}
+//	@Failure		400			{object}	response.ErrorResponse
+//	@Failure		500			{object}	response.ErrorResponse
+//	@Security		BearerAuth
+//	@Router			/v1/rbac/roles/{roleId}/users [get]
 func (c *UserRoleController) GetUsersWithRole(ctx echo.Context) error {
 	roleID, err := strconv.ParseInt(ctx.Param("roleId"), 10, 64)
 	if err != nil {

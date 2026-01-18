@@ -1,10 +1,11 @@
 package server
 
 import (
-	"github.com/labstack/echo/v4"
 	"html/template"
 	"ichi-go/config"
 	"net/http"
+
+	"github.com/labstack/echo/v4"
 )
 
 type TemplateRenderer struct {

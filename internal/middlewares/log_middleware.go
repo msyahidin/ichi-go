@@ -1,10 +1,11 @@
 package middlewares
 
 import (
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 	"ichi-go/config"
 	"ichi-go/pkg/logger"
+
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 func Logger(config *config.Config) echo.MiddlewareFunc {

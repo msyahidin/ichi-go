@@ -18,14 +18,7 @@ import (
 // Login authenticates user and returns tokens
 func (s *ServiceImpl) Login(ctx context.Context, req authDto.LoginRequest) (*authDto.LoginResponse, error) {
 	user, err := s.GetUserByEmail(ctx, req.Email)
-	if err != nil {
-		return nil, pkgErrors.AuthService(pkgErrors.ErrCodeInvalidCredentials).
-			With("email", req.Email).
-			Hint("Invalid email or password").
-			Wrap(err)
-	}
-
-	if user == nil {
+	if err != nil || user == nil {
 		return nil, pkgErrors.AuthService(pkgErrors.ErrCodeUserNotFound).
 			With("email", req.Email).
 			Hint("Invalid email or password").

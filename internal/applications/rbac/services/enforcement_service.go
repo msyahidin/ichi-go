@@ -16,11 +16,11 @@ import (
 // EnforcementService provides the main RBAC permission checking API
 // This is the CRITICAL service that applications use to check permissions
 type EnforcementService struct {
-	enforcer          *enforcer.Enforcer
-	decisionCache     *cache.DecisionCache
-	platformRepo      *repositories.PlatformRepository
-	auditRepo         *repositories.AuditRepository
-	config            *rbac.Config
+	enforcer      *enforcer.Enforcer
+	decisionCache *cache.DecisionCache
+	platformRepo  *repositories.PlatformRepository
+	auditRepo     *repositories.AuditRepository
+	config        *rbac.Config
 }
 
 // PermissionCheck represents a single permission check request

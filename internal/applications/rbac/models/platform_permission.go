@@ -25,9 +25,9 @@ func (PlatformPermission) TableName() string {
 
 // Platform permission constants
 const (
-	PlatformAdmin       = "platform.admin"       // Full platform access
-	PlatformImpersonate = "platform.impersonate" // Can impersonate users
-	PlatformAudit       = "platform.audit"       // Can view all audit logs
+	PlatformAdmin       = "platform.admin"        // Full platform access
+	PlatformImpersonate = "platform.impersonate"  // Can impersonate users
+	PlatformAudit       = "platform.audit"        // Can view all audit logs
 	PlatformManageRoles = "platform.manage_roles" // Can manage roles globally
 )
 

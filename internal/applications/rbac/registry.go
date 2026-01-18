@@ -37,9 +37,8 @@ func RegisterRoutes(
 ) {
 	// Base path for RBAC API
 	basePath := serviceName + "/api/v1/rbac"
-
+	enforcement := e.Group("/" + serviceName + "/api/enforce")
 	// Enforcement routes (permission checking)
-	enforcement := e.Group(basePath + "/enforce")
 	enforcement.Use(auth.AuthenticateMiddleware()) // Require authentication
 	{
 		enforcement.POST("/check", enforcementCtrl.CheckPermission)

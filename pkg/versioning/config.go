@@ -2,6 +2,7 @@ package versioning
 
 import (
 	"fmt"
+
 	"github.com/spf13/viper"
 )
 

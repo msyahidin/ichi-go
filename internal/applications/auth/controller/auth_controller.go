@@ -22,18 +22,19 @@ func NewAuthController(service *authService.ServiceImpl) *AuthController {
 }
 
 // Login godoc
-// @Summary      User login
-// @Description  Authenticate user with email and password, returns access and refresh tokens
-// @Tags         Auth
-// @Accept       json
-// @Produce      json
-// @Param        X-Language  header    string                      false  "Language preference (en or id)"  default(en)
-// @Param        request     body      authDto.LoginRequest        true   "Login credentials"
-// @Success      200         {object}  response.SuccessResponse{data=authDto.LoginResponse}  "Login successful"
-// @Failure      400         {object}  response.ErrorResponse     "Invalid request or validation error"
-// @Failure      401         {object}  response.ErrorResponse     "Invalid credentials"
-// @Failure      500         {object}  response.ErrorResponse     "Internal server error"
-// @Router       /auth/login [post]
+//
+//	@Summary		User login
+//	@Description	Authenticate user with email and password, returns access and refresh tokens
+//	@Tags			Auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			X-Language	header		string													false	"Language preference (en or id)"	default(en)
+//	@Param			request		body		authDto.LoginRequest									true	"Login credentials"
+//	@Success		200			{object}	response.SuccessResponse{data=authDto.LoginResponse}	"Login successful"
+//	@Failure		400			{object}	response.ErrorResponse									"Invalid request or validation error"
+//	@Failure		401			{object}	response.ErrorResponse									"Invalid credentials"
+//	@Failure		500			{object}	response.ErrorResponse									"Internal server error"
+//	@Router			/202601/auth/login [post]
 func (c *AuthController) Login(eCtx echo.Context) error {
 	var req authDto.LoginRequest
 
@@ -54,17 +55,18 @@ func (c *AuthController) Login(eCtx echo.Context) error {
 }
 
 // Register godoc
-// @Summary      Register new user
-// @Description  Create a new user account with email, password, and name
-// @Tags         Auth
-// @Accept       json
-// @Produce      json
-// @Param        X-Language  header    string                         false  "Language preference (en or id)"  default(en)
-// @Param        request     body      authDto.RegisterRequest        true   "Registration data"
-// @Success      201         {object}  response.SuccessResponse{data=authDto.RegisterResponse}  "User registered successfully"
-// @Failure      400         {object}  response.ErrorResponse         "Invalid request, validation error, or user already exists"
-// @Failure      500         {object}  response.ErrorResponse         "Internal server error"
-// @Router       /auth/register [post]
+//
+//	@Summary		Register new user
+//	@Description	Create a new user account with email, password, and name
+//	@Tags			Auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			X-Language	header		string													false	"Language preference (en or id)"	default(en)
+//	@Param			request		body		authDto.RegisterRequest									true	"Registration data"
+//	@Success		201			{object}	response.SuccessResponse{data=authDto.RegisterResponse}	"User registered successfully"
+//	@Failure		400			{object}	response.ErrorResponse									"Invalid request, validation error, or user already exists"
+//	@Failure		500			{object}	response.ErrorResponse									"Internal server error"
+//	@Router			/auth/register [post]
 func (c *AuthController) Register(eCtx echo.Context) error {
 	var req authDto.RegisterRequest
 
@@ -83,18 +85,19 @@ func (c *AuthController) Register(eCtx echo.Context) error {
 }
 
 // RefreshToken godoc
-// @Summary      Refresh access token
-// @Description  Generate new access and refresh tokens using a valid refresh token
-// @Tags         Auth
-// @Accept       json
-// @Produce      json
-// @Param        X-Language  header    string                              false  "Language preference (en or id)"  default(en)
-// @Param        request     body      authDto.RefreshTokenRequest         true   "Refresh token"
-// @Success      200         {object}  response.SuccessResponse{data=authDto.RefreshTokenResponse}  "Tokens refreshed successfully"
-// @Failure      400         {object}  response.ErrorResponse              "Invalid request or validation error"
-// @Failure      401         {object}  response.ErrorResponse              "Invalid or expired refresh token"
-// @Failure      500         {object}  response.ErrorResponse              "Internal server error"
-// @Router       /auth/refresh [post]
+//
+//	@Summary		Refresh access token
+//	@Description	Generate new access and refresh tokens using a valid refresh token
+//	@Tags			Auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			X-Language	header		string														false	"Language preference (en or id)"	default(en)
+//	@Param			request		body		authDto.RefreshTokenRequest									true	"Refresh token"
+//	@Success		200			{object}	response.SuccessResponse{data=authDto.RefreshTokenResponse}	"Tokens refreshed successfully"
+//	@Failure		400			{object}	response.ErrorResponse										"Invalid request or validation error"
+//	@Failure		401			{object}	response.ErrorResponse										"Invalid or expired refresh token"
+//	@Failure		500			{object}	response.ErrorResponse										"Internal server error"
+//	@Router			/auth/refresh [post]
 func (c *AuthController) RefreshToken(eCtx echo.Context) error {
 	var req authDto.RefreshTokenRequest
 
@@ -116,15 +119,16 @@ func (c *AuthController) RefreshToken(eCtx echo.Context) error {
 }
 
 // Logout godoc
-// @Summary      User logout
-// @Description  Invalidate current user session (client should discard tokens)
-// @Tags         Auth
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Success      200  {object}  response.SuccessResponse{data=map[string]string}  "Logged out successfully"
-// @Failure      401  {object}  response.ErrorResponse                             "Unauthorized - invalid or missing token"
-// @Router       /auth/logout [post]
+//
+//	@Summary		User logout
+//	@Description	Invalidate current user session (client should discard tokens)
+//	@Tags			Auth
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Success		200	{object}	response.SuccessResponse{data=map[string]string}	"Logged out successfully"
+//	@Failure		401	{object}	response.ErrorResponse								"Unauthorized - invalid or missing token"
+//	@Router			/auth/logout [post]
 func (c *AuthController) Logout(eCtx echo.Context) error {
 	logger.Infof("User logged out")
 	return response.Success(eCtx, map[string]string{
@@ -133,16 +137,17 @@ func (c *AuthController) Logout(eCtx echo.Context) error {
 }
 
 // Me godoc
-// @Summary      Get current user profile
-// @Description  Retrieve authenticated user's profile information
-// @Tags         Auth
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Success      200  {object}  response.SuccessResponse{data=authDto.UserInfo}  "User profile retrieved successfully"
-// @Failure      401  {object}  response.ErrorResponse                            "Unauthorized - invalid or missing token"
-// @Failure      500  {object}  response.ErrorResponse                            "Internal server error"
-// @Router       /auth/me [get]
+//
+//	@Summary		Get current user profile
+//	@Description	Retrieve authenticated user's profile information
+//	@Tags			Auth
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Success		200	{object}	response.SuccessResponse{data=authDto.UserInfo}	"User profile retrieved successfully"
+//	@Failure		401	{object}	response.ErrorResponse							"Unauthorized - invalid or missing token"
+//	@Failure		500	{object}	response.ErrorResponse							"Internal server error"
+//	@Router			/auth/me [get]
 func (c *AuthController) Me(eCtx echo.Context) error {
 	fmt.Println("AuthController.Me called")
 	// Get auth context from middleware
