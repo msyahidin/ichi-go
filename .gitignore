@@ -66,3 +66,5 @@ config.production.yaml
 *.log
 *.key
 *.pem
+
+bin/*

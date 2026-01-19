@@ -1,19 +1,12 @@
 package middlewares
 
 import (
-	"context"
-	"fmt"
-	"ichi-go/config"
-	authValidators "ichi-go/internal/applications/auth/validators"
-	httpConfig "ichi-go/pkg/http"
-	"ichi-go/pkg/logger"
-	appValidator "ichi-go/pkg/validator"
-	"strings"
-	"time"
-
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
+	"ichi-go/config"
+	"ichi-go/pkg/logger"
+	"strings"
 )
 
 func Init(e *echo.Echo, mainConfig *config.Config) {
@@ -80,47 +73,4 @@ func Init(e *echo.Echo, mainConfig *config.Config) {
 	if err := setupValidator(e, *mainConfig.Validator()); err != nil {
 		logger.Fatalf("failed to initialize validator: %v", err)
 	}
-}
-
-func copyRequestID(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		requestID := c.Request().Header.Get(echo.HeaderXRequestID)
-		if requestID == "" {
-			requestID = c.Response().Header().Get(echo.HeaderXRequestID)
-		}
-		ctx := context.WithValue(c.Request().Context(), echo.HeaderXRequestID, requestID)
-		c.SetRequest(c.Request().WithContext(ctx))
-		return next(c)
-	}
-}
-
-func AppRequestTimeOut(configHttp *httpConfig.Config) echo.MiddlewareFunc {
-	return middleware.ContextTimeoutWithConfig(middleware.ContextTimeoutConfig{
-		Timeout: time.Duration(configHttp.Timeout) * time.Second,
-	})
-}
-
-// setupValidator creates and configures the validator with all domain validators
-func setupValidator(e *echo.Echo, config appValidator.Config) error {
-	// Create base validator with translation support
-	v, err := appValidator.NewValidator(config)
-	if err != nil {
-		return fmt.Errorf("failed to create validator: %w", err)
-	}
-
-	// Register auth domain validators
-	if err := authValidators.RegisterAuthValidators(v); err != nil {
-		return fmt.Errorf("failed to register auth validators: %w", err)
-	}
-
-	// Register other domain validators here:
-	// if err := userValidators.RegisterUserValidators(v); err != nil {
-	//     return fmt.Errorf("failed to register user validators: %w", err)
-	// }
-
-	// Set Echo validator
-	e.Validator = NewValidatorMiddleware(v)
-
-	logger.Debugf("Validator initialized with auth validators")
-	return nil
 }
