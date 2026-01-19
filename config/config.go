@@ -193,6 +193,7 @@ func loadSchema() (*Schema, error) {
 
 func getEnv() string {
 	env := os.Getenv("APP_ENV")
+	logger.Debugf("APP_ENV: %s", env)
 	if env == "" {
 		env = "local"
 	}
