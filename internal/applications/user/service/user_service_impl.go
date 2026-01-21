@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"fmt"
+	"ichi-go/db/model"
 	user "ichi-go/internal/applications/user/repository"
 	"ichi-go/internal/infra/cache"
 	"ichi-go/internal/infra/queue/rabbitmq"
@@ -32,11 +33,11 @@ func NewUserService(
 	}
 }
 
-func (s *ServiceImpl) GetById(ctx context.Context, id uint32) (*user.UserModel, error) {
+func (s *ServiceImpl) GetById(ctx context.Context, id uint32) (*model.User, error) {
 	cacheKey := fmt.Sprintf("user:%d", id)
-	cachedData, err := s.cache.Get(ctx, cacheKey, &user.UserModel{})
+	cachedData, err := s.cache.Get(ctx, cacheKey, &model.User{})
 	if err == nil && cachedData != nil {
-		return cachedData.(*user.UserModel), nil
+		return cachedData.(*model.User), nil
 	}
 
 	user, err := s.repo.GetById(ctx, uint64(id))
@@ -54,7 +55,7 @@ func (s *ServiceImpl) GetById(ctx context.Context, id uint32) (*user.UserModel, 
 	return user, nil
 }
 
-func (s *ServiceImpl) Create(ctx context.Context, newUser user.UserModel) (int64, error) {
+func (s *ServiceImpl) Create(ctx context.Context, newUser model.User) (int64, error) {
 	userId, err := s.repo.Create(ctx, newUser)
 	if err != nil {
 		return 0, err
@@ -63,7 +64,7 @@ func (s *ServiceImpl) Create(ctx context.Context, newUser user.UserModel) (int64
 	return userId, nil
 }
 
-func (s *ServiceImpl) Update(ctx context.Context, updateUser user.UserModel) (int64, error) {
+func (s *ServiceImpl) Update(ctx context.Context, updateUser model.User) (int64, error) {
 	user, err := s.repo.GetById(ctx, uint64(updateUser.ID))
 	if err != nil {
 		return 0, err

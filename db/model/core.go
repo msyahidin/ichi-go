@@ -1,4 +1,4 @@
-package bun
+package model
 
 import (
 	"context"
