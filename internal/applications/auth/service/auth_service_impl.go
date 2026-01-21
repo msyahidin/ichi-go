@@ -3,9 +3,9 @@ package auth
 import (
 	"context"
 	"fmt"
+	"ichi-go/db/model"
 	authDto "ichi-go/internal/applications/auth/dto"
 	userDto "ichi-go/internal/applications/user/dto"
-	userRepo "ichi-go/internal/applications/user/repository"
 	"ichi-go/internal/infra/queue/rabbitmq"
 	"ichi-go/pkg/authenticator"
 	pkgErrors "ichi-go/pkg/errors"
@@ -75,7 +75,7 @@ func (s *ServiceImpl) Register(ctx context.Context, req authDto.RegisterRequest)
 			Wrap(err)
 	}
 
-	newUser := userRepo.UserModel{
+	newUser := model.User{
 		Name:     req.Name,
 		Email:    req.Email,
 		Password: hashedPassword,
@@ -162,7 +162,7 @@ func (s *ServiceImpl) RefreshToken(ctx context.Context, req authDto.RefreshToken
 }
 
 // GetUserByEmail retrieves user by email address
-func (s *ServiceImpl) GetUserByEmail(ctx context.Context, email string) (*userRepo.UserModel, error) {
+func (s *ServiceImpl) GetUserByEmail(ctx context.Context, email string) (*model.User, error) {
 	return s.userRepo.FindByEmail(ctx, email)
 }
 

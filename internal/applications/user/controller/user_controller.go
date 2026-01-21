@@ -1,8 +1,8 @@
 package user
 
 import (
+	"ichi-go/db/model"
 	userDto "ichi-go/internal/applications/user/dto"
-	userRepo "ichi-go/internal/applications/user/repository"
 	userService "ichi-go/internal/applications/user/service"
 	pokeDto "ichi-go/pkg/clients/pokemonapi/dto"
 	"ichi-go/pkg/logger"
@@ -54,7 +54,7 @@ func (c *UserController) CreateUser(eCtx echo.Context) error {
 		return response.Error(eCtx, http.StatusBadRequest, err)
 	}
 
-	var userModel userRepo.UserModel
+	var userModel model.User
 	err = dtoMapper.Map(&userModel, userCreateReq)
 	if err != nil {
 		return response.Error(eCtx, http.StatusInternalServerError, err)
@@ -74,7 +74,7 @@ func (c *UserController) UpdateUser(eCtx echo.Context) error {
 		return response.Error(eCtx, http.StatusBadRequest, err)
 	}
 
-	var userModel userRepo.UserModel
+	var userModel model.User
 	err = dtoMapper.Map(&userModel, userUpdateReq)
 	if err != nil {
 		return response.Error(eCtx, http.StatusInternalServerError, err)
