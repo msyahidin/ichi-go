@@ -15,12 +15,28 @@ type Config struct {
 	Publisher  PublisherConfig        `yaml:"publisher" mapstructure:"publisher"`
 }
 
+func NewConfig() Config {
+	return Config{
+		Enabled:    false,
+		Connection: NewRabbitConnectionConfig(),
+	}
+}
+
 type RabbitConnectionConfig struct {
 	Host           string `yaml:"host" mapstructure:"host"`
 	Port           int    `yaml:"port" mapstructure:"port"`
 	Username       string `yaml:"username" mapstructure:"username"`
 	Password       string `yaml:"password" mapstructure:"password"`
 	ConnectionName string `yaml:"connection_name" mapstructure:"connection_name"`
+}
+
+func NewRabbitConnectionConfig() RabbitConnectionConfig {
+	return RabbitConnectionConfig{
+		Host:     "localhost",
+		Port:     5672,
+		Username: "admin",
+		Password: "admin",
+	}
 }
 
 type ExchangeConfig struct {

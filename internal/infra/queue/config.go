@@ -2,8 +2,6 @@ package queue
 
 import (
 	"ichi-go/internal/infra/queue/rabbitmq"
-
-	"github.com/spf13/viper"
 )
 
 // Config holds queue system configuration.
@@ -13,8 +11,15 @@ type Config struct {
 	RabbitMQ rabbitmq.Config `mapstructure:"rabbitmq"`
 }
 
-// SetDefault sets default configuration.
-func SetDefault() {
-	viper.SetDefault("queue.enabled", false)
-	rabbitmq.RabbitMQSetDefault()
+func NewConfig() Config {
+	return Config{
+		Enabled:  false,
+		RabbitMQ: rabbitmq.NewConfig(),
+	}
 }
+
+//// SetDefault sets default configuration.
+//func SetDefault() {
+//	viper.SetDefault("queue.enabled", false)
+//	rabbitmq.RabbitMQSetDefault()
+//}

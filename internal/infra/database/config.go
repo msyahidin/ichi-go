@@ -1,7 +1,5 @@
 package database
 
-import "github.com/spf13/viper"
-
 type Config struct {
 	Driver          string `mapstructure:"driver"`
 	Host            string `mapstructure:"host"`
@@ -15,14 +13,29 @@ type Config struct {
 	Debug           bool   `mapstructure:"debug"`
 }
 
-func SetDefault() {
-	viper.SetDefault("database.driver", "mysql")
-	viper.SetDefault("database.host", "localhost")
-	viper.SetDefault("database.port", 3306)
-	viper.SetDefault("database.user", "postgres")
-	viper.SetDefault("database.password", "postgres")
-	viper.SetDefault("database.maxIdleConns", 10)
-	viper.SetDefault("database.maxOpenConns", 100)
-	viper.SetDefault("database.maxLifetime", 3600)
-	viper.SetDefault("database.debug", false)
+func NewConfig() Config {
+	return Config{
+		Driver:          "mysql",
+		Host:            "localhost",
+		Port:            3306,
+		User:            "postgres",
+		Password:        "postgres",
+		Name:            "db",
+		MaxIdleConns:    10,
+		MaxOpenConns:    100,
+		MaxConnLifeTime: 3600,
+		Debug:           false,
+	}
 }
+
+//func SetDefault() {
+//	viper.SetDefault("database.driver", "mysql")
+//	viper.SetDefault("database.host", "localhost")
+//	viper.SetDefault("database.port", 3306)
+//	viper.SetDefault("database.user", "postgres")
+//	viper.SetDefault("database.password", "postgres")
+//	viper.SetDefault("database.maxIdleConns", 10)
+//	viper.SetDefault("database.maxOpenConns", 100)
+//	viper.SetDefault("database.maxLifetime", 3600)
+//	viper.SetDefault("database.debug", false)
+//}

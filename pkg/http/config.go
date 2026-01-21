@@ -2,8 +2,6 @@ package http
 
 import (
 	"time"
-
-	"github.com/spf13/viper"
 )
 
 type CorsConfig struct {
@@ -16,12 +14,32 @@ type Config struct {
 	Port    int        `mapstructure:"port"`
 }
 
+func NewConfig() Config {
+	return Config{
+		Timeout: 30,
+		Cors: CorsConfig{
+			AllowOrigins: []string{"*"},
+		},
+		Port: 8080,
+	}
+}
+
 type ClientConfig struct {
 	Timeout       int  `mapstructure:"timeout"`         // request timeout (per call)
 	RetryCount    int  `mapstructure:"retry_count"`     // total max retries
 	RetryWaitTime int  `mapstructure:"retry_wait_time"` // delay between retries
 	RetryMaxWait  int  `mapstructure:"retry_max_wait"`  // total max backoff wait
 	LoggerEnabled bool `mapstructure:"logger_enabled"`  // enable/disable http log
+}
+
+func NewClientConfig() ClientConfig {
+	return ClientConfig{
+		Timeout:       60000,
+		RetryCount:    3,
+		RetryWaitTime: 5000,
+		RetryMaxWait:  5,
+		LoggerEnabled: false,
+	}
 }
 
 // ToOptions converts ClientConfig to ClientOptions
@@ -35,14 +53,14 @@ func (c *ClientConfig) ToOptions() ClientOptions {
 	}
 }
 
-func SetDefault() {
-	viper.SetDefault("http.port", 8080)
-	viper.SetDefault("http.timeout", 30)
-	viper.SetDefault("http.cors.allow_origins", []string{"*"})
-
-	viper.SetDefault("http_client.timeout", 60000)
-	viper.SetDefault("http_client.retry_count", 3)
-	viper.SetDefault("http_client.retry_wait_time", 5000)
-	viper.SetDefault("http_client.retry_max_wait", 5)
-	viper.SetDefault("http_client.logger_enabled", false)
-}
+//func SetDefault() {
+//	viper.SetDefault("http.port", 8080)
+//	viper.SetDefault("http.timeout", 30)
+//	viper.SetDefault("http.cors.allow_origins", []string{"*"})
+//
+//	viper.SetDefault("http_client.timeout", 60000)
+//	viper.SetDefault("http_client.retry_count", 3)
+//	viper.SetDefault("http_client.retry_wait_time", 5000)
+//	viper.SetDefault("http_client.retry_max_wait", 5)
+//	viper.SetDefault("http_client.logger_enabled", false)
+//}

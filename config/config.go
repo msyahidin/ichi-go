@@ -36,6 +36,23 @@ type Schema struct {
 	RBAC       rbac.Config
 }
 
+func NewSchema() Schema {
+	return Schema{
+		App:        NewAppConfig(),
+		Database:   database.NewConfig(),
+		Cache:      cache.NewConfig(),
+		Log:        logger.NewLogConfig(),
+		Http:       httpConfig.NewConfig(),
+		HttpClient: httpConfig.NewClientConfig(),
+		PkgClient:  pkgClientConfig.NewPkgClient(),
+		Queue:      queue.NewConfig(),
+		Auth:       authenticator.NewConfig(),
+		Validator:  validator.NewConfig(),
+		Versioning: versioning.NewConfig(),
+		RBAC:       rbac.NewConfig(),
+	}
+}
+
 type Config struct {
 	schema *Schema
 }
@@ -181,9 +198,9 @@ func loadSchema() (*Schema, error) {
 		return nil, fmt.Errorf("error reading config file: %w", err)
 	}
 
-	setDefault()
+	//setDefault()
 
-	var schema Schema
+	schema := NewSchema()
 	if err := viper.Unmarshal(&schema); err != nil {
 		return nil, fmt.Errorf("error parsing config: %w", err)
 	}
@@ -202,16 +219,16 @@ func getEnv() string {
 	return env
 }
 
-func setDefault() {
-	SetDefault()
-	database.SetDefault()
-	cache.SetDefault()
-	logger.SetDefault()
-	httpConfig.SetDefault()
-	queue.SetDefault()
-	authenticator.SetDefault()
-	rbac.SetDefault()
-}
+//func setDefault() {
+//	SetDefault()
+//	database.SetDefault()
+//	cache.SetDefault()
+//	logger.SetDefault()
+//	httpConfig.SetDefault()
+//	queue.SetDefault()
+//	authenticator.SetDefault()
+//	rbac.SetDefault()
+//}
 
 func SetDebugMode(e *echo.Echo, debug bool) {
 	e.Debug = debug

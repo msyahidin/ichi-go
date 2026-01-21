@@ -1,7 +1,5 @@
 package rbac
 
-import "github.com/spf13/viper"
-
 // Config defines RBAC system configuration
 type Config struct {
 	// Mode determines deployment strategy
@@ -27,6 +25,41 @@ type Config struct {
 
 	// Features toggles for optional functionality
 	Features FeaturesConfig `mapstructure:"features"`
+}
+
+func NewConfig() Config {
+	return Config{
+		Mode:          "hybrid",
+		DefaultTenant: "system",
+		ModelPath:     "config/rbac_model.conf",
+		Performance: PerformanceConfig{
+			LoadingStrategy:   "filtered",
+			FilteredTTL:       "10m",
+			MaxConcurrent:     50,
+			AdaptiveThreshold: 5000,
+		},
+		Cache: CacheConfig{
+			Enabled:     true,
+			MemoryTTL:   "60s",
+			RedisTTL:    "5m",
+			MaxSize:     10000,
+			Compression: true,
+		},
+		Audit: AuditConfig{
+			Enabled:       true,
+			LogDecisions:  false,
+			LogMutations:  true,
+			RetentionDays: 2555,
+			AnonymizePII:  true,
+			SampleRate:    0.01,
+		},
+		Features: FeaturesConfig{
+			TimeBoundRoles:    false,
+			Impersonation:     false,
+			ApprovalWorkflows: false,
+			ResourceLevelABAC: false,
+		},
+	}
 }
 
 // PerformanceConfig configures RBAC performance optimizations
@@ -102,40 +135,40 @@ type FeaturesConfig struct {
 	ResourceLevelABAC bool `mapstructure:"resource_level_abac"`
 }
 
-// SetDefault sets default RBAC configuration values
-func SetDefault() {
-	// Mode defaults
-	viper.SetDefault("rbac.mode", "hybrid")
-	viper.SetDefault("rbac.default_tenant", "system")
-	viper.SetDefault("rbac.model_path", "config/rbac_model.conf")
-
-	// Performance defaults
-	viper.SetDefault("rbac.performance.loading_strategy", "filtered")
-	viper.SetDefault("rbac.performance.filtered_ttl", "10m")
-	viper.SetDefault("rbac.performance.max_concurrent", 50)
-	viper.SetDefault("rbac.performance.adaptive_threshold", 5000)
-
-	// Cache defaults
-	viper.SetDefault("rbac.cache.enabled", true)
-	viper.SetDefault("rbac.cache.memory_ttl", "60s")
-	viper.SetDefault("rbac.cache.redis_ttl", "5m")
-	viper.SetDefault("rbac.cache.max_size", 10000)
-	viper.SetDefault("rbac.cache.compression", true)
-
-	// Audit defaults
-	viper.SetDefault("rbac.audit.enabled", true)
-	viper.SetDefault("rbac.audit.log_decisions", false) // High volume
-	viper.SetDefault("rbac.audit.log_mutations", true)
-	viper.SetDefault("rbac.audit.retention_days", 2555) // 7 years
-	viper.SetDefault("rbac.audit.anonymize_pii", true)
-	viper.SetDefault("rbac.audit.sample_rate", 0.01) // 1% of decisions
-
-	// Feature flags (all disabled by default for Phase 1)
-	viper.SetDefault("rbac.features.time_bound_roles", false)
-	viper.SetDefault("rbac.features.impersonation", false)
-	viper.SetDefault("rbac.features.approval_workflows", false)
-	viper.SetDefault("rbac.features.resource_level_abac", false)
-}
+//// SetDefault sets default RBAC configuration values
+//func SetDefault() {
+//	// Mode defaults
+//	viper.SetDefault("rbac.mode", "hybrid")
+//	viper.SetDefault("rbac.default_tenant", "system")
+//	viper.SetDefault("rbac.model_path", "config/rbac_model.conf")
+//
+//	// Performance defaults
+//	viper.SetDefault("rbac.performance.loading_strategy", "filtered")
+//	viper.SetDefault("rbac.performance.filtered_ttl", "10m")
+//	viper.SetDefault("rbac.performance.max_concurrent", 50)
+//	viper.SetDefault("rbac.performance.adaptive_threshold", 5000)
+//
+//	// Cache defaults
+//	viper.SetDefault("rbac.cache.enabled", true)
+//	viper.SetDefault("rbac.cache.memory_ttl", "60s")
+//	viper.SetDefault("rbac.cache.redis_ttl", "5m")
+//	viper.SetDefault("rbac.cache.max_size", 10000)
+//	viper.SetDefault("rbac.cache.compression", true)
+//
+//	// Audit defaults
+//	viper.SetDefault("rbac.audit.enabled", true)
+//	viper.SetDefault("rbac.audit.log_decisions", false) // High volume
+//	viper.SetDefault("rbac.audit.log_mutations", true)
+//	viper.SetDefault("rbac.audit.retention_days", 2555) // 7 years
+//	viper.SetDefault("rbac.audit.anonymize_pii", true)
+//	viper.SetDefault("rbac.audit.sample_rate", 0.01) // 1% of decisions
+//
+//	// Feature flags (all disabled by default for Phase 1)
+//	viper.SetDefault("rbac.features.time_bound_roles", false)
+//	viper.SetDefault("rbac.features.impersonation", false)
+//	viper.SetDefault("rbac.features.approval_workflows", false)
+//	viper.SetDefault("rbac.features.resource_level_abac", false)
+//}
 
 // Validate validates the RBAC configuration
 func (c *Config) Validate() error {

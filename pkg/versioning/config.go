@@ -2,8 +2,6 @@ package versioning
 
 import (
 	"fmt"
-
-	"github.com/spf13/viper"
 )
 
 // Config represents API versioning configuration
@@ -19,21 +17,34 @@ type Config struct {
 	CustomValidVersions []string `mapstructure:"custom_valid_versions"`
 }
 
+func NewConfig() Config {
+	return Config{
+		Enabled:           true,
+		Strategy:          "semantic",
+		DefaultVersion:    "v1",
+		SupportedVersions: []string{"v1"},
+		Deprecation: DeprecationConfig{
+			HeaderEnabled:          true,
+			SunsetNotificationDays: 90,
+		},
+	}
+}
+
 // DeprecationConfig represents deprecation settings
 type DeprecationConfig struct {
 	HeaderEnabled          bool `mapstructure:"header_enabled"`
 	SunsetNotificationDays int  `mapstructure:"sunset_notification_days"`
 }
 
-// SetDefault sets default versioning configuration
-func SetDefault() {
-	viper.SetDefault("api.versioning.enabled", true)
-	viper.SetDefault("api.versioning.strategy", "semantic")
-	viper.SetDefault("api.versioning.default_version", "v1")
-	viper.SetDefault("api.versioning.supported_versions", []string{"v1"})
-	viper.SetDefault("api.versioning.deprecation.header_enabled", true)
-	viper.SetDefault("api.versioning.deprecation.sunset_notification_days", 90)
-}
+//// SetDefault sets default versioning configuration
+//func SetDefault() {
+//	viper.SetDefault("api.versioning.enabled", true)
+//	viper.SetDefault("api.versioning.strategy", "semantic")
+//	viper.SetDefault("api.versioning.default_version", "v1")
+//	viper.SetDefault("api.versioning.supported_versions", []string{"v1"})
+//	viper.SetDefault("api.versioning.deprecation.header_enabled", true)
+//	viper.SetDefault("api.versioning.deprecation.sunset_notification_days", 90)
+//}
 
 // Validate validates the configuration
 func (c *Config) Validate() error {

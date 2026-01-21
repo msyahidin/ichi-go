@@ -13,7 +13,7 @@ type Config struct {
 	APIKey    *APIKeyConfig
 }
 
-func SetDefault() Config {
+func NewConfig() Config {
 	return Config{
 		JWT: &JWTConfig{
 			Enabled:        false,

@@ -1,18 +1,23 @@
 package validator
 
-import "github.com/spf13/viper"
-
 // Config represents validator configuration
 type Config struct {
 	DefaultLanguage    string   `mapstructure:"default_language"`
 	SupportedLanguages []string `mapstructure:"supported_languages"`
 }
 
-// SetDefault sets default validator configuration
-func SetDefault() {
-	viper.SetDefault("validator.default_language", "en")
-	viper.SetDefault("validator.supported_languages", []string{"en", "id"})
+func NewConfig() Config {
+	return Config{
+		DefaultLanguage:    "en",
+		SupportedLanguages: []string{"en", "id"},
+	}
 }
+
+//// SetDefault sets default validator configuration
+//func SetDefault() {
+//	viper.SetDefault("validator.default_language", "en")
+//	viper.SetDefault("validator.supported_languages", []string{"en", "id"})
+//}
 
 // Validate validates the configuration
 func (c *Config) Validate() error {
