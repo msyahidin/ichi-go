@@ -3,7 +3,7 @@ package user
 import (
 	"context"
 	"ichi-go/db/model"
-	"ichi-go/internal/infra/database/bun"
+	"ichi-go/db/repository"
 	pkgErrors "ichi-go/pkg/errors"
 	"ichi-go/pkg/logger"
 
@@ -11,11 +11,11 @@ import (
 )
 
 type RepositoryImpl struct {
-	*bun.BaseRepository[model.User]
+	*repository.BaseRepository[model.User]
 }
 
 func NewUserRepository(dbConnection *upbun.DB) *RepositoryImpl {
-	return &RepositoryImpl{BaseRepository: bun.NewRepository[model.User](dbConnection, &model.User{})}
+	return &RepositoryImpl{BaseRepository: repository.NewRepository[model.User](dbConnection, &model.User{})}
 }
 
 func (r *RepositoryImpl) GetById(ctx context.Context, id uint64) (*model.User, error) {
