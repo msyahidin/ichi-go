@@ -2,11 +2,11 @@ package auth
 
 import (
 	"context"
-	"ichi-go/db/model"
 	authDto "ichi-go/internal/applications/auth/dto"
 	userRepo "ichi-go/internal/applications/user/repository"
 	"ichi-go/internal/infra/queue/rabbitmq"
 	"ichi-go/pkg/authenticator"
+	"ichi-go/pkg/db/model"
 )
 
 type Service interface {

@@ -3,12 +3,12 @@ package user
 import (
 	"context"
 	"fmt"
-	"ichi-go/db/model"
 	user "ichi-go/internal/applications/user/repository"
 	"ichi-go/internal/infra/cache"
 	"ichi-go/internal/infra/queue/rabbitmq"
 	"ichi-go/pkg/clients/pokemonapi"
 	"ichi-go/pkg/clients/pokemonapi/dto"
+	"ichi-go/pkg/db/model"
 	"time"
 )
 

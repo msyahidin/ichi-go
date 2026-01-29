@@ -3,11 +3,11 @@ package auth
 import (
 	"context"
 	"fmt"
-	"ichi-go/db/model"
 	authDto "ichi-go/internal/applications/auth/dto"
 	userDto "ichi-go/internal/applications/user/dto"
 	"ichi-go/internal/infra/queue/rabbitmq"
 	"ichi-go/pkg/authenticator"
+	"ichi-go/pkg/db/model"
 	pkgErrors "ichi-go/pkg/errors"
 	"ichi-go/pkg/logger"
 	"time"

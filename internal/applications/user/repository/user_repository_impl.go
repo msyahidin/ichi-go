@@ -2,8 +2,8 @@ package user
 
 import (
 	"context"
-	"ichi-go/db/model"
-	"ichi-go/db/repository"
+	"ichi-go/pkg/db/model"
+	"ichi-go/pkg/db/repository"
 	pkgErrors "ichi-go/pkg/errors"
 	"ichi-go/pkg/logger"
 

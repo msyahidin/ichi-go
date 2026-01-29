@@ -3,7 +3,7 @@ package database
 import (
 	"database/sql"
 	"fmt"
-	"ichi-go/db/hook"
+	"ichi-go/pkg/db/hook"
 	"ichi-go/pkg/logger"
 	"strconv"
 	"time"
