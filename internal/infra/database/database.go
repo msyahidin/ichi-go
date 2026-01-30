@@ -3,7 +3,7 @@ package database
 import (
 	"database/sql"
 	"fmt"
-	"ichi-go/internal/infra/database/bun"
+	"ichi-go/pkg/db/hook"
 	"ichi-go/pkg/logger"
 	"strconv"
 	"time"
@@ -24,6 +24,10 @@ func GetDsn(dbConfig *Config) string {
 	return dsn
 }
 
+// NewBunClient creates and returns a configured Bun DB client for MySQL using the provided cfg.
+// It opens and verifies a SQL connection, applies connection pool settings (MaxIdleConns, MaxOpenConns,
+// ConnMaxLifetime) and attaches a debug query hook when cfg.Debug is true.
+// Returns a non-nil error if opening the underlying database connection or pinging it fails.
 func NewBunClient(cfg *Config) (*upbun.DB, error) {
 	dsn := GetDsn(cfg)
 
@@ -49,7 +53,7 @@ func NewBunClient(cfg *Config) (*upbun.DB, error) {
 
 	// Enable debug mode if configured
 	if cfg.Debug {
-		db.WithQueryHook(&bun.DebugHook{})
+		db.WithQueryHook(&hook.DebugHook{})
 	}
 
 	logger.Debugf("Database connection established: driver=%s, maxIdle=%d, maxOpen=%d",

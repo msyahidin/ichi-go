@@ -1,9 +1,10 @@
-package bun
+package repository
 
 import (
 	"context"
 	"errors"
 	"fmt"
+	"ichi-go/db/query"
 	"ichi-go/pkg/logger"
 	"time"
 
@@ -26,7 +27,7 @@ func (r *BaseRepository[T]) DB() *bun.DB {
 	return r.db
 }
 
-func (r *BaseRepository[T]) Query(scopes ...QueryScope) *bun.SelectQuery {
+func (r *BaseRepository[T]) Query(scopes ...query.QueryScope) *bun.SelectQuery {
 	query := r.db.NewSelect().Model(r.model)
 
 	// Apply all scopes
@@ -66,14 +67,14 @@ func (r *BaseRepository[T]) FindBy(ctx context.Context, field string, value inte
 }
 
 // All - get all with scopes
-func (r *BaseRepository[T]) All(ctx context.Context, scopes ...QueryScope) ([]*T, error) {
+func (r *BaseRepository[T]) All(ctx context.Context, scopes ...query.QueryScope) ([]*T, error) {
 	var models []*T
 	query := r.Query(scopes...)
 	err := query.Scan(ctx, &models)
 	return models, err
 }
 
-func (r *BaseRepository[T]) PaginateWithCount(ctx context.Context, page, perPage int, scopes ...QueryScope) ([]*T, int, error) {
+func (r *BaseRepository[T]) PaginateWithCount(ctx context.Context, page, perPage int, scopes ...query.QueryScope) ([]*T, int, error) {
 	var models []*T
 
 	// Build base query with scopes (excluding pagination)
@@ -86,7 +87,7 @@ func (r *BaseRepository[T]) PaginateWithCount(ctx context.Context, page, perPage
 	}
 
 	// Get paginated results
-	paginatedQuery := r.Query(append(scopes, Paginate(page, perPage))...)
+	paginatedQuery := r.Query(append(scopes, query.Paginate(page, perPage))...)
 	err = paginatedQuery.Scan(ctx, &models)
 
 	return models, count, err
@@ -163,13 +164,13 @@ func (r *BaseRepository[T]) Restore(ctx context.Context, id int64) error {
 }
 
 // Count - count with scopes
-func (r *BaseRepository[T]) Count(ctx context.Context, scopes ...QueryScope) (int, error) {
+func (r *BaseRepository[T]) Count(ctx context.Context, scopes ...query.QueryScope) (int, error) {
 	query := r.Query(scopes...)
 	return query.Count(ctx)
 }
 
 // Exists - check if record exists
-func (r *BaseRepository[T]) Exists(ctx context.Context, scopes ...QueryScope) (bool, error) {
+func (r *BaseRepository[T]) Exists(ctx context.Context, scopes ...query.QueryScope) (bool, error) {
 	count, err := r.Count(ctx, scopes...)
 	return count > 0, err
 }

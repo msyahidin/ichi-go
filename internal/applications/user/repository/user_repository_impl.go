@@ -2,7 +2,8 @@ package user
 
 import (
 	"context"
-	"ichi-go/internal/infra/database/bun"
+	"ichi-go/pkg/db/model"
+	"ichi-go/pkg/db/repository"
 	pkgErrors "ichi-go/pkg/errors"
 	"ichi-go/pkg/logger"
 
@@ -10,14 +11,15 @@ import (
 )
 
 type RepositoryImpl struct {
-	*bun.BaseRepository[UserModel]
+	*repository.BaseRepository[model.User]
 }
 
+// NewUserRepository creates a RepositoryImpl backed by a BaseRepository for model.User using the provided DB connection.
 func NewUserRepository(dbConnection *upbun.DB) *RepositoryImpl {
-	return &RepositoryImpl{BaseRepository: bun.NewRepository[UserModel](dbConnection, &UserModel{})}
+	return &RepositoryImpl{BaseRepository: repository.NewRepository[model.User](dbConnection, &model.User{})}
 }
 
-func (r *RepositoryImpl) GetById(ctx context.Context, id uint64) (*UserModel, error) {
+func (r *RepositoryImpl) GetById(ctx context.Context, id uint64) (*model.User, error) {
 	data, err := r.Find(ctx, int64(id))
 	if err != nil {
 		return nil, pkgErrors.Database(pkgErrors.ErrCodeDatabase).
@@ -28,7 +30,7 @@ func (r *RepositoryImpl) GetById(ctx context.Context, id uint64) (*UserModel, er
 	return data, nil
 }
 
-func (r *RepositoryImpl) FindByEmail(ctx context.Context, email string) (*UserModel, error) {
+func (r *RepositoryImpl) FindByEmail(ctx context.Context, email string) (*model.User, error) {
 	data, err := r.FindBy(ctx, "email", email)
 	if err != nil {
 		return nil, pkgErrors.Database(pkgErrors.ErrCodeDatabase).
@@ -40,7 +42,7 @@ func (r *RepositoryImpl) FindByEmail(ctx context.Context, email string) (*UserMo
 	return data, nil
 }
 
-func (r *RepositoryImpl) Create(ctx context.Context, newUser UserModel) (int64, error) {
+func (r *RepositoryImpl) Create(ctx context.Context, newUser model.User) (int64, error) {
 	data, err := r.DB().NewInsert().
 		Model(&newUser).
 		Returning("id").
@@ -62,7 +64,7 @@ func (r *RepositoryImpl) Create(ctx context.Context, newUser UserModel) (int64, 
 	return newUserID, nil
 }
 
-func (r *RepositoryImpl) Update(ctx context.Context, updateUser UserModel) (int64, error) {
+func (r *RepositoryImpl) Update(ctx context.Context, updateUser model.User) (int64, error) {
 	data, err := r.DB().NewUpdate().
 		Model(&updateUser).
 		Where("id = ?", updateUser.ID).
