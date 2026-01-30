@@ -19,6 +19,7 @@ type ServiceImpl struct {
 	producer   rabbitmq.MessageProducer
 }
 
+// NewUserService creates a ServiceImpl configured with the provided repository, cache, Pokémon client, and message producer.
 func NewUserService(
 	repo user.Repository,
 	cache cache.Cache,

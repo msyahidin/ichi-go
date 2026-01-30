@@ -14,6 +14,7 @@ type RepositoryImpl struct {
 	*repository.BaseRepository[model.User]
 }
 
+// NewUserRepository creates a RepositoryImpl backed by a BaseRepository for model.User using the provided DB connection.
 func NewUserRepository(dbConnection *upbun.DB) *RepositoryImpl {
 	return &RepositoryImpl{BaseRepository: repository.NewRepository[model.User](dbConnection, &model.User{})}
 }
