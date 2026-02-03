@@ -1,4 +1,4 @@
-package bun
+package query
 
 import (
 	"time"
