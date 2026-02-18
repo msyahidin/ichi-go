@@ -27,9 +27,12 @@ func RegisterProviders(injector do.Injector) {
 	do.Provide(injector, ProvideLogRepository)
 	do.Provide(injector, ProvideTemplateRenderer)
 	do.Provide(injector, ProvideMainProducer)
+	do.ProvideNamed(injector, "notification.blast.producer", ProvideBlastProducer)
+	do.ProvideNamed(injector, "notification.user.producer", ProvideUserProducer)
 	do.Provide(injector, ProvideFCMClient)
 	do.Provide(injector, ProvidePushChannel)
 	do.Provide(injector, ProvideCampaignService)
+	do.Provide(injector, ProvideNotificationService)
 	do.Provide(injector, ProvideNotificationController)
 }
 
@@ -102,4 +105,37 @@ func ProvideCampaignService(i do.Injector) (*services.CampaignService, error) {
 func ProvideNotificationController(i do.Injector) (*notifController.NotificationController, error) {
 	campaignSvc := do.MustInvoke[*services.CampaignService](i)
 	return notifController.NewNotificationController(campaignSvc), nil
+}
+
+// ProvideBlastProducer returns a producer bound to the fanout blast exchange.
+// Returns nil (not an error) when the queue connection is unavailable.
+func ProvideBlastProducer(i do.Injector) (rabbitmq.MessageProducer, error) {
+	conn, err := do.Invoke[*rabbitmq.Connection](i)
+	if err != nil || conn == nil {
+		return nil, nil // Queue disabled — NotificationService handles nil producer gracefully
+	}
+	cfg := do.MustInvoke[*config.Config](i)
+	rmqCfg := cfg.Queue().RabbitMQ
+	rmqCfg.Publisher.ExchangeName = "notification.blast"
+	return rabbitmq.NewProducer(conn, rmqCfg)
+}
+
+// ProvideUserProducer returns a producer bound to the topic user exchange.
+// Returns nil (not an error) when the queue connection is unavailable.
+func ProvideUserProducer(i do.Injector) (rabbitmq.MessageProducer, error) {
+	conn, err := do.Invoke[*rabbitmq.Connection](i)
+	if err != nil || conn == nil {
+		return nil, nil // Queue disabled — NotificationService handles nil producer gracefully
+	}
+	cfg := do.MustInvoke[*config.Config](i)
+	rmqCfg := cfg.Queue().RabbitMQ
+	rmqCfg.Publisher.ExchangeName = "notification.user"
+	return rabbitmq.NewProducer(conn, rmqCfg)
+}
+
+// ProvideNotificationService wires NotificationService with its blast and user producers.
+func ProvideNotificationService(i do.Injector) (*services.NotificationService, error) {
+	blastProducer, _ := do.InvokeNamed[rabbitmq.MessageProducer](i, "notification.blast.producer")
+	userProducer, _ := do.InvokeNamed[rabbitmq.MessageProducer](i, "notification.user.producer")
+	return services.NewNotificationService(blastProducer, userProducer), nil
 }

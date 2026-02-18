@@ -228,10 +228,12 @@ queue:
         internal: false
         no_wait: false
 
-      # User exchange: direct — routing_key="user.<userID>" targets one user.
+      # User exchange: topic — routing_key="user.<userID>" targets one user.
+      # Topic exchange required so the consumer binding "user.*" matches
+      # per-user keys like "user.42" (wildcards need topic, not direct).
       # Use for OTPs, order updates, account alerts, personal notifications.
       - name: "notification.user"
-        type: "direct"
+        type: "topic"
         durable: true
         auto_delete: false
         internal: false
@@ -302,12 +304,12 @@ queue:
 
       # -----------------------------------------------------------------------
       # User-specific consumer
-      # Bound to the direct exchange with routing_key="user.#" (wildcard).
-      # RabbitMQ direct exchange does NOT support wildcards natively — for true
-      # per-user routing you bind with specific keys per user (done at queue
-      # creation time). For simplicity, a single shared queue with "#" catches
-      # all user.* messages; the consumer then uses event.UserID internally.
-      # Switch to a per-user queue approach for very high-throughput workloads.
+      # Bound to the topic exchange with routing_key="user.*".
+      # The topic exchange matches "user.*" against per-user routing keys
+      # like "user.42", so a single shared queue catches all user messages.
+      # The consumer uses event.UserID internally to identify the recipient.
+      # For very high-throughput workloads, consider per-user queues bound
+      # with specific keys (e.g. "user.42") and a separate consumer per user.
       # -----------------------------------------------------------------------
       - name: "notification_user"
         enabled: true

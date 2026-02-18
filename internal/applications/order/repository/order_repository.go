@@ -198,7 +198,6 @@ func (r *OrderRepositoryImpl) FindRefundable(ctx context.Context) ([]*model.Orde
 		Model(&orders).
 		Where("status = ?", "paid").
 		Where("refundable_amount > 0").
-		Where("status != ?", "refunded").
 		Order("paid_at DESC").
 		Scan(ctx)
 
