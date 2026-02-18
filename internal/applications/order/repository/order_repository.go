@@ -4,7 +4,8 @@ import (
 	"context"
 	"fmt"
 	"ichi-go/internal/applications/order/model"
-	bunCore "ichi-go/internal/infra/database/bun"
+	"ichi-go/pkg/db/query"
+	"ichi-go/pkg/db/repository"
 	"time"
 
 	"github.com/uptrace/bun"
@@ -21,13 +22,13 @@ type OrderRepository interface {
 	Delete(ctx context.Context, id string) error
 
 	// Query Operations
-	FindByUserID(ctx context.Context, userID int64, scopes ...bunCore.QueryScope) ([]*model.Order, error)
-	FindByStatus(ctx context.Context, status string, scopes ...bunCore.QueryScope) ([]*model.Order, error)
-	FindByDateRange(ctx context.Context, startDate, endDate time.Time, scopes ...bunCore.QueryScope) ([]*model.Order, error)
-	List(ctx context.Context, scopes ...bunCore.QueryScope) ([]*model.Order, error)
+	FindByUserID(ctx context.Context, userID int64, scopes ...query.QueryScope) ([]*model.Order, error)
+	FindByStatus(ctx context.Context, status string, scopes ...query.QueryScope) ([]*model.Order, error)
+	FindByDateRange(ctx context.Context, startDate, endDate time.Time, scopes ...query.QueryScope) ([]*model.Order, error)
+	List(ctx context.Context, scopes ...query.QueryScope) ([]*model.Order, error)
 
 	// Pagination
-	Paginate(ctx context.Context, page, perPage int, scopes ...bunCore.QueryScope) ([]*model.Order, int, error)
+	Paginate(ctx context.Context, page, perPage int, scopes ...query.QueryScope) ([]*model.Order, int, error)
 
 	// Advanced Queries
 	FindPendingPayment(ctx context.Context, olderThan time.Duration) ([]*model.Order, error)
@@ -53,13 +54,13 @@ type OrderRepository interface {
 
 // OrderRepositoryImpl implements OrderRepository using Bun ORM.
 type OrderRepositoryImpl struct {
-	*bunCore.BaseRepository[model.Order]
+	*repository.BaseRepository[model.Order]
 	db *bun.DB
 }
 
 // NewOrderRepository creates a new order repository instance.
 func NewOrderRepository(db *bun.DB) OrderRepository {
-	baseRepo := bunCore.NewRepository(db, &model.Order{})
+	baseRepo := repository.NewRepository(db, &model.Order{})
 	return &OrderRepositoryImpl{
 		BaseRepository: baseRepo,
 		db:             db,
@@ -139,39 +140,39 @@ func (r *OrderRepositoryImpl) Delete(ctx context.Context, id string) error {
 }
 
 // FindByUserID retrieves all orders for a specific user.
-func (r *OrderRepositoryImpl) FindByUserID(ctx context.Context, userID int64, scopes ...bunCore.QueryScope) ([]*model.Order, error) {
+func (r *OrderRepositoryImpl) FindByUserID(ctx context.Context, userID int64, scopes ...query.QueryScope) ([]*model.Order, error) {
 	userScope := func(q *bun.SelectQuery) *bun.SelectQuery {
 		return q.Where("user_id = ?", userID)
 	}
-	allScopes := append([]bunCore.QueryScope{userScope}, scopes...)
+	allScopes := append([]query.QueryScope{userScope}, scopes...)
 	return r.All(ctx, allScopes...)
 }
 
 // FindByStatus retrieves all orders with a specific status.
-func (r *OrderRepositoryImpl) FindByStatus(ctx context.Context, status string, scopes ...bunCore.QueryScope) ([]*model.Order, error) {
+func (r *OrderRepositoryImpl) FindByStatus(ctx context.Context, status string, scopes ...query.QueryScope) ([]*model.Order, error) {
 	statusScope := func(q *bun.SelectQuery) *bun.SelectQuery {
 		return q.Where("status = ?", status)
 	}
-	allScopes := append([]bunCore.QueryScope{statusScope}, scopes...)
+	allScopes := append([]query.QueryScope{statusScope}, scopes...)
 	return r.All(ctx, allScopes...)
 }
 
 // FindByDateRange retrieves orders within a date range.
-func (r *OrderRepositoryImpl) FindByDateRange(ctx context.Context, startDate, endDate time.Time, scopes ...bunCore.QueryScope) ([]*model.Order, error) {
+func (r *OrderRepositoryImpl) FindByDateRange(ctx context.Context, startDate, endDate time.Time, scopes ...query.QueryScope) ([]*model.Order, error) {
 	dateScope := func(q *bun.SelectQuery) *bun.SelectQuery {
 		return q.Where("created_at BETWEEN ? AND ?", startDate, endDate)
 	}
-	allScopes := append([]bunCore.QueryScope{dateScope}, scopes...)
+	allScopes := append([]query.QueryScope{dateScope}, scopes...)
 	return r.All(ctx, allScopes...)
 }
 
 // List retrieves all orders with optional scopes.
-func (r *OrderRepositoryImpl) List(ctx context.Context, scopes ...bunCore.QueryScope) ([]*model.Order, error) {
+func (r *OrderRepositoryImpl) List(ctx context.Context, scopes ...query.QueryScope) ([]*model.Order, error) {
 	return r.All(ctx, scopes...)
 }
 
 // Paginate retrieves paginated orders with total count.
-func (r *OrderRepositoryImpl) Paginate(ctx context.Context, page, perPage int, scopes ...bunCore.QueryScope) ([]*model.Order, int, error) {
+func (r *OrderRepositoryImpl) Paginate(ctx context.Context, page, perPage int, scopes ...query.QueryScope) ([]*model.Order, int, error) {
 	return r.PaginateWithCount(ctx, page, perPage, scopes...)
 }
 

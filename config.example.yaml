@@ -219,6 +219,24 @@ queue:
         internal: false
         no_wait: false
 
+      # Blast exchange: fanout — one publish, every bound queue receives a copy.
+      # Use for system announcements, maintenance, campaigns targeting all users.
+      - name: "notification.blast"
+        type: "fanout"
+        durable: true
+        auto_delete: false
+        internal: false
+        no_wait: false
+
+      # User exchange: direct — routing_key="user.<userID>" targets one user.
+      # Use for OTPs, order updates, account alerts, personal notifications.
+      - name: "notification.user"
+        type: "direct"
+        durable: true
+        auto_delete: false
+        internal: false
+        no_wait: false
+
     publisher:
       exchange_name: "app.events"
 
@@ -258,4 +276,53 @@ queue:
         auto_ack: false
         exclusive: false
         consumer_tag: "welcome_notifier_v1"
+
+      # -----------------------------------------------------------------------
+      # Blast consumer
+      # Bound to the fanout exchange — routing_keys is ignored by fanout but
+      # must be present (use "#" as a placeholder).
+      # Scale worker_pool_size based on the number of channels × expected TPS.
+      # -----------------------------------------------------------------------
+      - name: "notification_blast"
+        enabled: true
+        queue:
+          name: "notification.blast.queue"
+          durable: true
+          auto_delete: false
+          exclusive: false
+          no_wait: false
+        exchange_name: "notification.blast"
+        routing_keys:
+          - "#"
+        prefetch_count: 20
+        worker_pool_size: 5
+        auto_ack: false
+        exclusive: false
+        consumer_tag: "notification_blast_v1"
+
+      # -----------------------------------------------------------------------
+      # User-specific consumer
+      # Bound to the direct exchange with routing_key="user.#" (wildcard).
+      # RabbitMQ direct exchange does NOT support wildcards natively — for true
+      # per-user routing you bind with specific keys per user (done at queue
+      # creation time). For simplicity, a single shared queue with "#" catches
+      # all user.* messages; the consumer then uses event.UserID internally.
+      # Switch to a per-user queue approach for very high-throughput workloads.
+      # -----------------------------------------------------------------------
+      - name: "notification_user"
+        enabled: true
+        queue:
+          name: "notification.user.queue"
+          durable: true
+          auto_delete: false
+          exclusive: false
+          no_wait: false
+        exchange_name: "notification.user"
+        routing_keys:
+          - "user.*"
+        prefetch_count: 50
+        worker_pool_size: 10
+        auto_ack: false
+        exclusive: false
+        consumer_tag: "notification_user_v1"
 
