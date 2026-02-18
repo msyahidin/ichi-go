@@ -87,7 +87,7 @@ func main() {
 	if cfg.Queue().Enabled {
 		msgConfig := cfg.Queue()
 		msgConn := do.MustInvoke[*rabbitmq.Connection](injector)
-		go server.StartQueueWorkers(ctx, msgConfig, msgConn)
+		go server.StartQueueWorkers(ctx, msgConfig, msgConn, injector)
 	}
 
 	// Start the server

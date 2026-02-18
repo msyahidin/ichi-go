@@ -5,13 +5,13 @@ import (
 
 	"github.com/uptrace/bun"
 
-	bunCore "ichi-go/internal/infra/database/bun"
+	"ichi-go/pkg/db/model"
 )
 
 // OrderItem represents a line item in an order.
 // Each item is a product/service purchased as part of the order.
 type OrderItem struct {
-	bunCore.CoreModel `bun:"table:order_items,alias:oi"`
+	model.CoreModel `bun:"table:order_items,alias:oi"`
 
 	// Relationships
 	OrderID int64  `bun:"order_id,notnull" json:"order_id"` // Foreign key to orders table

@@ -11,6 +11,7 @@ import (
 	"ichi-go/config"
 	"ichi-go/internal/applications/auth"
 	healthapp "ichi-go/internal/applications/health"
+	notificationapp "ichi-go/internal/applications/notification"
 	rbacapp "ichi-go/internal/applications/rbac"
 	"ichi-go/internal/applications/user"
 	"ichi-go/pkg/authenticator"
@@ -27,7 +28,8 @@ func SetupRestRoutes(injector do.Injector, e *echo.Echo, cfg *config.Config) {
 	// Register application domains
 	user.Register(injector, cfg.App().Name, e, appAuth)
 	auth.Register(injector, cfg.App().Name, e, appAuth)
-	rbacapp.Register(injector, cfg.App().Name, e, appAuth) // RBAC domain
+	rbacapp.Register(injector, cfg.App().Name, e, appAuth)             // RBAC domain
+	notificationapp.Register(injector, cfg.App().Name, e, appAuth)     // Notification domain
 	healthapp.Register(injector, cfg.App().Name, e, cfg)
 }
 

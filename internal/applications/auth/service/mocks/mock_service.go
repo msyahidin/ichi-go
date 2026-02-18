@@ -7,7 +7,7 @@ package auth
 import (
 	"context"
 	auth "ichi-go/internal/applications/auth/dto"
-	user "ichi-go/internal/applications/user/repository"
+	dbModel "ichi-go/pkg/db/model"
 
 	mock "github.com/stretchr/testify/mock"
 )
@@ -40,23 +40,23 @@ func (_m *MockService) EXPECT() *MockService_Expecter {
 }
 
 // GetUserByEmail provides a mock function for the type MockService
-func (_mock *MockService) GetUserByEmail(ctx context.Context, email string) (*user.UserModel, error) {
+func (_mock *MockService) GetUserByEmail(ctx context.Context, email string) (*dbModel.User, error) {
 	ret := _mock.Called(ctx, email)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetUserByEmail")
 	}
 
-	var r0 *user.UserModel
+	var r0 *dbModel.User
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*user.UserModel, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*dbModel.User, error)); ok {
 		return returnFunc(ctx, email)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *user.UserModel); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *dbModel.User); ok {
 		r0 = returnFunc(ctx, email)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*user.UserModel)
+			r0 = ret.Get(0).(*dbModel.User)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
@@ -97,12 +97,12 @@ func (_c *MockService_GetUserByEmail_Call) Run(run func(ctx context.Context, ema
 	return _c
 }
 
-func (_c *MockService_GetUserByEmail_Call) Return(userModel *user.UserModel, err error) *MockService_GetUserByEmail_Call {
+func (_c *MockService_GetUserByEmail_Call) Return(userModel *dbModel.User, err error) *MockService_GetUserByEmail_Call {
 	_c.Call.Return(userModel, err)
 	return _c
 }
 
-func (_c *MockService_GetUserByEmail_Call) RunAndReturn(run func(ctx context.Context, email string) (*user.UserModel, error)) *MockService_GetUserByEmail_Call {
+func (_c *MockService_GetUserByEmail_Call) RunAndReturn(run func(ctx context.Context, email string) (*dbModel.User, error)) *MockService_GetUserByEmail_Call {
 	_c.Call.Return(run)
 	return _c
 }

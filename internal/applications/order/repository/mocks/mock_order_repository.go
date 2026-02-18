@@ -7,7 +7,7 @@ package repository
 import (
 	"context"
 	"ichi-go/internal/applications/order/model"
-	"ichi-go/internal/infra/database/bun"
+	"ichi-go/pkg/db/query"
 	"time"
 
 	mock "github.com/stretchr/testify/mock"
@@ -363,7 +363,7 @@ func (_c *MockOrderRepository_Delete_Call) RunAndReturn(run func(ctx context.Con
 }
 
 // FindByDateRange provides a mock function for the type MockOrderRepository
-func (_mock *MockOrderRepository) FindByDateRange(ctx context.Context, startDate time.Time, endDate time.Time, scopes ...bun.QueryScope) ([]*model.Order, error) {
+func (_mock *MockOrderRepository) FindByDateRange(ctx context.Context, startDate time.Time, endDate time.Time, scopes ...query.QueryScope) ([]*model.Order, error) {
 	var tmpRet mock.Arguments
 	if len(scopes) > 0 {
 		tmpRet = _mock.Called(ctx, startDate, endDate, scopes)
@@ -378,17 +378,17 @@ func (_mock *MockOrderRepository) FindByDateRange(ctx context.Context, startDate
 
 	var r0 []*model.Order
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, time.Time, time.Time, ...bun.QueryScope) ([]*model.Order, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, time.Time, time.Time, ...query.QueryScope) ([]*model.Order, error)); ok {
 		return returnFunc(ctx, startDate, endDate, scopes...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, time.Time, time.Time, ...bun.QueryScope) []*model.Order); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, time.Time, time.Time, ...query.QueryScope) []*model.Order); ok {
 		r0 = returnFunc(ctx, startDate, endDate, scopes...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*model.Order)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, time.Time, time.Time, ...bun.QueryScope) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, time.Time, time.Time, ...query.QueryScope) error); ok {
 		r1 = returnFunc(ctx, startDate, endDate, scopes...)
 	} else {
 		r1 = ret.Error(1)
@@ -405,13 +405,13 @@ type MockOrderRepository_FindByDateRange_Call struct {
 //   - ctx context.Context
 //   - startDate time.Time
 //   - endDate time.Time
-//   - scopes ...bun.QueryScope
+//   - scopes ...query.QueryScope
 func (_e *MockOrderRepository_Expecter) FindByDateRange(ctx interface{}, startDate interface{}, endDate interface{}, scopes ...interface{}) *MockOrderRepository_FindByDateRange_Call {
 	return &MockOrderRepository_FindByDateRange_Call{Call: _e.mock.On("FindByDateRange",
 		append([]interface{}{ctx, startDate, endDate}, scopes...)...)}
 }
 
-func (_c *MockOrderRepository_FindByDateRange_Call) Run(run func(ctx context.Context, startDate time.Time, endDate time.Time, scopes ...bun.QueryScope)) *MockOrderRepository_FindByDateRange_Call {
+func (_c *MockOrderRepository_FindByDateRange_Call) Run(run func(ctx context.Context, startDate time.Time, endDate time.Time, scopes ...query.QueryScope)) *MockOrderRepository_FindByDateRange_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -425,10 +425,10 @@ func (_c *MockOrderRepository_FindByDateRange_Call) Run(run func(ctx context.Con
 		if args[2] != nil {
 			arg2 = args[2].(time.Time)
 		}
-		var arg3 []bun.QueryScope
-		var variadicArgs []bun.QueryScope
+		var arg3 []query.QueryScope
+		var variadicArgs []query.QueryScope
 		if len(args) > 3 {
-			variadicArgs = args[3].([]bun.QueryScope)
+			variadicArgs = args[3].([]query.QueryScope)
 		}
 		arg3 = variadicArgs
 		run(
@@ -446,13 +446,13 @@ func (_c *MockOrderRepository_FindByDateRange_Call) Return(orders []*model.Order
 	return _c
 }
 
-func (_c *MockOrderRepository_FindByDateRange_Call) RunAndReturn(run func(ctx context.Context, startDate time.Time, endDate time.Time, scopes ...bun.QueryScope) ([]*model.Order, error)) *MockOrderRepository_FindByDateRange_Call {
+func (_c *MockOrderRepository_FindByDateRange_Call) RunAndReturn(run func(ctx context.Context, startDate time.Time, endDate time.Time, scopes ...query.QueryScope) ([]*model.Order, error)) *MockOrderRepository_FindByDateRange_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // FindByStatus provides a mock function for the type MockOrderRepository
-func (_mock *MockOrderRepository) FindByStatus(ctx context.Context, status string, scopes ...bun.QueryScope) ([]*model.Order, error) {
+func (_mock *MockOrderRepository) FindByStatus(ctx context.Context, status string, scopes ...query.QueryScope) ([]*model.Order, error) {
 	var tmpRet mock.Arguments
 	if len(scopes) > 0 {
 		tmpRet = _mock.Called(ctx, status, scopes)
@@ -467,17 +467,17 @@ func (_mock *MockOrderRepository) FindByStatus(ctx context.Context, status strin
 
 	var r0 []*model.Order
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, ...bun.QueryScope) ([]*model.Order, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, ...query.QueryScope) ([]*model.Order, error)); ok {
 		return returnFunc(ctx, status, scopes...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, ...bun.QueryScope) []*model.Order); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, ...query.QueryScope) []*model.Order); ok {
 		r0 = returnFunc(ctx, status, scopes...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*model.Order)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, ...bun.QueryScope) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, ...query.QueryScope) error); ok {
 		r1 = returnFunc(ctx, status, scopes...)
 	} else {
 		r1 = ret.Error(1)
@@ -493,13 +493,13 @@ type MockOrderRepository_FindByStatus_Call struct {
 // FindByStatus is a helper method to define mock.On call
 //   - ctx context.Context
 //   - status string
-//   - scopes ...bun.QueryScope
+//   - scopes ...query.QueryScope
 func (_e *MockOrderRepository_Expecter) FindByStatus(ctx interface{}, status interface{}, scopes ...interface{}) *MockOrderRepository_FindByStatus_Call {
 	return &MockOrderRepository_FindByStatus_Call{Call: _e.mock.On("FindByStatus",
 		append([]interface{}{ctx, status}, scopes...)...)}
 }
 
-func (_c *MockOrderRepository_FindByStatus_Call) Run(run func(ctx context.Context, status string, scopes ...bun.QueryScope)) *MockOrderRepository_FindByStatus_Call {
+func (_c *MockOrderRepository_FindByStatus_Call) Run(run func(ctx context.Context, status string, scopes ...query.QueryScope)) *MockOrderRepository_FindByStatus_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -509,10 +509,10 @@ func (_c *MockOrderRepository_FindByStatus_Call) Run(run func(ctx context.Contex
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
-		var arg2 []bun.QueryScope
-		var variadicArgs []bun.QueryScope
+		var arg2 []query.QueryScope
+		var variadicArgs []query.QueryScope
 		if len(args) > 2 {
-			variadicArgs = args[2].([]bun.QueryScope)
+			variadicArgs = args[2].([]query.QueryScope)
 		}
 		arg2 = variadicArgs
 		run(
@@ -529,13 +529,13 @@ func (_c *MockOrderRepository_FindByStatus_Call) Return(orders []*model.Order, e
 	return _c
 }
 
-func (_c *MockOrderRepository_FindByStatus_Call) RunAndReturn(run func(ctx context.Context, status string, scopes ...bun.QueryScope) ([]*model.Order, error)) *MockOrderRepository_FindByStatus_Call {
+func (_c *MockOrderRepository_FindByStatus_Call) RunAndReturn(run func(ctx context.Context, status string, scopes ...query.QueryScope) ([]*model.Order, error)) *MockOrderRepository_FindByStatus_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // FindByUserID provides a mock function for the type MockOrderRepository
-func (_mock *MockOrderRepository) FindByUserID(ctx context.Context, userID int64, scopes ...bun.QueryScope) ([]*model.Order, error) {
+func (_mock *MockOrderRepository) FindByUserID(ctx context.Context, userID int64, scopes ...query.QueryScope) ([]*model.Order, error) {
 	var tmpRet mock.Arguments
 	if len(scopes) > 0 {
 		tmpRet = _mock.Called(ctx, userID, scopes)
@@ -550,17 +550,17 @@ func (_mock *MockOrderRepository) FindByUserID(ctx context.Context, userID int64
 
 	var r0 []*model.Order
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, ...bun.QueryScope) ([]*model.Order, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, ...query.QueryScope) ([]*model.Order, error)); ok {
 		return returnFunc(ctx, userID, scopes...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, ...bun.QueryScope) []*model.Order); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, ...query.QueryScope) []*model.Order); ok {
 		r0 = returnFunc(ctx, userID, scopes...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*model.Order)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, int64, ...bun.QueryScope) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, int64, ...query.QueryScope) error); ok {
 		r1 = returnFunc(ctx, userID, scopes...)
 	} else {
 		r1 = ret.Error(1)
@@ -576,13 +576,13 @@ type MockOrderRepository_FindByUserID_Call struct {
 // FindByUserID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userID int64
-//   - scopes ...bun.QueryScope
+//   - scopes ...query.QueryScope
 func (_e *MockOrderRepository_Expecter) FindByUserID(ctx interface{}, userID interface{}, scopes ...interface{}) *MockOrderRepository_FindByUserID_Call {
 	return &MockOrderRepository_FindByUserID_Call{Call: _e.mock.On("FindByUserID",
 		append([]interface{}{ctx, userID}, scopes...)...)}
 }
 
-func (_c *MockOrderRepository_FindByUserID_Call) Run(run func(ctx context.Context, userID int64, scopes ...bun.QueryScope)) *MockOrderRepository_FindByUserID_Call {
+func (_c *MockOrderRepository_FindByUserID_Call) Run(run func(ctx context.Context, userID int64, scopes ...query.QueryScope)) *MockOrderRepository_FindByUserID_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -592,10 +592,10 @@ func (_c *MockOrderRepository_FindByUserID_Call) Run(run func(ctx context.Contex
 		if args[1] != nil {
 			arg1 = args[1].(int64)
 		}
-		var arg2 []bun.QueryScope
-		var variadicArgs []bun.QueryScope
+		var arg2 []query.QueryScope
+		var variadicArgs []query.QueryScope
 		if len(args) > 2 {
-			variadicArgs = args[2].([]bun.QueryScope)
+			variadicArgs = args[2].([]query.QueryScope)
 		}
 		arg2 = variadicArgs
 		run(
@@ -612,7 +612,7 @@ func (_c *MockOrderRepository_FindByUserID_Call) Return(orders []*model.Order, e
 	return _c
 }
 
-func (_c *MockOrderRepository_FindByUserID_Call) RunAndReturn(run func(ctx context.Context, userID int64, scopes ...bun.QueryScope) ([]*model.Order, error)) *MockOrderRepository_FindByUserID_Call {
+func (_c *MockOrderRepository_FindByUserID_Call) RunAndReturn(run func(ctx context.Context, userID int64, scopes ...query.QueryScope) ([]*model.Order, error)) *MockOrderRepository_FindByUserID_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1020,7 +1020,7 @@ func (_c *MockOrderRepository_GetOrderWithItems_Call) RunAndReturn(run func(ctx 
 }
 
 // List provides a mock function for the type MockOrderRepository
-func (_mock *MockOrderRepository) List(ctx context.Context, scopes ...bun.QueryScope) ([]*model.Order, error) {
+func (_mock *MockOrderRepository) List(ctx context.Context, scopes ...query.QueryScope) ([]*model.Order, error) {
 	var tmpRet mock.Arguments
 	if len(scopes) > 0 {
 		tmpRet = _mock.Called(ctx, scopes)
@@ -1035,17 +1035,17 @@ func (_mock *MockOrderRepository) List(ctx context.Context, scopes ...bun.QueryS
 
 	var r0 []*model.Order
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ...bun.QueryScope) ([]*model.Order, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...query.QueryScope) ([]*model.Order, error)); ok {
 		return returnFunc(ctx, scopes...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ...bun.QueryScope) []*model.Order); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...query.QueryScope) []*model.Order); ok {
 		r0 = returnFunc(ctx, scopes...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*model.Order)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, ...bun.QueryScope) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, ...query.QueryScope) error); ok {
 		r1 = returnFunc(ctx, scopes...)
 	} else {
 		r1 = ret.Error(1)
@@ -1060,22 +1060,22 @@ type MockOrderRepository_List_Call struct {
 
 // List is a helper method to define mock.On call
 //   - ctx context.Context
-//   - scopes ...bun.QueryScope
+//   - scopes ...query.QueryScope
 func (_e *MockOrderRepository_Expecter) List(ctx interface{}, scopes ...interface{}) *MockOrderRepository_List_Call {
 	return &MockOrderRepository_List_Call{Call: _e.mock.On("List",
 		append([]interface{}{ctx}, scopes...)...)}
 }
 
-func (_c *MockOrderRepository_List_Call) Run(run func(ctx context.Context, scopes ...bun.QueryScope)) *MockOrderRepository_List_Call {
+func (_c *MockOrderRepository_List_Call) Run(run func(ctx context.Context, scopes ...query.QueryScope)) *MockOrderRepository_List_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 []bun.QueryScope
-		var variadicArgs []bun.QueryScope
+		var arg1 []query.QueryScope
+		var variadicArgs []query.QueryScope
 		if len(args) > 1 {
-			variadicArgs = args[1].([]bun.QueryScope)
+			variadicArgs = args[1].([]query.QueryScope)
 		}
 		arg1 = variadicArgs
 		run(
@@ -1091,7 +1091,7 @@ func (_c *MockOrderRepository_List_Call) Return(orders []*model.Order, err error
 	return _c
 }
 
-func (_c *MockOrderRepository_List_Call) RunAndReturn(run func(ctx context.Context, scopes ...bun.QueryScope) ([]*model.Order, error)) *MockOrderRepository_List_Call {
+func (_c *MockOrderRepository_List_Call) RunAndReturn(run func(ctx context.Context, scopes ...query.QueryScope) ([]*model.Order, error)) *MockOrderRepository_List_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1280,7 +1280,7 @@ func (_c *MockOrderRepository_MarkAsShipped_Call) RunAndReturn(run func(ctx cont
 }
 
 // Paginate provides a mock function for the type MockOrderRepository
-func (_mock *MockOrderRepository) Paginate(ctx context.Context, page int, perPage int, scopes ...bun.QueryScope) ([]*model.Order, int, error) {
+func (_mock *MockOrderRepository) Paginate(ctx context.Context, page int, perPage int, scopes ...query.QueryScope) ([]*model.Order, int, error) {
 	var tmpRet mock.Arguments
 	if len(scopes) > 0 {
 		tmpRet = _mock.Called(ctx, page, perPage, scopes)
@@ -1296,22 +1296,22 @@ func (_mock *MockOrderRepository) Paginate(ctx context.Context, page int, perPag
 	var r0 []*model.Order
 	var r1 int
 	var r2 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int, int, ...bun.QueryScope) ([]*model.Order, int, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int, int, ...query.QueryScope) ([]*model.Order, int, error)); ok {
 		return returnFunc(ctx, page, perPage, scopes...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int, int, ...bun.QueryScope) []*model.Order); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int, int, ...query.QueryScope) []*model.Order); ok {
 		r0 = returnFunc(ctx, page, perPage, scopes...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*model.Order)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, int, int, ...bun.QueryScope) int); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, int, int, ...query.QueryScope) int); ok {
 		r1 = returnFunc(ctx, page, perPage, scopes...)
 	} else {
 		r1 = ret.Get(1).(int)
 	}
-	if returnFunc, ok := ret.Get(2).(func(context.Context, int, int, ...bun.QueryScope) error); ok {
+	if returnFunc, ok := ret.Get(2).(func(context.Context, int, int, ...query.QueryScope) error); ok {
 		r2 = returnFunc(ctx, page, perPage, scopes...)
 	} else {
 		r2 = ret.Error(2)
@@ -1328,13 +1328,13 @@ type MockOrderRepository_Paginate_Call struct {
 //   - ctx context.Context
 //   - page int
 //   - perPage int
-//   - scopes ...bun.QueryScope
+//   - scopes ...query.QueryScope
 func (_e *MockOrderRepository_Expecter) Paginate(ctx interface{}, page interface{}, perPage interface{}, scopes ...interface{}) *MockOrderRepository_Paginate_Call {
 	return &MockOrderRepository_Paginate_Call{Call: _e.mock.On("Paginate",
 		append([]interface{}{ctx, page, perPage}, scopes...)...)}
 }
 
-func (_c *MockOrderRepository_Paginate_Call) Run(run func(ctx context.Context, page int, perPage int, scopes ...bun.QueryScope)) *MockOrderRepository_Paginate_Call {
+func (_c *MockOrderRepository_Paginate_Call) Run(run func(ctx context.Context, page int, perPage int, scopes ...query.QueryScope)) *MockOrderRepository_Paginate_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -1348,10 +1348,10 @@ func (_c *MockOrderRepository_Paginate_Call) Run(run func(ctx context.Context, p
 		if args[2] != nil {
 			arg2 = args[2].(int)
 		}
-		var arg3 []bun.QueryScope
-		var variadicArgs []bun.QueryScope
+		var arg3 []query.QueryScope
+		var variadicArgs []query.QueryScope
 		if len(args) > 3 {
-			variadicArgs = args[3].([]bun.QueryScope)
+			variadicArgs = args[3].([]query.QueryScope)
 		}
 		arg3 = variadicArgs
 		run(
@@ -1369,7 +1369,7 @@ func (_c *MockOrderRepository_Paginate_Call) Return(orders []*model.Order, n int
 	return _c
 }
 
-func (_c *MockOrderRepository_Paginate_Call) RunAndReturn(run func(ctx context.Context, page int, perPage int, scopes ...bun.QueryScope) ([]*model.Order, int, error)) *MockOrderRepository_Paginate_Call {
+func (_c *MockOrderRepository_Paginate_Call) RunAndReturn(run func(ctx context.Context, page int, perPage int, scopes ...query.QueryScope) ([]*model.Order, int, error)) *MockOrderRepository_Paginate_Call {
 	_c.Call.Return(run)
 	return _c
 }

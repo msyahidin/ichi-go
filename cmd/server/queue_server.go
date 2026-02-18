@@ -2,15 +2,18 @@ package server
 
 import (
 	"context"
+	"sync"
+
+	"github.com/samber/do/v2"
+
 	queue "ichi-go/internal/infra/queue"
 	"ichi-go/internal/infra/queue/rabbitmq"
 	"ichi-go/pkg/logger"
-	"sync"
 )
 
 // StartQueueWorkers starts all queue consumers with context-based lifecycle.
 // Blocks until context is cancelled.
-func StartQueueWorkers(ctx context.Context, queueConfig *queue.Config, conn *rabbitmq.Connection) {
+func StartQueueWorkers(ctx context.Context, queueConfig *queue.Config, conn *rabbitmq.Connection, injector do.Injector) {
 	if conn == nil {
 		logger.Warnf("Queue connection is nil - skipping worker startup")
 		return
@@ -20,8 +23,8 @@ func StartQueueWorkers(ctx context.Context, queueConfig *queue.Config, conn *rab
 
 	wg := sync.WaitGroup{}
 
-	// Get registered consumers
-	registeredConsumers := queue.GetRegisteredConsumers()
+	// Get registered consumers — pass injector so consumers can resolve DB/service deps.
+	registeredConsumers := queue.GetRegisteredConsumers(injector)
 
 	// Start each consumer
 	for _, registration := range registeredConsumers {

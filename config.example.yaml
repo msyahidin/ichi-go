@@ -326,3 +326,34 @@ queue:
         exclusive: false
         consumer_tag: "notification_user_v1"
 
+      # Dispatcher: receives delayed messages from app.events and re-routes to blast/user exchanges.
+      # Bound to app.events (x-delayed-message) with routing_key="notification.dispatch".
+      # After the delay expires, messages are forwarded here, then re-published with zero delay.
+      - name: "notification_dispatcher"
+        enabled: true
+        queue:
+          name: "notification.dispatch.queue"
+          durable: true
+          auto_delete: false
+          exclusive: false
+          no_wait: false
+        exchange_name: "app.events"
+        routing_keys:
+          - "notification.dispatch"
+        prefetch_count: 100
+        worker_pool_size: 5
+        auto_ack: false
+        exclusive: false
+        consumer_tag: "notification_dispatcher_v1"
+
+# Notification domain configuration
+notification:
+  fcm:
+    # Set enabled: true and provide credentials_file to enable FCM push notifications.
+    # Leave enabled: false in local development — push channel will skip silently.
+    enabled: false
+    # Path to Firebase service account JSON key file.
+    # NEVER commit this file to source control. Use environment variables or secrets manager.
+    credentials_file: ""
+    project_id: ""
+

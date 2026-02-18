@@ -6,7 +6,7 @@ package user
 
 import (
 	"context"
-	user "ichi-go/internal/applications/user/repository"
+	dbModel "ichi-go/pkg/db/model"
 
 	mock "github.com/stretchr/testify/mock"
 )
@@ -39,7 +39,7 @@ func (_m *MockRepository) EXPECT() *MockRepository_Expecter {
 }
 
 // Create provides a mock function for the type MockRepository
-func (_mock *MockRepository) Create(ctx context.Context, newUser user.UserModel) (int64, error) {
+func (_mock *MockRepository) Create(ctx context.Context, newUser dbModel.User) (int64, error) {
 	ret := _mock.Called(ctx, newUser)
 
 	if len(ret) == 0 {
@@ -48,15 +48,15 @@ func (_mock *MockRepository) Create(ctx context.Context, newUser user.UserModel)
 
 	var r0 int64
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, user.UserModel) (int64, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, dbModel.User) (int64, error)); ok {
 		return returnFunc(ctx, newUser)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, user.UserModel) int64); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, dbModel.User) int64); ok {
 		r0 = returnFunc(ctx, newUser)
 	} else {
 		r0 = ret.Get(0).(int64)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, user.UserModel) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, dbModel.User) error); ok {
 		r1 = returnFunc(ctx, newUser)
 	} else {
 		r1 = ret.Error(1)
@@ -71,20 +71,20 @@ type MockRepository_Create_Call struct {
 
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
-//   - newUser user.UserModel
+//   - newUser dbModel.User
 func (_e *MockRepository_Expecter) Create(ctx interface{}, newUser interface{}) *MockRepository_Create_Call {
 	return &MockRepository_Create_Call{Call: _e.mock.On("Create", ctx, newUser)}
 }
 
-func (_c *MockRepository_Create_Call) Run(run func(ctx context.Context, newUser user.UserModel)) *MockRepository_Create_Call {
+func (_c *MockRepository_Create_Call) Run(run func(ctx context.Context, newUser dbModel.User)) *MockRepository_Create_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 user.UserModel
+		var arg1 dbModel.User
 		if args[1] != nil {
-			arg1 = args[1].(user.UserModel)
+			arg1 = args[1].(dbModel.User)
 		}
 		run(
 			arg0,
@@ -99,29 +99,29 @@ func (_c *MockRepository_Create_Call) Return(n int64, err error) *MockRepository
 	return _c
 }
 
-func (_c *MockRepository_Create_Call) RunAndReturn(run func(ctx context.Context, newUser user.UserModel) (int64, error)) *MockRepository_Create_Call {
+func (_c *MockRepository_Create_Call) RunAndReturn(run func(ctx context.Context, newUser dbModel.User) (int64, error)) *MockRepository_Create_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // FindByEmail provides a mock function for the type MockRepository
-func (_mock *MockRepository) FindByEmail(ctx context.Context, email string) (*user.UserModel, error) {
+func (_mock *MockRepository) FindByEmail(ctx context.Context, email string) (*dbModel.User, error) {
 	ret := _mock.Called(ctx, email)
 
 	if len(ret) == 0 {
 		panic("no return value specified for FindByEmail")
 	}
 
-	var r0 *user.UserModel
+	var r0 *dbModel.User
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*user.UserModel, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*dbModel.User, error)); ok {
 		return returnFunc(ctx, email)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *user.UserModel); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *dbModel.User); ok {
 		r0 = returnFunc(ctx, email)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*user.UserModel)
+			r0 = ret.Get(0).(*dbModel.User)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
@@ -162,34 +162,34 @@ func (_c *MockRepository_FindByEmail_Call) Run(run func(ctx context.Context, ema
 	return _c
 }
 
-func (_c *MockRepository_FindByEmail_Call) Return(userModel *user.UserModel, err error) *MockRepository_FindByEmail_Call {
+func (_c *MockRepository_FindByEmail_Call) Return(userModel *dbModel.User, err error) *MockRepository_FindByEmail_Call {
 	_c.Call.Return(userModel, err)
 	return _c
 }
 
-func (_c *MockRepository_FindByEmail_Call) RunAndReturn(run func(ctx context.Context, email string) (*user.UserModel, error)) *MockRepository_FindByEmail_Call {
+func (_c *MockRepository_FindByEmail_Call) RunAndReturn(run func(ctx context.Context, email string) (*dbModel.User, error)) *MockRepository_FindByEmail_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetById provides a mock function for the type MockRepository
-func (_mock *MockRepository) GetById(ctx context.Context, id uint64) (*user.UserModel, error) {
+func (_mock *MockRepository) GetById(ctx context.Context, id uint64) (*dbModel.User, error) {
 	ret := _mock.Called(ctx, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetById")
 	}
 
-	var r0 *user.UserModel
+	var r0 *dbModel.User
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uint64) (*user.UserModel, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uint64) (*dbModel.User, error)); ok {
 		return returnFunc(ctx, id)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uint64) *user.UserModel); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uint64) *dbModel.User); ok {
 		r0 = returnFunc(ctx, id)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*user.UserModel)
+			r0 = ret.Get(0).(*dbModel.User)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, uint64) error); ok {
@@ -230,18 +230,18 @@ func (_c *MockRepository_GetById_Call) Run(run func(ctx context.Context, id uint
 	return _c
 }
 
-func (_c *MockRepository_GetById_Call) Return(userModel *user.UserModel, err error) *MockRepository_GetById_Call {
+func (_c *MockRepository_GetById_Call) Return(userModel *dbModel.User, err error) *MockRepository_GetById_Call {
 	_c.Call.Return(userModel, err)
 	return _c
 }
 
-func (_c *MockRepository_GetById_Call) RunAndReturn(run func(ctx context.Context, id uint64) (*user.UserModel, error)) *MockRepository_GetById_Call {
+func (_c *MockRepository_GetById_Call) RunAndReturn(run func(ctx context.Context, id uint64) (*dbModel.User, error)) *MockRepository_GetById_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Update provides a mock function for the type MockRepository
-func (_mock *MockRepository) Update(ctx context.Context, updateUser user.UserModel) (int64, error) {
+func (_mock *MockRepository) Update(ctx context.Context, updateUser dbModel.User) (int64, error) {
 	ret := _mock.Called(ctx, updateUser)
 
 	if len(ret) == 0 {
@@ -250,15 +250,15 @@ func (_mock *MockRepository) Update(ctx context.Context, updateUser user.UserMod
 
 	var r0 int64
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, user.UserModel) (int64, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, dbModel.User) (int64, error)); ok {
 		return returnFunc(ctx, updateUser)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, user.UserModel) int64); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, dbModel.User) int64); ok {
 		r0 = returnFunc(ctx, updateUser)
 	} else {
 		r0 = ret.Get(0).(int64)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, user.UserModel) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, dbModel.User) error); ok {
 		r1 = returnFunc(ctx, updateUser)
 	} else {
 		r1 = ret.Error(1)
@@ -273,20 +273,20 @@ type MockRepository_Update_Call struct {
 
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
-//   - updateUser user.UserModel
+//   - updateUser dbModel.User
 func (_e *MockRepository_Expecter) Update(ctx interface{}, updateUser interface{}) *MockRepository_Update_Call {
 	return &MockRepository_Update_Call{Call: _e.mock.On("Update", ctx, updateUser)}
 }
 
-func (_c *MockRepository_Update_Call) Run(run func(ctx context.Context, updateUser user.UserModel)) *MockRepository_Update_Call {
+func (_c *MockRepository_Update_Call) Run(run func(ctx context.Context, updateUser dbModel.User)) *MockRepository_Update_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 user.UserModel
+		var arg1 dbModel.User
 		if args[1] != nil {
-			arg1 = args[1].(user.UserModel)
+			arg1 = args[1].(dbModel.User)
 		}
 		run(
 			arg0,
@@ -301,7 +301,7 @@ func (_c *MockRepository_Update_Call) Return(n int64, err error) *MockRepository
 	return _c
 }
 
-func (_c *MockRepository_Update_Call) RunAndReturn(run func(ctx context.Context, updateUser user.UserModel) (int64, error)) *MockRepository_Update_Call {
+func (_c *MockRepository_Update_Call) RunAndReturn(run func(ctx context.Context, updateUser dbModel.User) (int64, error)) *MockRepository_Update_Call {
 	_c.Call.Return(run)
 	return _c
 }
