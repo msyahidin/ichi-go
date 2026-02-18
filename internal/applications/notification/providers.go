@@ -2,6 +2,7 @@ package notification
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/samber/do/v2"
 	"github.com/spf13/viper"
@@ -91,14 +92,20 @@ func ProvideFCMClient(_ do.Injector) (*fcm.Client, error) {
 // ProvidePushChannel provides the FCM-backed push channel.
 // Falls back to no-op when FCM client is nil (disabled).
 func ProvidePushChannel(i do.Injector) (*notifChannels.PushChannel, error) {
-	fcmClient, _ := do.Invoke[*fcm.Client](i)
+	fcmClient, err := do.Invoke[*fcm.Client](i)
+	if err != nil {
+		return nil, fmt.Errorf("notification: failed to get FCM client: %w", err)
+	}
 	return notifChannels.NewPushChannel(fcmClient), nil
 }
 
 func ProvideCampaignService(i do.Injector) (*services.CampaignService, error) {
 	registry := do.MustInvoke[*notiftemplate.Registry](i)
 	campaignRepo := do.MustInvoke[*repositories.NotificationCampaignRepository](i)
-	producer, _ := do.Invoke[rabbitmq.MessageProducer](i)
+	producer, err := do.Invoke[rabbitmq.MessageProducer](i)
+	if err != nil {
+		return nil, fmt.Errorf("notification: failed to get main producer: %w", err)
+	}
 	return services.NewCampaignService(registry, campaignRepo, producer), nil
 }
 
@@ -109,10 +116,11 @@ func ProvideNotificationController(i do.Injector) (*notifController.Notification
 
 // ProvideBlastProducer returns a producer bound to the fanout blast exchange.
 // Returns nil (not an error) when the queue connection is unavailable.
+// Callers must guard against nil before invoking Publish.
 func ProvideBlastProducer(i do.Injector) (rabbitmq.MessageProducer, error) {
 	conn, err := do.Invoke[*rabbitmq.Connection](i)
 	if err != nil || conn == nil {
-		return nil, nil // Queue disabled — NotificationService handles nil producer gracefully
+		return nil, nil // Queue disabled — producer is nil; NotificationService.Blast returns an error when called
 	}
 	cfg := do.MustInvoke[*config.Config](i)
 	rmqCfg := cfg.Queue().RabbitMQ
@@ -122,10 +130,11 @@ func ProvideBlastProducer(i do.Injector) (rabbitmq.MessageProducer, error) {
 
 // ProvideUserProducer returns a producer bound to the topic user exchange.
 // Returns nil (not an error) when the queue connection is unavailable.
+// Callers must guard against nil before invoking Publish.
 func ProvideUserProducer(i do.Injector) (rabbitmq.MessageProducer, error) {
 	conn, err := do.Invoke[*rabbitmq.Connection](i)
 	if err != nil || conn == nil {
-		return nil, nil // Queue disabled — NotificationService handles nil producer gracefully
+		return nil, nil // Queue disabled — producer is nil; NotificationService.SendToUser returns an error when called
 	}
 	cfg := do.MustInvoke[*config.Config](i)
 	rmqCfg := cfg.Queue().RabbitMQ
@@ -135,7 +144,13 @@ func ProvideUserProducer(i do.Injector) (rabbitmq.MessageProducer, error) {
 
 // ProvideNotificationService wires NotificationService with its blast and user producers.
 func ProvideNotificationService(i do.Injector) (*services.NotificationService, error) {
-	blastProducer, _ := do.InvokeNamed[rabbitmq.MessageProducer](i, "notification.blast.producer")
-	userProducer, _ := do.InvokeNamed[rabbitmq.MessageProducer](i, "notification.user.producer")
+	blastProducer, err := do.InvokeNamed[rabbitmq.MessageProducer](i, "notification.blast.producer")
+	if err != nil {
+		return nil, fmt.Errorf("notification: failed to get blast producer: %w", err)
+	}
+	userProducer, err := do.InvokeNamed[rabbitmq.MessageProducer](i, "notification.user.producer")
+	if err != nil {
+		return nil, fmt.Errorf("notification: failed to get user producer: %w", err)
+	}
 	return services.NewNotificationService(blastProducer, userProducer), nil
 }

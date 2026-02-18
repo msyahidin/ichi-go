@@ -1,6 +1,7 @@
 package queue
 
 import (
+	"github.com/redis/go-redis/v9"
 	"github.com/samber/do/v2"
 	"github.com/spf13/viper"
 	"github.com/uptrace/bun"
@@ -52,6 +53,9 @@ func GetRegisteredConsumers(injector do.Injector) []ConsumerRegistration {
 	fcmClient, _ := do.Invoke[*fcm.Client](injector)
 	pushChannel := notifChannels.NewPushChannel(fcmClient)
 
+	// Resolve Redis client for idempotency guard (may be nil if Redis is unavailable).
+	redisClient, _ := do.Invoke[*redis.Client](injector)
+
 	// Build blast/user producers directly from the RabbitMQ connection.
 	// This avoids importing the notification application package (which would create a cycle).
 	conn, _ := do.Invoke[*rabbitmq.Connection](injector)
@@ -95,7 +99,7 @@ func GetRegisteredConsumers(injector do.Injector) []ConsumerRegistration {
 		// User-specific: one publish → one user (direct exchange, routing_key=user.<id>)
 		{
 			Name:        "notification_user",
-			ConsumeFunc: notifConsumers.NewUserNotificationConsumer(renderer, logRepo, chs...).Consume,
+			ConsumeFunc: notifConsumers.NewUserNotificationConsumer(renderer, logRepo, redisClient, chs...).Consume,
 			Description: "Delivers targeted notifications to a single user via email and push",
 		},
 	}

@@ -55,7 +55,6 @@ type OrderRepository interface {
 // OrderRepositoryImpl implements OrderRepository using Bun ORM.
 type OrderRepositoryImpl struct {
 	*repository.BaseRepository[model.Order]
-	db *bun.DB
 }
 
 // NewOrderRepository creates a new order repository instance.
@@ -63,13 +62,12 @@ func NewOrderRepository(db *bun.DB) OrderRepository {
 	baseRepo := repository.NewRepository(db, &model.Order{})
 	return &OrderRepositoryImpl{
 		BaseRepository: baseRepo,
-		db:             db,
 	}
 }
 
 // Create creates a new order with its items in a transaction.
 func (r *OrderRepositoryImpl) Create(ctx context.Context, order *model.Order) (*model.Order, error) {
-	err := r.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+	err := r.DB().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		// Insert order
 		if _, err := tx.NewInsert().Model(order).Exec(ctx); err != nil {
 			return fmt.Errorf("failed to insert order: %w", err)
@@ -103,7 +101,7 @@ func (r *OrderRepositoryImpl) Update(ctx context.Context, order *model.Order) (*
 // GetByID retrieves an order by its ID.
 func (r *OrderRepositoryImpl) GetByID(ctx context.Context, id string) (*model.Order, error) {
 	var order model.Order
-	err := r.db.NewSelect().
+	err := r.DB().NewSelect().
 		Model(&order).
 		Where("id = ?", id).
 		Scan(ctx)
@@ -118,7 +116,7 @@ func (r *OrderRepositoryImpl) GetByID(ctx context.Context, id string) (*model.Or
 // GetByOrderNumber retrieves an order by its order number.
 func (r *OrderRepositoryImpl) GetByOrderNumber(ctx context.Context, orderNumber string) (*model.Order, error) {
 	var order model.Order
-	err := r.db.NewSelect().
+	err := r.DB().NewSelect().
 		Model(&order).
 		Where("order_number = ?", orderNumber).
 		Scan(ctx)
@@ -132,7 +130,7 @@ func (r *OrderRepositoryImpl) GetByOrderNumber(ctx context.Context, orderNumber 
 
 // Delete soft deletes an order.
 func (r *OrderRepositoryImpl) Delete(ctx context.Context, id string) error {
-	_, err := r.db.NewDelete().
+	_, err := r.DB().NewDelete().
 		Model((*model.Order)(nil)).
 		Where("id = ?", id).
 		Exec(ctx)
@@ -181,7 +179,7 @@ func (r *OrderRepositoryImpl) FindPendingPayment(ctx context.Context, olderThan 
 	cutoffTime := time.Now().Add(-olderThan)
 
 	var orders []*model.Order
-	err := r.db.NewSelect().
+	err := r.DB().NewSelect().
 		Model(&orders).
 		Where("status = ?", "payment_pending").
 		Where("created_at < ?", cutoffTime).
@@ -194,7 +192,7 @@ func (r *OrderRepositoryImpl) FindPendingPayment(ctx context.Context, olderThan 
 // FindRefundable finds orders that can be refunded.
 func (r *OrderRepositoryImpl) FindRefundable(ctx context.Context) ([]*model.Order, error) {
 	var orders []*model.Order
-	err := r.db.NewSelect().
+	err := r.DB().NewSelect().
 		Model(&orders).
 		Where("status = ?", "paid").
 		Where("refundable_amount > 0").
@@ -206,7 +204,7 @@ func (r *OrderRepositoryImpl) FindRefundable(ctx context.Context) ([]*model.Orde
 
 // CountByStatus counts orders by status.
 func (r *OrderRepositoryImpl) CountByStatus(ctx context.Context, status string) (int, error) {
-	return r.db.NewSelect().
+	return r.DB().NewSelect().
 		Model((*model.Order)(nil)).
 		Where("status = ?", status).
 		Count(ctx)
@@ -215,7 +213,7 @@ func (r *OrderRepositoryImpl) CountByStatus(ctx context.Context, status string) 
 // GetOrderWithItems retrieves an order with all its items.
 func (r *OrderRepositoryImpl) GetOrderWithItems(ctx context.Context, orderID string) (*model.Order, error) {
 	var order model.Order
-	err := r.db.NewSelect().
+	err := r.DB().NewSelect().
 		Model(&order).
 		Relation("Items").
 		Where("o.id = ?", orderID).
@@ -230,7 +228,7 @@ func (r *OrderRepositoryImpl) GetOrderWithItems(ctx context.Context, orderID str
 
 // AddItem adds an item to an order.
 func (r *OrderRepositoryImpl) AddItem(ctx context.Context, item *model.OrderItem) (*model.OrderItem, error) {
-	_, err := r.db.NewInsert().
+	_, err := r.DB().NewInsert().
 		Model(item).
 		Exec(ctx)
 
@@ -243,7 +241,7 @@ func (r *OrderRepositoryImpl) AddItem(ctx context.Context, item *model.OrderItem
 
 // UpdateItem updates an order item.
 func (r *OrderRepositoryImpl) UpdateItem(ctx context.Context, item *model.OrderItem) (*model.OrderItem, error) {
-	_, err := r.db.NewUpdate().
+	_, err := r.DB().NewUpdate().
 		Model(item).
 		WherePK().
 		Exec(ctx)
@@ -257,7 +255,7 @@ func (r *OrderRepositoryImpl) UpdateItem(ctx context.Context, item *model.OrderI
 
 // RemoveItem removes an item from an order.
 func (r *OrderRepositoryImpl) RemoveItem(ctx context.Context, itemID int64) error {
-	_, err := r.db.NewDelete().
+	_, err := r.DB().NewDelete().
 		Model((*model.OrderItem)(nil)).
 		Where("id = ?", itemID).
 		Exec(ctx)
@@ -268,7 +266,7 @@ func (r *OrderRepositoryImpl) RemoveItem(ctx context.Context, itemID int64) erro
 // GetItemsByOrderID retrieves all items for an order.
 func (r *OrderRepositoryImpl) GetItemsByOrderID(ctx context.Context, orderID int64) ([]*model.OrderItem, error) {
 	var items []*model.OrderItem
-	err := r.db.NewSelect().
+	err := r.DB().NewSelect().
 		Model(&items).
 		Where("order_id = ?", orderID).
 		Scan(ctx)
@@ -278,7 +276,7 @@ func (r *OrderRepositoryImpl) GetItemsByOrderID(ctx context.Context, orderID int
 
 // UpdateStatus updates order status.
 func (r *OrderRepositoryImpl) UpdateStatus(ctx context.Context, orderID string, newStatus string) error {
-	_, err := r.db.NewUpdate().
+	_, err := r.DB().NewUpdate().
 		Model((*model.Order)(nil)).
 		Set("status = ?", newStatus).
 		Where("id = ?", orderID).
@@ -289,7 +287,7 @@ func (r *OrderRepositoryImpl) UpdateStatus(ctx context.Context, orderID string, 
 
 // UpdatePaymentStatus updates payment status and transaction ID.
 func (r *OrderRepositoryImpl) UpdatePaymentStatus(ctx context.Context, orderID string, paymentStatus string, transactionID string) error {
-	_, err := r.db.NewUpdate().
+	_, err := r.DB().NewUpdate().
 		Model((*model.Order)(nil)).
 		Set("payment_status = ?", paymentStatus).
 		Set("transaction_id = ?", transactionID).
@@ -302,7 +300,7 @@ func (r *OrderRepositoryImpl) UpdatePaymentStatus(ctx context.Context, orderID s
 // MarkAsPaid marks an order as paid.
 func (r *OrderRepositoryImpl) MarkAsPaid(ctx context.Context, orderID string, transactionID string) error {
 	now := time.Now()
-	_, err := r.db.NewUpdate().
+	_, err := r.DB().NewUpdate().
 		Model((*model.Order)(nil)).
 		Set("status = ?", "paid").
 		Set("payment_status = ?", "captured").
@@ -317,7 +315,7 @@ func (r *OrderRepositoryImpl) MarkAsPaid(ctx context.Context, orderID string, tr
 // MarkAsShipped marks an order as shipped.
 func (r *OrderRepositoryImpl) MarkAsShipped(ctx context.Context, orderID string, trackingNumber string) error {
 	now := time.Now()
-	_, err := r.db.NewUpdate().
+	_, err := r.DB().NewUpdate().
 		Model((*model.Order)(nil)).
 		Set("status = ?", "shipped").
 		Set("shipping_status = ?", "in_transit").
@@ -332,7 +330,7 @@ func (r *OrderRepositoryImpl) MarkAsShipped(ctx context.Context, orderID string,
 // MarkAsDelivered marks an order as delivered.
 func (r *OrderRepositoryImpl) MarkAsDelivered(ctx context.Context, orderID string) error {
 	now := time.Now()
-	_, err := r.db.NewUpdate().
+	_, err := r.DB().NewUpdate().
 		Model((*model.Order)(nil)).
 		Set("status = ?", "delivered").
 		Set("shipping_status = ?", "delivered").
@@ -346,7 +344,7 @@ func (r *OrderRepositoryImpl) MarkAsDelivered(ctx context.Context, orderID strin
 // CancelOrder cancels an order with a reason.
 func (r *OrderRepositoryImpl) CancelOrder(ctx context.Context, orderID string, reason string) error {
 	now := time.Now()
-	_, err := r.db.NewUpdate().
+	_, err := r.DB().NewUpdate().
 		Model((*model.Order)(nil)).
 		Set("status = ?", "cancelled").
 		Set("cancellation_reason = ?", reason).
@@ -361,7 +359,7 @@ func (r *OrderRepositoryImpl) CancelOrder(ctx context.Context, orderID string, r
 func (r *OrderRepositoryImpl) RefundOrder(ctx context.Context, orderID string, amount float64, reason string) error {
 	now := time.Now()
 
-	return r.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+	return r.DB().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		// Get current order
 		var order model.Order
 		err := tx.NewSelect().

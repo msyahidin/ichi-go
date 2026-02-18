@@ -229,7 +229,7 @@ queue:
         no_wait: false
 
       # User exchange: topic — routing_key="user.<userID>" targets one user.
-      # Topic exchange required so the consumer binding "user.*" matches
+      # Topic exchange required so the consumer binding "user.#" matches
       # per-user keys like "user.42" (wildcards need topic, not direct).
       # Use for OTPs, order updates, account alerts, personal notifications.
       - name: "notification.user"
@@ -304,8 +304,8 @@ queue:
 
       # -----------------------------------------------------------------------
       # User-specific consumer
-      # Bound to the topic exchange with routing_key="user.*".
-      # The topic exchange matches "user.*" against per-user routing keys
+      # Bound to the topic exchange with routing_key="user.#".
+      # The topic exchange matches "user.#" against per-user routing keys
       # like "user.42", so a single shared queue catches all user messages.
       # The consumer uses event.UserID internally to identify the recipient.
       # For very high-throughput workloads, consider per-user queues bound
@@ -321,7 +321,7 @@ queue:
           no_wait: false
         exchange_name: "notification.user"
         routing_keys:
-          - "user.*"
+          - "user.#"
         prefetch_count: 50
         worker_pool_size: 10
         auto_ack: false
@@ -357,5 +357,4 @@ notification:
     # Path to Firebase service account JSON key file.
     # NEVER commit this file to source control. Use environment variables or secrets manager.
     credentials_file: ""
-    project_id: ""
 

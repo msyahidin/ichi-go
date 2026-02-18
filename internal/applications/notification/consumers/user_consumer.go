@@ -3,6 +3,9 @@ package consumers
 import (
 	"context"
 	"encoding/json"
+	"time"
+
+	"github.com/redis/go-redis/v9"
 
 	"ichi-go/internal/applications/notification/channels"
 	"ichi-go/internal/applications/notification/dto"
@@ -14,7 +17,7 @@ import (
 // UserNotificationConsumer processes notifications targeting a SINGLE user.
 //
 // Bound to: notification.user exchange (topic)
-// Routing key pattern: "user.*"  — matches per-user keys like "user.42".
+// Routing key pattern: "user.#"  — matches per-user keys like "user.42".
 //
 // Use for: OTPs, order updates, account alerts, password resets,
 // personal recommendations — anything that must reach exactly one person.
@@ -22,17 +25,20 @@ type UserNotificationConsumer struct {
 	channels []channels.NotificationChannel
 	renderer *services.TemplateRenderer
 	logRepo  *repositories.NotificationLogRepository
+	redis    *redis.Client // nil when Redis is unavailable; idempotency guard is skipped
 }
 
 func NewUserNotificationConsumer(
 	renderer *services.TemplateRenderer,
 	logRepo *repositories.NotificationLogRepository,
+	redisClient *redis.Client,
 	chs ...channels.NotificationChannel,
 ) *UserNotificationConsumer {
 	return &UserNotificationConsumer{
 		channels: chs,
 		renderer: renderer,
 		logRepo:  logRepo,
+		redis:    redisClient,
 	}
 }
 
@@ -72,6 +78,20 @@ func (c *UserNotificationConsumer) Consume(ctx context.Context, body []byte) err
 		event.EventID, event.EventType, maskedUID, event.Channels)
 
 	campaignID := extractCampaignID(event.Meta)
+
+	// Idempotency guard: skip duplicate deliveries using Redis SETNX keyed by EventID.
+	// If Redis is unavailable the guard is bypassed and the message is processed normally.
+	if c.redis != nil {
+		key := "user-notif:processed:" + event.EventID
+		set, err := c.redis.SetNX(ctx, key, 1, 5*time.Minute).Result()
+		if err != nil {
+			logger.Warnf("[user-notif] redis idempotency check failed event_id=%s: %v; processing anyway",
+				event.EventID, err)
+		} else if !set {
+			logger.Infof("[user-notif] duplicate event_id=%s, skipping", event.EventID)
+			return nil
+		}
+	}
 
 	return dispatch(ctx, event, c.channels, c.renderer, c.logRepo, campaignID)
 }

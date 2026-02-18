@@ -15,7 +15,7 @@ const (
 	blastRoutingKey = "notification.blast"
 
 	// userRoutingKeyPrefix is combined with userID for topic exchange routing.
-	// The consumer queue must be bound with the pattern "user.*".
+	// The consumer queue must be bound with the pattern "user.#".
 	userRoutingKeyPrefix = "user."
 )
 
@@ -47,6 +47,9 @@ func NewNotificationService(
 // The event's DeliveryMode is set automatically.
 // EventID must be non-empty to ensure idempotency headers are useful.
 func (s *NotificationService) Blast(ctx context.Context, event dto.NotificationEvent) error {
+	if s.blastProducer == nil {
+		return fmt.Errorf("notification: blast producer unavailable")
+	}
 	if event.EventID == "" {
 		return fmt.Errorf("notification: EventID must not be empty (required for idempotency)")
 	}
@@ -64,11 +67,14 @@ func (s *NotificationService) Blast(ctx context.Context, event dto.NotificationE
 
 // SendToUser publishes a notification to a SINGLE user via the topic exchange.
 // Routing key is constructed as "user.<userID>" — only the queue bound with
-// the pattern "user.*" on the topic exchange receives the message.
+// the pattern "user.#" on the topic exchange receives the message.
 //
 // The event's DeliveryMode and UserID are set/validated automatically.
 // EventID must be non-empty to ensure idempotency headers are useful.
 func (s *NotificationService) SendToUser(ctx context.Context, userID string, event dto.NotificationEvent) error {
+	if s.userProducer == nil {
+		return fmt.Errorf("notification: user producer unavailable")
+	}
 	if userID == "" {
 		return fmt.Errorf("notification: userID must not be empty for user-specific delivery")
 	}
