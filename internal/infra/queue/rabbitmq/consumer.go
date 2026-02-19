@@ -53,67 +53,6 @@ func (c *Consumer) setup() error {
 		return fmt.Errorf("failed to set QoS: %w", err)
 	}
 
-	// Declare exchange
-	logger.Debugf("📢 Declaring exchange:")
-	logger.Debugf("   Name: '%s'", c.exchangeConfig.Name)
-	logger.Debugf("   Type: '%s'", c.exchangeConfig.Type)
-	logger.Debugf("   Durable: %v", c.exchangeConfig.Durable)
-
-	err = ch.ExchangeDeclare(
-		c.exchangeConfig.Name,
-		c.exchangeConfig.Type,
-		c.exchangeConfig.Durable,
-		c.exchangeConfig.AutoDelete,
-		c.exchangeConfig.Internal,
-		c.exchangeConfig.NoWait,
-		nil,
-	)
-	if err != nil {
-		return fmt.Errorf("failed to declare exchange '%s': %w", c.exchangeConfig.Name, err)
-	}
-	logger.Debugf("✅ Exchange declared: '%s'", c.exchangeConfig.Name)
-
-	// Declare queue
-	logger.Debugf("📦 Declaring queue:")
-	logger.Debugf("   Name: '%s'", c.consumerConfig.Queue.Name)
-	logger.Debugf("   Durable: %v", c.consumerConfig.Queue.Durable)
-
-	queue, err := ch.QueueDeclare(
-		c.consumerConfig.Queue.Name,
-		c.consumerConfig.Queue.Durable,
-		c.consumerConfig.Queue.AutoDelete,
-		c.consumerConfig.Queue.Exclusive,
-		c.consumerConfig.Queue.NoWait,
-		nil,
-	)
-	if err != nil {
-		return fmt.Errorf("failed to declare queue '%s': %w", c.consumerConfig.Queue.Name, err)
-	}
-	logger.Debugf("✅ Queue declared: '%s' (messages: %d, consumers: %d)",
-		queue.Name, queue.Messages, queue.Consumers)
-
-	// Bind queue to exchange with routing keys
-	logger.Debugf("🔗 Binding queue to exchange...")
-	for i, routingKey := range c.consumerConfig.RoutingKeys {
-		logger.Debugf("   [%d/%d] Binding with routing key: '%s'",
-			i+1, len(c.consumerConfig.RoutingKeys), routingKey)
-
-		err = ch.QueueBind(
-			c.consumerConfig.Queue.Name,
-			routingKey,
-			c.exchangeConfig.Name,
-			false,
-			nil,
-		)
-		if err != nil {
-			return fmt.Errorf("failed to bind queue '%s' to exchange '%s' with key '%s': %w",
-				c.consumerConfig.Queue.Name, c.exchangeConfig.Name, routingKey, err)
-		}
-
-		logger.Debugf("   ✅ Bound: queue='%s' <-> exchange='%s' (key='%s')",
-			c.consumerConfig.Queue.Name, c.exchangeConfig.Name, routingKey)
-	}
-
 	c.channel = ch
 
 	logger.Debugf("✅ Consumer '%s' setup complete:", c.consumerConfig.Name)

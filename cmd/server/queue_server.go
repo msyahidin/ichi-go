@@ -21,6 +21,12 @@ func StartQueueWorkers(ctx context.Context, queueConfig *queue.Config, conn *rab
 
 	logger.Infof("🚀 Starting queue workers...")
 
+	// Declare all exchanges, queues, and bindings once before any producer or consumer starts.
+	if err := rabbitmq.SetupTopology(conn, queueConfig.RabbitMQ); err != nil {
+		logger.Errorf("❌ Failed to setup RabbitMQ topology: %v", err)
+		return
+	}
+
 	wg := sync.WaitGroup{}
 
 	// Get registered consumers — pass injector so consumers can resolve DB/service deps.
