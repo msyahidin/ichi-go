@@ -74,7 +74,7 @@ make docker-deploy
 
 # 3. Access
 # API: http://localhost:8080
-# Swagger: http://localhost:8080/swagger/index.html
+# API Docs: http://localhost:8080/docs/index.html
 ```
 
 **📚 See [README.Docker.md](./README.Docker.md) for complete Docker deployment guide**
@@ -159,22 +159,21 @@ ichi-go/
 │       └── setup.go              # Validator initialization
 ├── internal/
 │   ├── applications/             # Domain applications
-│   │   ├── auth/                # Authentication domain
-│   │   │   ├── controllers/
-│   │   │   ├── services/
-│   │   │   ├── repositories/
-│   │   │   ├── dto/
-│   │   │   └── validators/
-│   │   └── user/                # User management domain
+│   │   ├── auth/                # Authentication (login, register, tokens)
+│   │   ├── user/                # User management (reference CRUD example)
+│   │   ├── health/              # Health check endpoints
+│   │   ├── notification/        # Notification service (blast + user-specific)
+│   │   └── rbac/                # Role-based access control (36 endpoints)
 │   ├── infra/                   # Infrastructure layer
 │   │   ├── database/           # Bun ORM setup
 │   │   ├── cache/              # Redis client
-│   │   └── queue/              # RabbitMQ integration
-│   │       ├── rabbitmq/
-│   │       │   ├── connection.go
-│   │       │   ├── producer.go
-│   │       │   └── consumer.go
-│   │       └── registry.go     # Consumer registration
+│   │   ├── queue/              # RabbitMQ integration
+│   │   │   ├── rabbitmq/
+│   │   │   │   ├── connection.go
+│   │   │   │   ├── producer.go
+│   │   │   │   └── consumer.go
+│   │   │   └── registry.go     # Consumer registration
+│   │   └── authz/              # Casbin RBAC enforcer, adapter, cache, watcher
 │   └── middlewares/            # HTTP middlewares
 ├── db/
 │   ├── cmd/
@@ -329,6 +328,27 @@ rc := requestctx.FromRequest(c.Request())
 // Use in business logic
 userID := requestctx.GetUserID(ctx)
 ```
+
+### 6. RBAC Authorization
+
+Multi-tenant role-based access control with Casbin v3:
+
+- **Three-layer model**: Platform → Application (tenant-scoped) → Resource (future ABAC)
+- **L1/L2 caching**: in-memory LRU + Redis for <1ms permission checks
+- **Audit logging**: SOC2/GDPR-compliant with 7-year retention
+- **Pre-seeded**: 9 system roles, 146 default permissions
+
+```go
+// Protect a route group — auto-maps HTTP methods to actions
+admin := e.Group("/admin")
+admin.Use(RequirePermission(enforcementService, "admin", "access"))
+
+// Check permission in service code
+allowed, err := enforcementService.CheckPermission(
+    ctx, userID, tenantID, "products", "edit")
+```
+
+See [docs/RBAC.md](./docs/RBAC.md) for complete documentation.
 
 ## 💻 Development Workflow
 
@@ -740,7 +760,14 @@ func handleMessage(ctx context.Context, msg rabbitmq.Message) error {
 
 ## 📖 Additional Resources
 
-### Documentation
+### Internal Documentation
+- [Starter Guide](./docs/STARTER_GUIDE.md) - New developer Day 1 guide
+- [Adding a New Service](./docs/ADDING_NEW_SERVICE.md) - Domain creation walkthrough
+- [RBAC Guide](./docs/RBAC.md) - Authorization system reference
+- [Testing Guide](./docs/testing/TESTING.md) - Comprehensive testing patterns
+- [Testing Quick Start](./docs/testing/TESTING_QUICKSTART.md) - Get testing in 5 minutes
+
+### External Documentation
 - [Echo Framework Docs](https://echo.labstack.com/)
 - [Bun ORM Guide](https://bun.uptrace.dev/)
 - [samber/do Documentation](https://github.com/samber/do)
