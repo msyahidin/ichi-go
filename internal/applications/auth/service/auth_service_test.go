@@ -11,6 +11,7 @@ import (
 	authDto "ichi-go/internal/applications/auth/dto"
 	userRepo "ichi-go/internal/applications/user/repository"
 	"ichi-go/pkg/authenticator"
+	dbModel "ichi-go/pkg/db/model"
 	pkgErrors "ichi-go/pkg/errors"
 
 	_ "github.com/labstack/echo/v4"
@@ -30,28 +31,28 @@ type MockUserRepository struct {
 	mock.Mock
 }
 
-func (m *MockUserRepository) FindByEmail(ctx context.Context, email string) (*userRepo.UserModel, error) {
+func (m *MockUserRepository) FindByEmail(ctx context.Context, email string) (*dbModel.User, error) {
 	args := m.Called(ctx, email)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*userRepo.UserModel), args.Error(1)
+	return args.Get(0).(*dbModel.User), args.Error(1)
 }
 
-func (m *MockUserRepository) GetById(ctx context.Context, id uint64) (*userRepo.UserModel, error) {
+func (m *MockUserRepository) GetById(ctx context.Context, id uint64) (*dbModel.User, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*userRepo.UserModel), args.Error(1)
+	return args.Get(0).(*dbModel.User), args.Error(1)
 }
 
-func (m *MockUserRepository) Create(ctx context.Context, user userRepo.UserModel) (int64, error) {
+func (m *MockUserRepository) Create(ctx context.Context, user dbModel.User) (int64, error) {
 	args := m.Called(ctx, user)
 	return args.Get(0).(int64), args.Error(1)
 }
 
-func (m *MockUserRepository) Update(ctx context.Context, user userRepo.UserModel) (int64, error) {
+func (m *MockUserRepository) Update(ctx context.Context, user dbModel.User) (int64, error) {
 	args := m.Called(ctx, user)
 	return args.Get(0).(int64), args.Error(1)
 }
@@ -100,7 +101,7 @@ func (m *MockMessageProducer) Close() error {
 
 // TestUser wraps UserModel with test-specific fields
 type TestUser struct {
-	Model    *userRepo.UserModel
+	Model    *dbModel.User
 	ID       uint64
 	Password string // Plain text password for testing
 }
@@ -110,7 +111,7 @@ func createTestUser() *TestUser {
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(plainPassword), bcrypt.DefaultCost)
 
 	return &TestUser{
-		Model: &userRepo.UserModel{
+		Model: &dbModel.User{
 			Name:     "Test User",
 			Email:    "test@example.com",
 			Password: string(hashedPassword),
@@ -125,7 +126,7 @@ func createTestUserWithID(id uint64, email string) *TestUser {
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(plainPassword), bcrypt.DefaultCost)
 
 	return &TestUser{
-		Model: &userRepo.UserModel{
+		Model: &dbModel.User{
 			Name:     "Test User",
 			Email:    email,
 			Password: string(hashedPassword),
@@ -150,7 +151,7 @@ type AuthServiceForTesting interface {
 	Register(ctx context.Context, req authDto.RegisterRequest) (*authDto.RegisterResponse, error)
 	RefreshToken(ctx context.Context, req authDto.RefreshTokenRequest) (*authDto.RefreshTokenResponse, error)
 	Me(ctx context.Context, authCtx authenticator.AuthContext) (*authDto.UserInfo, error)
-	GetUserByEmail(ctx context.Context, email string) (*userRepo.UserModel, error)
+	GetUserByEmail(ctx context.Context, email string) (*dbModel.User, error)
 	HashPassword(password string) (string, error)
 	VerifyPassword(hashedPassword, password string) bool
 }
@@ -230,7 +231,7 @@ func (s *testAuthService) Register(ctx context.Context, req authDto.RegisterRequ
 			Wrap(err)
 	}
 
-	newUser := userRepo.UserModel{
+	newUser := dbModel.User{
 		Name:     req.Name,
 		Email:    req.Email,
 		Password: hashedPassword,
@@ -326,7 +327,7 @@ func (s *testAuthService) Me(ctx context.Context, authCtx authenticator.AuthCont
 }
 
 // Helper methods
-func (s *testAuthService) GetUserByEmail(ctx context.Context, email string) (*userRepo.UserModel, error) {
+func (s *testAuthService) GetUserByEmail(ctx context.Context, email string) (*dbModel.User, error) {
 	return s.userRepo.FindByEmail(ctx, email)
 }
 
@@ -519,12 +520,12 @@ func TestRegister_Success(t *testing.T) {
 	mockRepo.On("FindByEmail", ctx, req.Email).Return(nil, sql.ErrNoRows)
 
 	// User creation succeeds
-	mockRepo.On("Create", ctx, mock.MatchedBy(func(u userRepo.UserModel) bool {
+	mockRepo.On("Create", ctx, mock.MatchedBy(func(u dbModel.User) bool {
 		return u.Name == req.Name && u.Email == req.Email
 	})).Return(int64(1), nil)
 
 	// Get created user
-	createdUser := &userRepo.UserModel{
+	createdUser := &dbModel.User{
 		Name:     req.Name,
 		Email:    req.Email,
 		Password: "hashed_password_here", // Will be set by service
@@ -568,7 +569,7 @@ func TestRegister_UserAlreadyExists(t *testing.T) {
 		Password: "SecurePass123!@#",
 	}
 
-	mockRepo.On("FindByEmail", ctx, req.Email).Return(existingUser, nil)
+	mockRepo.On("FindByEmail", ctx, req.Email).Return(existingUser.Model, nil)
 
 	// Act
 	response, err := service.Register(ctx, req)
@@ -656,7 +657,7 @@ func TestRegister_NotificationFailureDoesNotBreakRegistration(t *testing.T) {
 	mockRepo.On("FindByEmail", ctx, req.Email).Return(nil, sql.ErrNoRows)
 	mockRepo.On("Create", ctx, mock.Anything).Return(int64(1), nil)
 
-	createdUser := &userRepo.UserModel{
+	createdUser := &dbModel.User{
 		Name:  req.Name,
 		Email: req.Email,
 	}
@@ -882,7 +883,7 @@ func TestGetUserByEmail_Success(t *testing.T) {
 	ctx := context.Background()
 	testUser := createTestUser()
 
-	mockRepo.On("FindByEmail", ctx, testUser.Model.Email).Return(testUser, nil)
+	mockRepo.On("FindByEmail", ctx, testUser.Model.Email).Return(testUser.Model, nil)
 
 	// Act
 	user, err := service.GetUserByEmail(ctx, testUser.Model.Email)
@@ -1018,7 +1019,7 @@ func TestRegister_SpecialCharactersInEmail(t *testing.T) {
 	mockRepo.On("FindByEmail", ctx, req.Email).Return(nil, sql.ErrNoRows)
 	mockRepo.On("Create", ctx, mock.Anything).Return(int64(1), nil)
 
-	createdUser := &userRepo.UserModel{
+	createdUser := &dbModel.User{
 		Name:  req.Name,
 		Email: req.Email,
 	}

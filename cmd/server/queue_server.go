@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"sync"
+	"time"
 
 	"github.com/samber/do/v2"
 
@@ -22,9 +23,24 @@ func StartQueueWorkers(ctx context.Context, queueConfig *queue.Config, conn *rab
 	logger.Infof("🚀 Starting queue workers...")
 
 	// Declare all exchanges, queues, and bindings once before any producer or consumer starts.
-	if err := rabbitmq.SetupTopology(conn, queueConfig.RabbitMQ); err != nil {
-		logger.Errorf("❌ Failed to setup RabbitMQ topology: %v", err)
-		return
+	// Retry with exponential backoff so transient broker-not-ready errors at startup self-heal.
+	{
+		backoff := 100 * time.Millisecond
+		const maxBackoff = 10 * time.Second
+		for {
+			if err := rabbitmq.SetupTopology(conn, queueConfig.RabbitMQ); err == nil {
+				break
+			} else {
+				logger.Errorf("❌ Topology setup failed (retrying in %v): %v", backoff, err)
+			}
+			select {
+			case <-ctx.Done():
+				logger.Warnf("🛑 Context cancelled during topology setup — aborting worker startup")
+				return
+			case <-time.After(backoff):
+				backoff = min(backoff*2, maxBackoff)
+			}
+		}
 	}
 
 	wg := sync.WaitGroup{}

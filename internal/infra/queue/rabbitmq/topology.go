@@ -22,6 +22,13 @@ func SetupTopology(conn *Connection, config Config) error {
 	for _, ex := range config.Exchanges {
 		args := buildExchangeArgs(ex)
 
+		// Override NoWait to false — topology setup must be synchronous so that
+		// declaration errors surface immediately rather than silently closing the
+		// channel on the next operation.
+		if ex.NoWait {
+			logger.Warnf("⚠️  Exchange '%s' has no_wait=true in config; overriding to false for topology setup", ex.Name)
+		}
+
 		logger.Infof("📢 Declaring exchange: name=%s, type=%s, durable=%v", ex.Name, ex.Type, ex.Durable)
 
 		if err := ch.ExchangeDeclare(
@@ -30,7 +37,7 @@ func SetupTopology(conn *Connection, config Config) error {
 			ex.Durable,
 			ex.AutoDelete,
 			ex.Internal,
-			ex.NoWait,
+			false, // NoWait always false — see comment above
 			args,
 		); err != nil {
 			return fmt.Errorf("failed to declare exchange '%s': %w", ex.Name, err)
@@ -61,6 +68,22 @@ func SetupTopology(conn *Connection, config Config) error {
 
 		logger.Infof("✅ Queue declared: %s (messages: %d, consumers: %d)", q.Name, q.Messages, q.Consumers)
 
+		if len(consumer.RoutingKeys) == 0 {
+			// Fanout exchanges route all messages regardless of routing key —
+			// bind with an empty key so the queue is explicitly connected.
+			// For all other exchange types, an unbound queue receives nothing.
+			if getExchangeType(config, consumer.ExchangeName) == "fanout" {
+				logger.Infof("🔗 Fanout binding: queue '%s' -> exchange '%s' (no routing key needed)", q.Name, consumer.ExchangeName)
+				if err := ch.QueueBind(q.Name, "", consumer.ExchangeName, false, nil); err != nil {
+					return fmt.Errorf("failed to bind queue '%s' to fanout exchange '%s': %w", q.Name, consumer.ExchangeName, err)
+				}
+			} else {
+				logger.Warnf("⚠️  Consumer '%s': queue '%s' has no routing keys — it will receive no messages from exchange '%s'",
+					consumer.Name, q.Name, consumer.ExchangeName)
+			}
+			continue
+		}
+
 		for _, key := range consumer.RoutingKeys {
 			logger.Infof("🔗 Binding queue '%s' -> exchange '%s' (key: '%s')", q.Name, consumer.ExchangeName, key)
 
@@ -75,14 +98,22 @@ func SetupTopology(conn *Connection, config Config) error {
 	return nil
 }
 
-// buildExchangeArgs constructs the amqp.Table for an exchange declaration,
-// preserving plugin-specific args (e.g. x-delayed-type for x-delayed-message).
+// buildExchangeArgs returns a defensive copy of the exchange's configured args.
+// Ranging over a nil map is a no-op in Go, so this is always safe.
 func buildExchangeArgs(ex ExchangeConfig) amqp.Table {
-	args := amqp.Table{}
-	if ex.Type == "x-delayed-message" {
-		if delayedType, ok := ex.Args["x-delayed-type"]; ok {
-			args["x-delayed-type"] = delayedType
+	result := amqp.Table{}
+	for k, v := range ex.Args {
+		result[k] = v
+	}
+	return result
+}
+
+// getExchangeType returns the type of the named exchange from config, or "" if not found.
+func getExchangeType(config Config, name string) string {
+	for _, ex := range config.Exchanges {
+		if ex.Name == name {
+			return ex.Type
 		}
 	}
-	return args
+	return ""
 }
