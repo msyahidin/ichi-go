@@ -3,17 +3,15 @@ package model
 import (
 	"context"
 	"fmt"
-	"time"
-
-	bunCore "ichi-go/internal/infra/database/bun"
-
 	"github.com/uptrace/bun"
+	"ichi-go/pkg/db/model"
+	"time"
 )
 
 // Order represents a customer order in the system.
 // This model supports the full order lifecycle: creation, payment, fulfillment, and refunds.
 type Order struct {
-	bunCore.CoreModel `bun:"table:orders,alias:o"`
+	model.CoreModel `bun:"table:orders,alias:o"`
 
 	// Order Identification
 	OrderNumber string `bun:"order_number,notnull,unique" json:"order_number"` // Human-readable order number (e.g., "ORD-20250101-0001")

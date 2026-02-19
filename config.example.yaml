@@ -219,6 +219,26 @@ queue:
         internal: false
         no_wait: false
 
+      # Blast exchange: fanout — one publish, every bound queue receives a copy.
+      # Use for system announcements, maintenance, campaigns targeting all users.
+      - name: "notification.blast"
+        type: "fanout"
+        durable: true
+        auto_delete: false
+        internal: false
+        no_wait: false
+
+      # User exchange: topic — routing_key="user.<userID>" targets one user.
+      # Topic exchange required so the consumer binding "user.#" matches
+      # per-user keys like "user.42" (wildcards need topic, not direct).
+      # Use for OTPs, order updates, account alerts, personal notifications.
+      - name: "notification.user"
+        type: "topic"
+        durable: true
+        auto_delete: false
+        internal: false
+        no_wait: false
+
     publisher:
       exchange_name: "app.events"
 
@@ -258,4 +278,83 @@ queue:
         auto_ack: false
         exclusive: false
         consumer_tag: "welcome_notifier_v1"
+
+      # -----------------------------------------------------------------------
+      # Blast consumer
+      # Bound to the fanout exchange — routing_keys is ignored by fanout but
+      # must be present (use "#" as a placeholder).
+      # Scale worker_pool_size based on the number of channels × expected TPS.
+      # -----------------------------------------------------------------------
+      - name: "notification_blast"
+        enabled: true
+        queue:
+          name: "notification.blast.queue"
+          durable: true
+          auto_delete: false
+          exclusive: false
+          no_wait: false
+        exchange_name: "notification.blast"
+        routing_keys:
+          - "#"
+        prefetch_count: 20
+        worker_pool_size: 5
+        auto_ack: false
+        exclusive: false
+        consumer_tag: "notification_blast_v1"
+
+      # -----------------------------------------------------------------------
+      # User-specific consumer
+      # Bound to the topic exchange with routing_key="user.#".
+      # The topic exchange matches "user.#" against per-user routing keys
+      # like "user.42", so a single shared queue catches all user messages.
+      # The consumer uses event.UserID internally to identify the recipient.
+      # For very high-throughput workloads, consider per-user queues bound
+      # with specific keys (e.g. "user.42") and a separate consumer per user.
+      # -----------------------------------------------------------------------
+      - name: "notification_user"
+        enabled: true
+        queue:
+          name: "notification.user.queue"
+          durable: true
+          auto_delete: false
+          exclusive: false
+          no_wait: false
+        exchange_name: "notification.user"
+        routing_keys:
+          - "user.#"
+        prefetch_count: 50
+        worker_pool_size: 10
+        auto_ack: false
+        exclusive: false
+        consumer_tag: "notification_user_v1"
+
+      # Dispatcher: receives delayed messages from app.events and re-routes to blast/user exchanges.
+      # Bound to app.events (x-delayed-message) with routing_key="notification.dispatch".
+      # After the delay expires, messages are forwarded here, then re-published with zero delay.
+      - name: "notification_dispatcher"
+        enabled: true
+        queue:
+          name: "notification.dispatch.queue"
+          durable: true
+          auto_delete: false
+          exclusive: false
+          no_wait: false
+        exchange_name: "app.events"
+        routing_keys:
+          - "notification.dispatch"
+        prefetch_count: 100
+        worker_pool_size: 5
+        auto_ack: false
+        exclusive: false
+        consumer_tag: "notification_dispatcher_v1"
+
+# Notification domain configuration
+notification:
+  fcm:
+    # Set enabled: true and provide credentials_file to enable FCM push notifications.
+    # Leave enabled: false in local development — push channel will skip silently.
+    enabled: false
+    # Path to Firebase service account JSON key file.
+    # NEVER commit this file to source control. Use environment variables or secrets manager.
+    credentials_file: ""
 

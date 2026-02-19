@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"ichi-go/db/query"
+	"ichi-go/pkg/db/query"
 	"ichi-go/pkg/logger"
 	"time"
 

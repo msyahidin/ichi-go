@@ -6,7 +6,7 @@ package user
 
 import (
 	"context"
-	user "ichi-go/internal/applications/user/repository"
+	dbModel "ichi-go/pkg/db/model"
 
 	mock "github.com/stretchr/testify/mock"
 )
@@ -39,7 +39,7 @@ func (_m *MockService) EXPECT() *MockService_Expecter {
 }
 
 // Create provides a mock function for the type MockService
-func (_mock *MockService) Create(ctx context.Context, newUser user.UserModel) (int64, error) {
+func (_mock *MockService) Create(ctx context.Context, newUser dbModel.User) (int64, error) {
 	ret := _mock.Called(ctx, newUser)
 
 	if len(ret) == 0 {
@@ -48,15 +48,15 @@ func (_mock *MockService) Create(ctx context.Context, newUser user.UserModel) (i
 
 	var r0 int64
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, user.UserModel) (int64, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, dbModel.User) (int64, error)); ok {
 		return returnFunc(ctx, newUser)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, user.UserModel) int64); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, dbModel.User) int64); ok {
 		r0 = returnFunc(ctx, newUser)
 	} else {
 		r0 = ret.Get(0).(int64)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, user.UserModel) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, dbModel.User) error); ok {
 		r1 = returnFunc(ctx, newUser)
 	} else {
 		r1 = ret.Error(1)
@@ -71,20 +71,20 @@ type MockService_Create_Call struct {
 
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
-//   - newUser user.UserModel
+//   - newUser dbModel.User
 func (_e *MockService_Expecter) Create(ctx interface{}, newUser interface{}) *MockService_Create_Call {
 	return &MockService_Create_Call{Call: _e.mock.On("Create", ctx, newUser)}
 }
 
-func (_c *MockService_Create_Call) Run(run func(ctx context.Context, newUser user.UserModel)) *MockService_Create_Call {
+func (_c *MockService_Create_Call) Run(run func(ctx context.Context, newUser dbModel.User)) *MockService_Create_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 user.UserModel
+		var arg1 dbModel.User
 		if args[1] != nil {
-			arg1 = args[1].(user.UserModel)
+			arg1 = args[1].(dbModel.User)
 		}
 		run(
 			arg0,
@@ -99,29 +99,29 @@ func (_c *MockService_Create_Call) Return(n int64, err error) *MockService_Creat
 	return _c
 }
 
-func (_c *MockService_Create_Call) RunAndReturn(run func(ctx context.Context, newUser user.UserModel) (int64, error)) *MockService_Create_Call {
+func (_c *MockService_Create_Call) RunAndReturn(run func(ctx context.Context, newUser dbModel.User) (int64, error)) *MockService_Create_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetById provides a mock function for the type MockService
-func (_mock *MockService) GetById(ctx context.Context, id uint32) (*user.UserModel, error) {
+func (_mock *MockService) GetById(ctx context.Context, id uint32) (*dbModel.User, error) {
 	ret := _mock.Called(ctx, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetById")
 	}
 
-	var r0 *user.UserModel
+	var r0 *dbModel.User
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uint32) (*user.UserModel, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uint32) (*dbModel.User, error)); ok {
 		return returnFunc(ctx, id)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uint32) *user.UserModel); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uint32) *dbModel.User); ok {
 		r0 = returnFunc(ctx, id)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*user.UserModel)
+			r0 = ret.Get(0).(*dbModel.User)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, uint32) error); ok {
@@ -162,18 +162,18 @@ func (_c *MockService_GetById_Call) Run(run func(ctx context.Context, id uint32)
 	return _c
 }
 
-func (_c *MockService_GetById_Call) Return(userModel *user.UserModel, err error) *MockService_GetById_Call {
+func (_c *MockService_GetById_Call) Return(userModel *dbModel.User, err error) *MockService_GetById_Call {
 	_c.Call.Return(userModel, err)
 	return _c
 }
 
-func (_c *MockService_GetById_Call) RunAndReturn(run func(ctx context.Context, id uint32) (*user.UserModel, error)) *MockService_GetById_Call {
+func (_c *MockService_GetById_Call) RunAndReturn(run func(ctx context.Context, id uint32) (*dbModel.User, error)) *MockService_GetById_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // SendNotification provides a mock function for the type MockService
-func (_mock *MockService) SendNotification(ctx context.Context, user1 user.UserModel) error {
+func (_mock *MockService) SendNotification(ctx context.Context, user1 dbModel.User) error {
 	ret := _mock.Called(ctx, user1)
 
 	if len(ret) == 0 {
@@ -181,7 +181,7 @@ func (_mock *MockService) SendNotification(ctx context.Context, user1 user.UserM
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, user.UserModel) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, dbModel.User) error); ok {
 		r0 = returnFunc(ctx, user1)
 	} else {
 		r0 = ret.Error(0)
@@ -196,20 +196,20 @@ type MockService_SendNotification_Call struct {
 
 // SendNotification is a helper method to define mock.On call
 //   - ctx context.Context
-//   - user1 user.UserModel
+//   - user1 dbModel.User
 func (_e *MockService_Expecter) SendNotification(ctx interface{}, user1 interface{}) *MockService_SendNotification_Call {
 	return &MockService_SendNotification_Call{Call: _e.mock.On("SendNotification", ctx, user1)}
 }
 
-func (_c *MockService_SendNotification_Call) Run(run func(ctx context.Context, user1 user.UserModel)) *MockService_SendNotification_Call {
+func (_c *MockService_SendNotification_Call) Run(run func(ctx context.Context, user1 dbModel.User)) *MockService_SendNotification_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 user.UserModel
+		var arg1 dbModel.User
 		if args[1] != nil {
-			arg1 = args[1].(user.UserModel)
+			arg1 = args[1].(dbModel.User)
 		}
 		run(
 			arg0,
@@ -224,13 +224,13 @@ func (_c *MockService_SendNotification_Call) Return(err error) *MockService_Send
 	return _c
 }
 
-func (_c *MockService_SendNotification_Call) RunAndReturn(run func(ctx context.Context, user1 user.UserModel) error) *MockService_SendNotification_Call {
+func (_c *MockService_SendNotification_Call) RunAndReturn(run func(ctx context.Context, user1 dbModel.User) error) *MockService_SendNotification_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Update provides a mock function for the type MockService
-func (_mock *MockService) Update(ctx context.Context, updateUser user.UserModel) (int64, error) {
+func (_mock *MockService) Update(ctx context.Context, updateUser dbModel.User) (int64, error) {
 	ret := _mock.Called(ctx, updateUser)
 
 	if len(ret) == 0 {
@@ -239,15 +239,15 @@ func (_mock *MockService) Update(ctx context.Context, updateUser user.UserModel)
 
 	var r0 int64
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, user.UserModel) (int64, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, dbModel.User) (int64, error)); ok {
 		return returnFunc(ctx, updateUser)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, user.UserModel) int64); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, dbModel.User) int64); ok {
 		r0 = returnFunc(ctx, updateUser)
 	} else {
 		r0 = ret.Get(0).(int64)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, user.UserModel) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, dbModel.User) error); ok {
 		r1 = returnFunc(ctx, updateUser)
 	} else {
 		r1 = ret.Error(1)
@@ -262,20 +262,20 @@ type MockService_Update_Call struct {
 
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
-//   - updateUser user.UserModel
+//   - updateUser dbModel.User
 func (_e *MockService_Expecter) Update(ctx interface{}, updateUser interface{}) *MockService_Update_Call {
 	return &MockService_Update_Call{Call: _e.mock.On("Update", ctx, updateUser)}
 }
 
-func (_c *MockService_Update_Call) Run(run func(ctx context.Context, updateUser user.UserModel)) *MockService_Update_Call {
+func (_c *MockService_Update_Call) Run(run func(ctx context.Context, updateUser dbModel.User)) *MockService_Update_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 user.UserModel
+		var arg1 dbModel.User
 		if args[1] != nil {
-			arg1 = args[1].(user.UserModel)
+			arg1 = args[1].(dbModel.User)
 		}
 		run(
 			arg0,
@@ -290,7 +290,7 @@ func (_c *MockService_Update_Call) Return(n int64, err error) *MockService_Updat
 	return _c
 }
 
-func (_c *MockService_Update_Call) RunAndReturn(run func(ctx context.Context, updateUser user.UserModel) (int64, error)) *MockService_Update_Call {
+func (_c *MockService_Update_Call) RunAndReturn(run func(ctx context.Context, updateUser dbModel.User) (int64, error)) *MockService_Update_Call {
 	_c.Call.Return(run)
 	return _c
 }

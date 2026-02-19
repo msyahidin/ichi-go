@@ -3,13 +3,14 @@ package repository
 import (
 	"context"
 
-	bunBase "ichi-go/internal/infra/database/bun"
-
 	"github.com/uptrace/bun"
+
+	"ichi-go/pkg/db/model"
+	dbRepository "ichi-go/pkg/db/repository"
 )
 
 type HealthModel struct {
-	bunBase.CoreModel
+	model.CoreModel
 	bun.BaseModel `bun:"table:healths,alias:health"`
 
 	// TODO: Add your fields here
@@ -23,11 +24,11 @@ type HealthRepository interface {
 }
 
 type RepositoryImpl struct {
-	*bunBase.BaseRepository[HealthModel]
+	*dbRepository.BaseRepository[HealthModel]
 }
 
 func NewHealthRepository(db *bun.DB) HealthRepository {
-	base := bunBase.NewRepository[HealthModel](db, &HealthModel{})
+	base := dbRepository.NewRepository[HealthModel](db, &HealthModel{})
 	return &RepositoryImpl{BaseRepository: base}
 }
 
