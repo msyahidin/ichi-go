@@ -65,40 +65,6 @@ func (p *Producer) setup() error {
 		logger.Infof("✅ Publisher confirms enabled")
 	}
 
-	// Declare exchanges
-	for _, exchange := range p.config.Exchanges {
-		logger.Infof("📢 Declaring exchange: name=%s, type=%s, durable=%v",
-			exchange.Name, exchange.Type, exchange.Durable)
-
-		args := amqp.Table{}
-
-		if exchange.Type == "x-delayed-message" {
-			if delayedType, ok := exchange.Args["x-delayed-type"]; ok {
-				args["x-delayed-type"] = delayedType
-			}
-		}
-
-		err = ch.ExchangeDeclare(
-			exchange.Name,
-			exchange.Type,
-			exchange.Durable,
-			exchange.AutoDelete,
-			exchange.Internal,
-			exchange.NoWait,
-			args,
-		)
-		if err != nil {
-			ch.Close()
-			logger.Errorf("❌ Failed to declare exchange %s: %v", exchange.Name, err)
-			return fmt.Errorf("failed to declare exchange %s: %w", exchange.Name, err)
-		}
-
-		logger.Infof("✅ Exchange declared successfully")
-		logger.Infof("   Name: %s", exchange.Name)
-		logger.Infof("   Type: %s", exchange.Type)
-		logger.Infof("   Durable: %v", exchange.Durable)
-	}
-
 	p.channel = ch
 
 	logger.Infof("✅ Producer configured to publish to exchange: '%s'", p.exchangeName)

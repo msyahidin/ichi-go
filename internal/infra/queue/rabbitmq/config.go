@@ -79,7 +79,7 @@ func GetExchangeByName(config *Config, name string) (*ExchangeConfig, error) {
 			return &exchange, nil
 		}
 	}
-	return nil, fmt.Errorf("consumer '%s' not found", name)
+	return nil, fmt.Errorf("exchange '%s' not found", name)
 }
 
 func GetEnabledConsumers(config *Config) []ConsumerConfig {
