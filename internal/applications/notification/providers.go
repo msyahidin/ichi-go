@@ -106,6 +106,11 @@ func ProvideCampaignService(i do.Injector) (*services.CampaignService, error) {
 	if err != nil {
 		return nil, fmt.Errorf("notification: failed to get main producer: %w", err)
 	}
+	// ProvideMainProducer returns (nil, nil) when the queue is disabled.
+	// Pass nil through — NewCampaignService and its Publish callers must guard against a nil producer.
+	if producer == nil {
+		return services.NewCampaignService(registry, campaignRepo, nil), nil
+	}
 	return services.NewCampaignService(registry, campaignRepo, producer), nil
 }
 

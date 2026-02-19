@@ -45,11 +45,12 @@ func NewUserNotificationConsumer(
 // maskUserID returns a redacted form of the user ID suitable for logging.
 // Shows only the last 3 characters prefixed with "***" so logs remain
 // debuggable without exposing the full identifier.
-// Example: "1234567" → "***567", "42" → "***42"
+// Short IDs (≤ keepLast chars) are fully redacted to avoid revealing the whole value.
+// Example: "1234567" → "***567", "42" → "***"
 func maskUserID(uid string) string {
 	const keepLast = 3
 	if len(uid) <= keepLast {
-		return "***" + uid
+		return "***"
 	}
 	return "***" + uid[len(uid)-keepLast:]
 }
@@ -80,16 +81,21 @@ func (c *UserNotificationConsumer) Consume(ctx context.Context, body []byte) err
 	campaignID := extractCampaignID(event.Meta)
 
 	// Idempotency guard: skip duplicate deliveries using Redis SETNX keyed by EventID.
-	// If Redis is unavailable the guard is bypassed and the message is processed normally.
+	// If Redis is unavailable, or if EventID is empty (non-deduplicatable), the guard is bypassed
+	// and the message is processed normally.
 	if c.redis != nil {
-		key := "user-notif:processed:" + event.EventID
-		set, err := c.redis.SetNX(ctx, key, 1, 5*time.Minute).Result()
-		if err != nil {
-			logger.Warnf("[user-notif] redis idempotency check failed event_id=%s: %v; processing anyway",
-				event.EventID, err)
-		} else if !set {
-			logger.Infof("[user-notif] duplicate event_id=%s, skipping", event.EventID)
-			return nil
+		if event.EventID == "" {
+			logger.Warnf("[user-notif] missing event_id for user_id=%s; skipping idempotency check", maskedUID)
+		} else {
+			key := "user-notif:processed:" + event.EventID
+			set, err := c.redis.SetNX(ctx, key, 1, 5*time.Minute).Result()
+			if err != nil {
+				logger.Warnf("[user-notif] redis idempotency check failed event_id=%s: %v; processing anyway",
+					event.EventID, err)
+			} else if !set {
+				logger.Infof("[user-notif] duplicate event_id=%s, skipping", event.EventID)
+				return nil
+			}
 		}
 	}
 

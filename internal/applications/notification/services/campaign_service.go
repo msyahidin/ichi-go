@@ -133,6 +133,7 @@ func (s *CampaignService) Send(ctx context.Context, req dto.SendNotificationRequ
 
 // publish sends the NotificationEvent(s) to RabbitMQ.
 // Blast → ONE message. User → N messages (one per filtered user ID).
+// Returns an error when the producer is nil (queue disabled).
 func (s *CampaignService) publish(
 	ctx context.Context,
 	campaign *models.NotificationCampaign,
@@ -142,6 +143,10 @@ func (s *CampaignService) publish(
 	data map[string]any,
 	meta map[string]string,
 ) error {
+	if s.producer == nil {
+		return fmt.Errorf("campaign_service: message queue is unavailable (producer is nil)")
+	}
+
 	channels := make([]dto.Channel, len(campaign.Channels))
 	for i, ch := range campaign.Channels {
 		channels[i] = dto.Channel(ch)

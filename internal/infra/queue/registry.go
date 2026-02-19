@@ -13,6 +13,7 @@ import (
 	orderConsumers "ichi-go/internal/applications/order/consumers"
 	userConsumers "ichi-go/internal/applications/user/consumers"
 	"ichi-go/internal/infra/queue/rabbitmq"
+	"ichi-go/pkg/logger"
 	"ichi-go/pkg/notification/fcm"
 	notiftemplate "ichi-go/pkg/notification/template"
 )
@@ -35,8 +36,14 @@ type ConsumerRegistration struct {
 // 5. Test
 func GetRegisteredConsumers(injector do.Injector) []ConsumerRegistration {
 	// Resolve shared dependencies from the DI container.
-	db, _ := do.Invoke[*bun.DB](injector)
-	registry, _ := do.Invoke[*notiftemplate.Registry](injector)
+	db, err := do.Invoke[*bun.DB](injector)
+	if err != nil {
+		logger.Warnf("[queue] injector: failed to resolve *bun.DB: %v; notification log persistence disabled", err)
+	}
+	registry, err := do.Invoke[*notiftemplate.Registry](injector)
+	if err != nil {
+		logger.Warnf("[queue] injector: failed to resolve *notiftemplate.Registry: %v; template rendering disabled", err)
+	}
 
 	// Build renderer and log repo (nil-safe: if DB is unavailable, logs are skipped).
 	var renderer *services.TemplateRenderer
@@ -126,6 +133,7 @@ func buildExchangeProducer(conn *rabbitmq.Connection, defaultExchangeName string
 
 	producer, err := rabbitmq.NewProducer(conn, cfg)
 	if err != nil {
+		logger.Warnf("[queue] buildExchangeProducer: failed to create producer for exchange %q: %v", defaultExchangeName, err)
 		return nil
 	}
 	return producer

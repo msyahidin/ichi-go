@@ -2,13 +2,17 @@ package repository
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
-	"ichi-go/internal/applications/order/model"
-	"ichi-go/pkg/db/query"
-	"ichi-go/pkg/db/repository"
+	"math"
 	"time"
 
 	"github.com/uptrace/bun"
+
+	"ichi-go/internal/applications/order/model"
+	"ichi-go/pkg/db/query"
+	"ichi-go/pkg/db/repository"
 )
 
 // OrderRepository defines operations for managing orders.
@@ -107,7 +111,10 @@ func (r *OrderRepositoryImpl) GetByID(ctx context.Context, id string) (*model.Or
 		Scan(ctx)
 
 	if err != nil {
-		return nil, fmt.Errorf("order not found: %w", err)
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("order not found")
+		}
+		return nil, fmt.Errorf("failed to get order by id: %w", err)
 	}
 
 	return &order, nil
@@ -122,7 +129,10 @@ func (r *OrderRepositoryImpl) GetByOrderNumber(ctx context.Context, orderNumber 
 		Scan(ctx)
 
 	if err != nil {
-		return nil, fmt.Errorf("order not found: %w", err)
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("order not found")
+		}
+		return nil, fmt.Errorf("failed to get order by order number: %w", err)
 	}
 
 	return &order, nil
@@ -220,7 +230,10 @@ func (r *OrderRepositoryImpl) GetOrderWithItems(ctx context.Context, orderID str
 		Scan(ctx)
 
 	if err != nil {
-		return nil, fmt.Errorf("order not found: %w", err)
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("order not found")
+		}
+		return nil, fmt.Errorf("failed to get order with items: %w", err)
 	}
 
 	return &order, nil
@@ -369,7 +382,10 @@ func (r *OrderRepositoryImpl) RefundOrder(ctx context.Context, orderID string, a
 			Scan(ctx)
 
 		if err != nil {
-			return fmt.Errorf("order not found: %w", err)
+			if errors.Is(err, sql.ErrNoRows) {
+				return fmt.Errorf("order not found")
+			}
+			return fmt.Errorf("failed to get order for refund: %w", err)
 		}
 
 		// Validate refund amount
@@ -381,9 +397,12 @@ func (r *OrderRepositoryImpl) RefundOrder(ctx context.Context, orderID string, a
 		newRefundedAmount := order.RefundedAmount + amount
 		newRefundableAmount := order.TotalAmount - newRefundedAmount
 
-		// Determine new status
+		// Determine new status.
+		// Use an epsilon comparison rather than == 0 to avoid float64 rounding errors
+		// on decimal(15,2) values accumulated through repeated arithmetic.
+		const eps = 0.005 // half a cent — smaller than the smallest representable currency unit
 		newStatus := order.Status
-		if newRefundableAmount == 0 {
+		if math.Abs(newRefundableAmount) <= eps {
 			newStatus = "refunded"
 		}
 
