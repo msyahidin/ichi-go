@@ -14,7 +14,6 @@ import (
 
 	"ichi-go/internal/applications/notification/dto"
 	"ichi-go/internal/applications/notification/models"
-	"ichi-go/internal/applications/notification/repositories"
 	"ichi-go/internal/infra/queue/rabbitmq"
 	"ichi-go/pkg/logger"
 )
@@ -29,6 +28,13 @@ const (
 	maxDelaySeconds = 2_147_483
 )
 
+// CampaignRepository is the minimal interface CampaignService uses for DB persistence.
+// The concrete *repositories.NotificationCampaignRepository satisfies this interface.
+type CampaignRepository interface {
+	CreateCampaign(ctx context.Context, campaign *models.NotificationCampaign) (*models.NotificationCampaign, error)
+	UpdateStatus(ctx context.Context, id int64, status models.CampaignStatus, errMsg string, publishedAt *time.Time) error
+}
+
 // CampaignService orchestrates the full notification send flow:
 //  1. Validate event slug against Go TemplateRegistry
 //  2. Validate channels against event's SupportedChannels()
@@ -39,13 +45,13 @@ const (
 //  7. Update campaign status to published | failed
 type CampaignService struct {
 	registry     *notiftemplate.Registry
-	campaignRepo *repositories.NotificationCampaignRepository
+	campaignRepo CampaignRepository
 	producer     rabbitmq.MessageProducer // app.events (x-delayed-message) exchange
 }
 
 func NewCampaignService(
 	registry *notiftemplate.Registry,
-	campaignRepo *repositories.NotificationCampaignRepository,
+	campaignRepo CampaignRepository,
 	producer rabbitmq.MessageProducer,
 ) *CampaignService {
 	return &CampaignService{
@@ -119,13 +125,18 @@ func (s *CampaignService) Send(ctx context.Context, req dto.SendNotificationRequ
 	now := time.Now()
 	if publishErr != nil {
 		logger.Errorf("[campaign] publish failed campaign_id=%d: %v", campaign.ID, publishErr)
-		_ = s.campaignRepo.UpdateStatus(ctx, campaign.ID, models.CampaignStatusFailed, publishErr.Error(), nil)
+		if updateErr := s.campaignRepo.UpdateStatus(ctx, campaign.ID, models.CampaignStatusFailed, publishErr.Error(), nil); updateErr != nil {
+			logger.Errorf("[campaign] failed to update campaign status to failed, campaign_id=%d: %v", campaign.ID, updateErr)
+		}
 		campaign.Status = models.CampaignStatusFailed
 		campaign.ErrorMessage = publishErr.Error()
 		return campaign, publishErr
 	}
 
-	_ = s.campaignRepo.UpdateStatus(ctx, campaign.ID, models.CampaignStatusPublished, "", &now)
+	if updateErr := s.campaignRepo.UpdateStatus(ctx, campaign.ID, models.CampaignStatusPublished, "", &now); updateErr != nil {
+		logger.Errorf("[campaign] failed to update campaign status to published, campaign_id=%d: %v", campaign.ID, updateErr)
+		return nil, updateErr
+	}
 	campaign.Status = models.CampaignStatusPublished
 	campaign.PublishedAt = &now
 	return campaign, nil
