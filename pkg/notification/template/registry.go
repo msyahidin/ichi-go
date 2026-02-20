@@ -18,6 +18,12 @@ var GlobalRegistry = &Registry{
 	templates: make(map[string]EventTemplate),
 }
 
+// NewRegistry creates a fresh, empty Registry.
+// Use this in tests to get an isolated registry that won't conflict with GlobalRegistry.
+func NewRegistry() *Registry {
+	return &Registry{templates: make(map[string]EventTemplate)}
+}
+
 // Register adds an EventTemplate to the registry.
 // Panics if a template with the same slug is already registered — duplicate slugs
 // are a programming error and should be caught at startup, not silently ignored.
