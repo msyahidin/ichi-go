@@ -447,6 +447,25 @@ func TestSend_PublishFails(t *testing.T) {
 	repo.AssertExpectations(t)
 }
 
+func TestSend_UpdateStatusFails(t *testing.T) {
+	// When UpdateStatus fails after a successful publish, Send must return nil campaign + the DB error.
+	// The in-memory campaign must NOT be mutated to published state.
+	svc, repo, producer := setupCampaignSvc(t, "order.shipped")
+	req := baseReq("order.shipped", dto.DeliveryModeBlast)
+
+	returned := createdCampaignWithID(7, req.DeliveryMode, []string{"email"})
+	repo.On("CreateCampaign", mock.Anything, mock.Anything).Return(returned, nil)
+	repo.On("UpdateStatus", mock.Anything, int64(7), models.CampaignStatusPublished, "", mock.AnythingOfType("*time.Time")).
+		Return(errors.New("db connection lost"))
+	producer.On("Publish", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	campaign, err := svc.Send(context.Background(), req)
+
+	require.Error(t, err)
+	assert.Nil(t, campaign) // no partially-mutated campaign returned to caller
+	repo.AssertExpectations(t)
+}
+
 func TestSend_DelaySeconds(t *testing.T) {
 	svc, repo, producer := setupCampaignSvc(t, "order.shipped")
 	req := baseReq("order.shipped", dto.DeliveryModeBlast)

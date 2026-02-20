@@ -135,6 +135,7 @@ func (s *CampaignService) Send(ctx context.Context, req dto.SendNotificationRequ
 
 	if updateErr := s.campaignRepo.UpdateStatus(ctx, campaign.ID, models.CampaignStatusPublished, "", &now); updateErr != nil {
 		logger.Errorf("[campaign] failed to update campaign status to published, campaign_id=%d: %v", campaign.ID, updateErr)
+		return nil, updateErr
 	}
 	campaign.Status = models.CampaignStatusPublished
 	campaign.PublishedAt = &now
