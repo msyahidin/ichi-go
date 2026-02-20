@@ -125,13 +125,17 @@ func (s *CampaignService) Send(ctx context.Context, req dto.SendNotificationRequ
 	now := time.Now()
 	if publishErr != nil {
 		logger.Errorf("[campaign] publish failed campaign_id=%d: %v", campaign.ID, publishErr)
-		_ = s.campaignRepo.UpdateStatus(ctx, campaign.ID, models.CampaignStatusFailed, publishErr.Error(), nil)
+		if updateErr := s.campaignRepo.UpdateStatus(ctx, campaign.ID, models.CampaignStatusFailed, publishErr.Error(), nil); updateErr != nil {
+			logger.Errorf("[campaign] failed to update campaign status to failed, campaign_id=%d: %v", campaign.ID, updateErr)
+		}
 		campaign.Status = models.CampaignStatusFailed
 		campaign.ErrorMessage = publishErr.Error()
 		return campaign, publishErr
 	}
 
-	_ = s.campaignRepo.UpdateStatus(ctx, campaign.ID, models.CampaignStatusPublished, "", &now)
+	if updateErr := s.campaignRepo.UpdateStatus(ctx, campaign.ID, models.CampaignStatusPublished, "", &now); updateErr != nil {
+		logger.Errorf("[campaign] failed to update campaign status to published, campaign_id=%d: %v", campaign.ID, updateErr)
+	}
 	campaign.Status = models.CampaignStatusPublished
 	campaign.PublishedAt = &now
 	return campaign, nil

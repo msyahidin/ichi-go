@@ -3,11 +3,12 @@ package consumers
 import (
 	"context"
 	"encoding/json"
+	"testing"
 
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 
 	"ichi-go/internal/applications/notification/dto"
-	"ichi-go/internal/infra/queue/rabbitmq"
 )
 
 // ============================================================================
@@ -27,24 +28,6 @@ func (m *mockChannel) Name() dto.Channel { return m.name }
 
 func (m *mockChannel) Send(ctx context.Context, event dto.NotificationEvent) error {
 	args := m.Called(ctx, event)
-	return args.Error(0)
-}
-
-// ============================================================================
-// mockProducer — implements rabbitmq.MessageProducer
-// ============================================================================
-
-type mockConsumerProducer struct {
-	mock.Mock
-}
-
-func (m *mockConsumerProducer) Publish(ctx context.Context, routingKey string, message interface{}, opts rabbitmq.PublishOptions) error {
-	args := m.Called(ctx, routingKey, message, opts)
-	return args.Error(0)
-}
-
-func (m *mockConsumerProducer) Close() error {
-	args := m.Called()
 	return args.Error(0)
 }
 
@@ -71,7 +54,9 @@ func makeTestBlastEvent(eventID string, chs ...dto.Channel) dto.NotificationEven
 	}
 }
 
-func marshalEvent(e dto.NotificationEvent) []byte {
-	b, _ := json.Marshal(e)
+func marshalEvent(t *testing.T, e dto.NotificationEvent) []byte {
+	t.Helper()
+	b, err := json.Marshal(e)
+	require.NoError(t, err)
 	return b
 }

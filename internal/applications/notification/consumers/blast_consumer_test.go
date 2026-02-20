@@ -56,7 +56,7 @@ func TestBlastConsume_WrongDeliveryMode(t *testing.T) {
 
 	// user event arriving at blast consumer
 	event := makeTestUserEvent("42", "evt-001", dto.ChannelEmail)
-	err := c.Consume(newCtx(), marshalEvent(event))
+	err := c.Consume(newCtx(), marshalEvent(t, event))
 
 	require.NoError(t, err)
 	ch.AssertNotCalled(t, "Send")
@@ -69,7 +69,7 @@ func TestBlastConsume_HappyPath(t *testing.T) {
 	event := makeTestBlastEvent("evt-002", dto.ChannelEmail)
 	ch.On("Send", mock.Anything, mock.Anything).Return(nil)
 
-	err := c.Consume(newCtx(), marshalEvent(event))
+	err := c.Consume(newCtx(), marshalEvent(t, event))
 
 	require.NoError(t, err)
 	ch.AssertCalled(t, "Send", mock.Anything, mock.Anything)
@@ -81,7 +81,7 @@ func TestBlastConsume_ChannelNotTargeted(t *testing.T) {
 	c := &BlastConsumer{channels: asChannels(emailCh)}
 
 	event := makeTestBlastEvent("evt-003", dto.ChannelPush)
-	err := c.Consume(newCtx(), marshalEvent(event))
+	err := c.Consume(newCtx(), marshalEvent(t, event))
 
 	require.NoError(t, err)
 	emailCh.AssertNotCalled(t, "Send")
@@ -94,7 +94,7 @@ func TestBlastConsume_ChannelSendFails(t *testing.T) {
 	event := makeTestBlastEvent("evt-004", dto.ChannelEmail)
 	ch.On("Send", mock.Anything, mock.Anything).Return(errors.New("smtp error"))
 
-	err := c.Consume(newCtx(), marshalEvent(event))
+	err := c.Consume(newCtx(), marshalEvent(t, event))
 
 	require.Error(t, err) // all channels failed → requeue
 }
@@ -109,7 +109,7 @@ func TestBlastConsume_PartialSuccess(t *testing.T) {
 	emailCh.On("Send", mock.Anything, mock.Anything).Return(errors.New("smtp error"))
 	pushCh.On("Send", mock.Anything, mock.Anything).Return(nil)
 
-	err := c.Consume(newCtx(), marshalEvent(event))
+	err := c.Consume(newCtx(), marshalEvent(t, event))
 
 	require.NoError(t, err) // at least one succeeded — ack
 	emailCh.AssertCalled(t, "Send", mock.Anything, mock.Anything)
@@ -125,7 +125,7 @@ func TestBlastConsume_AllChannelsFail(t *testing.T) {
 	emailCh.On("Send", mock.Anything, mock.Anything).Return(errors.New("email down"))
 	pushCh.On("Send", mock.Anything, mock.Anything).Return(errors.New("fcm down"))
 
-	err := c.Consume(newCtx(), marshalEvent(event))
+	err := c.Consume(newCtx(), marshalEvent(t, event))
 
 	require.Error(t, err) // all failed → requeue
 }
@@ -138,7 +138,7 @@ func TestBlastConsume_NilRenderer(t *testing.T) {
 	event := makeTestBlastEvent("evt-007", dto.ChannelEmail)
 	ch.On("Send", mock.Anything, mock.Anything).Return(nil)
 
-	err := c.Consume(newCtx(), marshalEvent(event))
+	err := c.Consume(newCtx(), marshalEvent(t, event))
 
 	require.NoError(t, err)
 	ch.AssertCalled(t, "Send", mock.Anything, mock.Anything)
@@ -156,7 +156,7 @@ func TestBlastConsume_EventWithMeta_ExtractsCampaignID(t *testing.T) {
 	event.Meta = map[string]string{"campaign_id": "99"}
 	ch.On("Send", mock.Anything, mock.Anything).Return(nil)
 
-	err := c.Consume(newCtx(), marshalEvent(event))
+	err := c.Consume(newCtx(), marshalEvent(t, event))
 	require.NoError(t, err)
 	// campaignID=99 is passed to dispatch — no logRepo means it's silently skipped
 	ch.AssertCalled(t, "Send", mock.Anything, mock.Anything)

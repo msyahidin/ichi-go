@@ -63,11 +63,12 @@ func newTestRegistry(slug string, channels []string) *notiftemplate.Registry {
 
 // createdCampaignWithID returns a campaign stub simulating the DB INSERT result.
 // mode is required so publish() can switch on DeliveryMode.
-func createdCampaignWithID(id int64, mode dto.DeliveryMode) *models.NotificationCampaign {
+// channels must match req.Channels (as []string) so publish() reads the correct channels.
+func createdCampaignWithID(id int64, mode dto.DeliveryMode, channels []string) *models.NotificationCampaign {
 	c := &models.NotificationCampaign{
 		Status:       models.CampaignStatusPending,
 		DeliveryMode: string(mode),
-		Channels:     []string{"email"},
+		Channels:     channels,
 	}
 	c.ID = id
 	return c
@@ -338,7 +339,7 @@ func TestSend_BlastHappyPath(t *testing.T) {
 	svc, repo, producer := setupCampaignSvc(t, "order.shipped")
 	req := baseReq("order.shipped", dto.DeliveryModeBlast)
 
-	returned := createdCampaignWithID(7, req.DeliveryMode)
+	returned := createdCampaignWithID(7, req.DeliveryMode, []string{"email"})
 	repo.On("CreateCampaign", mock.Anything, mock.Anything).Return(returned, nil)
 	repo.On("UpdateStatus", mock.Anything, int64(7), models.CampaignStatusPublished, "", mock.AnythingOfType("*time.Time")).Return(nil)
 	producer.On("Publish", mock.Anything, dispatchRoutingKey, mock.MatchedBy(func(e dto.NotificationEvent) bool {
@@ -359,7 +360,7 @@ func TestSend_UserHappyPath(t *testing.T) {
 	req := baseReq("order.shipped", dto.DeliveryModeUser)
 	req.UserTargetIDs = []int64{1, 2, 3}
 
-	returned := createdCampaignWithID(7, req.DeliveryMode)
+	returned := createdCampaignWithID(7, req.DeliveryMode, []string{"email"})
 	repo.On("CreateCampaign", mock.Anything, mock.Anything).Return(returned, nil)
 	repo.On("UpdateStatus", mock.Anything, int64(7), models.CampaignStatusPublished, "", mock.AnythingOfType("*time.Time")).Return(nil)
 	producer.On("Publish", mock.Anything, dispatchRoutingKey, mock.MatchedBy(func(e dto.NotificationEvent) bool {
@@ -379,7 +380,7 @@ func TestSend_UserWithExclusion(t *testing.T) {
 	req.UserTargetIDs = []int64{1, 2, 3}
 	req.UserExcludeIDs = []int64{2}
 
-	returned := createdCampaignWithID(7, req.DeliveryMode)
+	returned := createdCampaignWithID(7, req.DeliveryMode, []string{"email"})
 	repo.On("CreateCampaign", mock.Anything, mock.Anything).Return(returned, nil)
 	repo.On("UpdateStatus", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	producer.On("Publish", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
@@ -396,7 +397,7 @@ func TestSend_AllUsersExcluded(t *testing.T) {
 	req.UserTargetIDs = []int64{1}
 	req.UserExcludeIDs = []int64{1}
 
-	returned := createdCampaignWithID(7, req.DeliveryMode)
+	returned := createdCampaignWithID(7, req.DeliveryMode, []string{"email"})
 	repo.On("CreateCampaign", mock.Anything, mock.Anything).Return(returned, nil)
 	repo.On("UpdateStatus", mock.Anything, int64(7), models.CampaignStatusPublished, "", mock.AnythingOfType("*time.Time")).Return(nil)
 
@@ -418,7 +419,7 @@ func TestSend_NilProducer(t *testing.T) {
 
 	req := baseReq("order.shipped", dto.DeliveryModeBlast)
 
-	returned := createdCampaignWithID(7, req.DeliveryMode)
+	returned := createdCampaignWithID(7, req.DeliveryMode, []string{"email"})
 	repo.On("CreateCampaign", mock.Anything, mock.Anything).Return(returned, nil)
 	repo.On("UpdateStatus", mock.Anything, int64(7), models.CampaignStatusFailed, mock.AnythingOfType("string"), (*time.Time)(nil)).Return(nil)
 
@@ -433,7 +434,7 @@ func TestSend_PublishFails(t *testing.T) {
 	svc, repo, producer := setupCampaignSvc(t, "order.shipped")
 	req := baseReq("order.shipped", dto.DeliveryModeBlast)
 
-	returned := createdCampaignWithID(7, req.DeliveryMode)
+	returned := createdCampaignWithID(7, req.DeliveryMode, []string{"email"})
 	repo.On("CreateCampaign", mock.Anything, mock.Anything).Return(returned, nil)
 	repo.On("UpdateStatus", mock.Anything, int64(7), models.CampaignStatusFailed, mock.AnythingOfType("string"), (*time.Time)(nil)).Return(nil)
 	producer.On("Publish", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(errors.New("broker down"))
@@ -451,7 +452,7 @@ func TestSend_DelaySeconds(t *testing.T) {
 	req := baseReq("order.shipped", dto.DeliveryModeBlast)
 	req.DelaySeconds = u32(30)
 
-	returned := createdCampaignWithID(7, req.DeliveryMode)
+	returned := createdCampaignWithID(7, req.DeliveryMode, []string{"email"})
 	repo.On("CreateCampaign", mock.Anything, mock.Anything).Return(returned, nil)
 	repo.On("UpdateStatus", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	producer.On("Publish", mock.Anything, mock.Anything, mock.Anything, mock.MatchedBy(func(opts rabbitmq.PublishOptions) bool {
@@ -473,7 +474,7 @@ func TestSend_DefaultLocale(t *testing.T) {
 	repo.On("CreateCampaign", mock.Anything, mock.MatchedBy(func(c *models.NotificationCampaign) bool {
 		capturedCampaign = c
 		return true
-	})).Return(createdCampaignWithID(7, req.DeliveryMode), nil)
+	})).Return(createdCampaignWithID(7, req.DeliveryMode, []string{"email"}), nil)
 	repo.On("UpdateStatus", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	producer.On("Publish", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
@@ -488,7 +489,7 @@ func TestSend_UnknownDeliveryMode(t *testing.T) {
 	svc, repo, producer := setupCampaignSvc(t, "order.shipped")
 	req := baseReq("order.shipped", "webhook") // invalid mode
 
-	returned := createdCampaignWithID(7, req.DeliveryMode)
+	returned := createdCampaignWithID(7, req.DeliveryMode, []string{"email"})
 	repo.On("CreateCampaign", mock.Anything, mock.Anything).Return(returned, nil)
 	repo.On("UpdateStatus", mock.Anything, int64(7), models.CampaignStatusFailed, mock.AnythingOfType("string"), (*time.Time)(nil)).Return(nil)
 
