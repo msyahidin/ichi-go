@@ -24,7 +24,7 @@ The project follows domain-driven design with clear separation of concerns:
 
 ```
 internal/
-├── applications/          # Domain applications (auth, user, order, etc.)
+├── applications/          # Domain applications (auth, user, health, notification, rbac)
 │   └── {domain}/
 │       ├── controllers/   # HTTP handlers (presentation layer)
 │       ├── services/      # Business logic
@@ -36,7 +36,8 @@ internal/
 ├── infra/                # Infrastructure layer
 │   ├── database/        # Bun ORM setup
 │   ├── cache/           # Redis client
-│   └── queue/           # RabbitMQ integration
+│   ├── queue/           # RabbitMQ integration
+│   └── authz/           # Casbin RBAC enforcer, adapter, cache, watcher
 └── middlewares/         # HTTP middlewares
 ```
 
@@ -46,7 +47,7 @@ The project uses samber/do for runtime dependency injection:
 
 ```go
 // In domain's register.go
-func Register(injector do.Injector, serviceName string, e *echo.Echo) {
+func Register(injector do.Injector, serviceName string, e *echo.Echo, auth *authenticator.Authenticator) {
     // Register repository
     do.ProvideNamed(injector, serviceName+".user.repository",
         func(i do.Injector) (*repositories.UserRepository, error) {
@@ -428,6 +429,12 @@ logger.WithContext(ctx).Info("Processing request")
 ### Code Generation
 - `pkg/ichigen/` - Code generator CLI
 - `Makefile` - Build automation and commands
+
+### Documentation
+- `docs/STARTER_GUIDE.md` - New developer onboarding (Day 1 guide)
+- `docs/RBAC.md` - RBAC system architecture and usage guide
+- `docs/ADDING_NEW_SERVICE.md` - Step-by-step guide for adding a new domain
+- `docs/testing/` - Testing guides (TESTING.md, TESTING_QUICKSTART.md, TESTING_CHEATSHEET.md)
 
 ## Common Makefile Commands
 
