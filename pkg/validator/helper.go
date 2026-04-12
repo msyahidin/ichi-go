@@ -4,20 +4,20 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 // ErrValidationFailed is a sentinel error for validation failures
 var ErrValidationFailed = errors.New("validation failed")
 
 type ContextValidator interface {
-	ValidateWithContext(c echo.Context, i interface{}) error
+	ValidateWithContext(c *echo.Context, i interface{}) error
 	ValidateWithLanguage(i interface{}, lang string) error
 }
 
 // BindAndValidate binds request body and validates with automatic language detection
 // Returns ValidationErrors that can be passed to response.Error()
-func BindAndValidate(c echo.Context, req interface{}) error {
+func BindAndValidate(c *echo.Context, req interface{}) error {
 	// Bind request body
 	if err := c.Bind(req); err != nil {
 		return err
@@ -29,7 +29,7 @@ func BindAndValidate(c echo.Context, req interface{}) error {
 
 // ValidateWithTranslation validates a struct with automatic language detection from headers
 // Returns ValidationErrors without sending response (compatible with response builder)
-func ValidateWithTranslation(c echo.Context, req interface{}) error {
+func ValidateWithTranslation(c *echo.Context, req interface{}) error {
 	// Get validator from Echo
 	echoValidator := c.Echo().Validator
 	if echoValidator == nil {
@@ -55,7 +55,7 @@ func ValidateWithTranslation(c echo.Context, req interface{}) error {
 
 // ValidateWithLanguage validates a struct with a specific language
 // Returns ValidationErrors without sending response (compatible with response builder)
-func ValidateWithLanguage(c echo.Context, req interface{}, lang string) error {
+func ValidateWithLanguage(c *echo.Context, req interface{}, lang string) error {
 	// Get validator from Echo
 	echoValidator := c.Echo().Validator
 	if echoValidator == nil {

@@ -1,7 +1,7 @@
 package middlewares
 
 import (
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 type RequestFields struct {
@@ -10,7 +10,7 @@ type RequestFields struct {
 
 func RequestInjector(fields RequestFields) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
+		return func(c *echo.Context) error {
 			c.Request().Header.Set("Domain", fields.Domain)
 			return next(c)
 		}

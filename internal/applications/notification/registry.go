@@ -1,7 +1,7 @@
 package notification
 
 import (
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/do/v2"
 
 	notifController "ichi-go/internal/applications/notification/controller"

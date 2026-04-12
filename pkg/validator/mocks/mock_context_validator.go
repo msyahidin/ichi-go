@@ -5,7 +5,7 @@
 package validator
 
 import (
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -37,7 +37,7 @@ func (_m *MockContextValidator) EXPECT() *MockContextValidator_Expecter {
 }
 
 // ValidateWithContext provides a mock function for the type MockContextValidator
-func (_mock *MockContextValidator) ValidateWithContext(c echo.Context, i interface{}) error {
+func (_mock *MockContextValidator) ValidateWithContext(c *echo.Context, i interface{}) error {
 	ret := _mock.Called(c, i)
 
 	if len(ret) == 0 {
@@ -45,7 +45,7 @@ func (_mock *MockContextValidator) ValidateWithContext(c echo.Context, i interfa
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(echo.Context, interface{}) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(*echo.Context, interface{}) error); ok {
 		r0 = returnFunc(c, i)
 	} else {
 		r0 = ret.Error(0)
@@ -59,17 +59,17 @@ type MockContextValidator_ValidateWithContext_Call struct {
 }
 
 // ValidateWithContext is a helper method to define mock.On call
-//   - c echo.Context
+//   - c *echo.Context
 //   - i interface{}
 func (_e *MockContextValidator_Expecter) ValidateWithContext(c interface{}, i interface{}) *MockContextValidator_ValidateWithContext_Call {
 	return &MockContextValidator_ValidateWithContext_Call{Call: _e.mock.On("ValidateWithContext", c, i)}
 }
 
-func (_c *MockContextValidator_ValidateWithContext_Call) Run(run func(c echo.Context, i interface{})) *MockContextValidator_ValidateWithContext_Call {
+func (_c *MockContextValidator_ValidateWithContext_Call) Run(run func(c *echo.Context, i interface{})) *MockContextValidator_ValidateWithContext_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 echo.Context
+		var arg0 *echo.Context
 		if args[0] != nil {
-			arg0 = args[0].(echo.Context)
+			arg0 = args[0].(*echo.Context)
 		}
 		var arg1 interface{}
 		if args[1] != nil {
@@ -88,7 +88,7 @@ func (_c *MockContextValidator_ValidateWithContext_Call) Return(err error) *Mock
 	return _c
 }
 
-func (_c *MockContextValidator_ValidateWithContext_Call) RunAndReturn(run func(c echo.Context, i interface{}) error) *MockContextValidator_ValidateWithContext_Call {
+func (_c *MockContextValidator_ValidateWithContext_Call) RunAndReturn(run func(c *echo.Context, i interface{}) error) *MockContextValidator_ValidateWithContext_Call {
 	_c.Call.Return(run)
 	return _c
 }

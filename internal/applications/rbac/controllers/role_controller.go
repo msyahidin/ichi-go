@@ -10,7 +10,7 @@ import (
 
 	"ichi-go/pkg/utils/response"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 // RoleController handles role management endpoints
@@ -41,7 +41,7 @@ func NewRoleController(roleService *services.RoleService) *RoleController {
 //	@Failure		500			{object}	response.ErrorResponse
 //	@Security		BearerAuth
 //	@Router			/v1/rbac/roles [get]
-func (c *RoleController) GetRoles(ctx echo.Context) error {
+func (c *RoleController) GetRoles(ctx *echo.Context) error {
 	var req dto.GetRolesRequest
 
 	if err := ctx.Bind(&req); err != nil {
@@ -116,7 +116,7 @@ func (c *RoleController) GetRoles(ctx echo.Context) error {
 //	@Failure		404	{object}	response.ErrorResponse
 //	@Security		BearerAuth
 //	@Router			/v1/rbac/roles/{id} [get]
-func (c *RoleController) GetRole(ctx echo.Context) error {
+func (c *RoleController) GetRole(ctx *echo.Context) error {
 	id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {
 		return response.Error(ctx, http.StatusBadRequest, echo.NewHTTPError(http.StatusBadRequest, "Invalid role ID"))
@@ -143,7 +143,7 @@ func (c *RoleController) GetRole(ctx echo.Context) error {
 //	@Failure		404	{object}	response.ErrorResponse
 //	@Security		BearerAuth
 //	@Router			/v1/rbac/roles/{id}/permissions [get]
-func (c *RoleController) GetRoleWithPermissions(ctx echo.Context) error {
+func (c *RoleController) GetRoleWithPermissions(ctx *echo.Context) error {
 	id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {
 		return response.Error(ctx, http.StatusBadRequest, echo.NewHTTPError(http.StatusBadRequest, "Invalid role ID"))
@@ -176,7 +176,7 @@ func (c *RoleController) GetRoleWithPermissions(ctx echo.Context) error {
 //	@Failure		500		{object}	response.ErrorResponse
 //	@Security		BearerAuth
 //	@Router			/v1/rbac/roles [post]
-func (c *RoleController) CreateRole(ctx echo.Context) error {
+func (c *RoleController) CreateRole(ctx *echo.Context) error {
 	var req dto.CreateRoleRequest
 
 	if err := ctx.Bind(&req); err != nil {
@@ -218,7 +218,7 @@ func (c *RoleController) CreateRole(ctx echo.Context) error {
 //	@Failure		500		{object}	response.ErrorResponse
 //	@Security		BearerAuth
 //	@Router			/v1/rbac/roles/{id} [put]
-func (c *RoleController) UpdateRole(ctx echo.Context) error {
+func (c *RoleController) UpdateRole(ctx *echo.Context) error {
 	id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {
 		return response.Error(ctx, http.StatusBadRequest, echo.NewHTTPError(http.StatusBadRequest, "Invalid role ID"))
@@ -269,7 +269,7 @@ func (c *RoleController) UpdateRole(ctx echo.Context) error {
 //	@Failure		500	{object}	response.ErrorResponse
 //	@Security		BearerAuth
 //	@Router			/v1/rbac/roles/{id} [delete]
-func (c *RoleController) DeleteRole(ctx echo.Context) error {
+func (c *RoleController) DeleteRole(ctx *echo.Context) error {
 	id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {
 		return response.Error(ctx, http.StatusBadRequest, echo.NewHTTPError(http.StatusBadRequest, "Invalid role ID"))

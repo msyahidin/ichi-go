@@ -1,8 +1,8 @@
 package middlewares
 
 import (
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
+	"github.com/labstack/echo/v5"
+	"github.com/labstack/echo/v5/middleware"
 	"ichi-go/pkg/http"
 	"time"
 )

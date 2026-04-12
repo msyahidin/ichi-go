@@ -13,8 +13,7 @@ import (
 	"os"
 	"sync"
 
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/gommon/log"
+	"github.com/labstack/echo/v5"
 	"github.com/spf13/viper"
 
 	pkgClientConfig "ichi-go/pkg/clients"
@@ -212,12 +211,6 @@ func setDefault() {
 	rbac.SetDefault()
 }
 
-func SetDebugMode(e *echo.Echo, debug bool) {
-	e.Debug = debug
-	if debug {
-		log.SetLevel(log.DEBUG)
-	} else {
-		log.SetLevel(log.INFO)
-	}
-	log.Debugf("Debug mode set to %v", debug)
+func SetDebugMode(_ *echo.Echo, debug bool) {
+	logger.Debugf("Debug mode set to %v", debug)
 }

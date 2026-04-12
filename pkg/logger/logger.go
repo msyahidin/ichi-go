@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/rs/zerolog"
 	oopszerolog "github.com/samber/oops/loggers/zerolog"
 	"github.com/spf13/viper"
@@ -106,7 +106,7 @@ func GetInstance() *Logger {
 	return instance
 }
 
-func RequestLogging(eCtx echo.Context, format string, v ...interface{}) {
+func RequestLogging(eCtx *echo.Context, format string, v ...interface{}) {
 	WithRequestStamp(eCtx).Info().
 		Msgf(format, v...)
 }
@@ -141,12 +141,16 @@ func WithContext(ctx context.Context) *Logger {
 	return &Logger{contextualLogger}
 }
 
-func WithRequestStamp(eCtx echo.Context) *Logger {
+func WithRequestStamp(eCtx *echo.Context) *Logger {
 	baseInstance := GetInstance()
+	var statusCode int
+	if resp, err := echo.UnwrapResponse(eCtx.Response()); err == nil {
+		statusCode = resp.Status
+	}
 	contextualLogger := baseInstance.With().
 		Str("method", eCtx.Request().Method).
 		Str("path", eCtx.Request().URL.Path).
-		Int("status", eCtx.Response().Status).
+		Int("status", statusCode).
 		Str("ip", eCtx.RealIP()).
 		Str("user_agent", eCtx.Request().UserAgent()).
 		Str(echo.HeaderXRequestID, eCtx.Response().Header().Get(echo.HeaderXRequestID)).

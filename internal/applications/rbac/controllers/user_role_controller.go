@@ -12,7 +12,7 @@ import (
 
 	"ichi-go/pkg/utils/response"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 // UserRoleController handles user role assignment endpoints
@@ -41,7 +41,7 @@ func NewUserRoleController(userRoleService *services.UserRoleService) *UserRoleC
 //	@Failure		500			{object}	response.ErrorResponse
 //	@Security		BearerAuth
 //	@Router			/v1/rbac/users/{userId}/roles [get]
-func (c *UserRoleController) GetUserRoles(ctx echo.Context) error {
+func (c *UserRoleController) GetUserRoles(ctx *echo.Context) error {
 	userID, err := strconv.ParseInt(ctx.Param("userId"), 10, 64)
 	if err != nil {
 		return response.Error(ctx, http.StatusBadRequest, echo.NewHTTPError(http.StatusBadRequest, "Invalid user ID"))
@@ -90,7 +90,7 @@ func (c *UserRoleController) GetUserRoles(ctx echo.Context) error {
 //	@Failure		500			{object}	response.ErrorResponse
 //	@Security		BearerAuth
 //	@Router			/v1/rbac/users/{userId}/roles/active [get]
-func (c *UserRoleController) GetActiveUserRoles(ctx echo.Context) error {
+func (c *UserRoleController) GetActiveUserRoles(ctx *echo.Context) error {
 	userID, err := strconv.ParseInt(ctx.Param("userId"), 10, 64)
 	if err != nil {
 		return response.Error(ctx, http.StatusBadRequest, echo.NewHTTPError(http.StatusBadRequest, "Invalid user ID"))
@@ -140,7 +140,7 @@ func (c *UserRoleController) GetActiveUserRoles(ctx echo.Context) error {
 //	@Failure		500		{object}	response.ErrorResponse
 //	@Security		BearerAuth
 //	@Router			/v1/rbac/users/{userId}/roles [post]
-func (c *UserRoleController) AssignRole(ctx echo.Context) error {
+func (c *UserRoleController) AssignRole(ctx *echo.Context) error {
 	userID, err := strconv.ParseInt(ctx.Param("userId"), 10, 64)
 	if err != nil {
 		return response.Error(ctx, http.StatusBadRequest, echo.NewHTTPError(http.StatusBadRequest, "Invalid user ID"))
@@ -197,7 +197,7 @@ func (c *UserRoleController) AssignRole(ctx echo.Context) error {
 //	@Failure		500			{object}	response.ErrorResponse
 //	@Security		BearerAuth
 //	@Router			/v1/rbac/users/{userId}/roles/{roleSlug} [delete]
-func (c *UserRoleController) RevokeRole(ctx echo.Context) error {
+func (c *UserRoleController) RevokeRole(ctx *echo.Context) error {
 	userID, err := strconv.ParseInt(ctx.Param("userId"), 10, 64)
 	if err != nil {
 		return response.Error(ctx, http.StatusBadRequest, echo.NewHTTPError(http.StatusBadRequest, "Invalid user ID"))
@@ -263,7 +263,7 @@ func (c *UserRoleController) RevokeRole(ctx echo.Context) error {
 //	@Failure		500			{object}	response.ErrorResponse
 //	@Security		BearerAuth
 //	@Router			/v1/rbac/roles/{roleId}/users [get]
-func (c *UserRoleController) GetUsersWithRole(ctx echo.Context) error {
+func (c *UserRoleController) GetUsersWithRole(ctx *echo.Context) error {
 	roleID, err := strconv.ParseInt(ctx.Param("roleId"), 10, 64)
 	if err != nil {
 		return response.Error(ctx, http.StatusBadRequest, echo.NewHTTPError(http.StatusBadRequest, "Invalid role ID"))

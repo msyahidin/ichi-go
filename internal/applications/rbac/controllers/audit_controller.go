@@ -13,7 +13,7 @@ import (
 
 	"ichi-go/pkg/utils/response"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 // AuditController handles audit log endpoints
@@ -51,7 +51,7 @@ func NewAuditController(auditService *services.AuditService) *AuditController {
 //	@Failure		500				{object}	response.ErrorResponse
 //	@Security		BearerAuth
 //	@Router			/v1/rbac/audit/logs [get]
-func (c *AuditController) QueryAuditLogs(ctx echo.Context) error {
+func (c *AuditController) QueryAuditLogs(ctx *echo.Context) error {
 	var req dto.AuditQueryRequest
 
 	if err := ctx.Bind(&req); err != nil {
@@ -139,7 +139,7 @@ func (c *AuditController) QueryAuditLogs(ctx echo.Context) error {
 //	@Failure		500			{object}	response.ErrorResponse
 //	@Security		BearerAuth
 //	@Router			/v1/rbac/audit/stats [get]
-func (c *AuditController) GetAuditStats(ctx echo.Context) error {
+func (c *AuditController) GetAuditStats(ctx *echo.Context) error {
 	var req dto.AuditStatsRequest
 
 	if err := ctx.Bind(&req); err != nil {
@@ -196,7 +196,7 @@ func (c *AuditController) GetAuditStats(ctx echo.Context) error {
 //	@Failure		500		{object}	response.ErrorResponse
 //	@Security		BearerAuth
 //	@Router			/v1/rbac/audit/export [post]
-func (c *AuditController) ExportAuditLogs(ctx echo.Context) error {
+func (c *AuditController) ExportAuditLogs(ctx *echo.Context) error {
 	var req dto.ExportAuditLogsRequest
 
 	if err := ctx.Bind(&req); err != nil {
@@ -277,7 +277,7 @@ func (c *AuditController) ExportAuditLogs(ctx echo.Context) error {
 //	@Failure		500			{object}	response.ErrorResponse
 //	@Security		BearerAuth
 //	@Router			/v1/rbac/audit/mutations [get]
-func (c *AuditController) GetRecentMutations(ctx echo.Context) error {
+func (c *AuditController) GetRecentMutations(ctx *echo.Context) error {
 	tenantID := ctx.QueryParam("tenant_id")
 	limit := 50 // Default limit
 
@@ -330,7 +330,7 @@ func (c *AuditController) GetRecentMutations(ctx echo.Context) error {
 //	@Failure		500			{object}	response.ErrorResponse
 //	@Security		BearerAuth
 //	@Router			/v1/rbac/audit/decisions [get]
-func (c *AuditController) GetRecentDecisions(ctx echo.Context) error {
+func (c *AuditController) GetRecentDecisions(ctx *echo.Context) error {
 	tenantID := ctx.QueryParam("tenant_id")
 	limit := 50 // Default limit
 

@@ -6,7 +6,7 @@ import (
 	"ichi-go/internal/applications/health/service"
 	"ichi-go/pkg/health"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 var Domain = "health"
@@ -36,7 +36,7 @@ func (c *HealthController) RegisterRoutes(e *echo.Echo, serviceName string) {
 //	@Produce		json
 //	@Success		200	{object}	health.HealthResponse
 //	@Router			/health [get]
-func (c *HealthController) GetHealth(ctx echo.Context) error {
+func (c *HealthController) GetHealth(ctx *echo.Context) error {
 	response := c.service.GetHealth(ctx.Request().Context())
 	return ctx.JSON(http.StatusOK, response)
 }
@@ -49,7 +49,7 @@ func (c *HealthController) GetHealth(ctx echo.Context) error {
 //	@Produce		json
 //	@Success		200	{object}	health.HealthResponse
 //	@Router			/health/live [get]
-func (c *HealthController) GetLiveness(ctx echo.Context) error {
+func (c *HealthController) GetLiveness(ctx *echo.Context) error {
 	response := c.service.GetLiveness(ctx.Request().Context())
 	return ctx.JSON(http.StatusOK, response)
 }
@@ -63,7 +63,7 @@ func (c *HealthController) GetLiveness(ctx echo.Context) error {
 //	@Success		200	{object}	health.HealthResponse	"All dependencies healthy"
 //	@Failure		503	{object}	health.HealthResponse	"One or more dependencies unhealthy"
 //	@Router			/health/ready [get]
-func (c *HealthController) GetReadiness(ctx echo.Context) error {
+func (c *HealthController) GetReadiness(ctx *echo.Context) error {
 	response := c.service.GetReadiness(ctx.Request().Context())
 
 	statusCode := http.StatusOK

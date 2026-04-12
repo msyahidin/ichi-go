@@ -6,12 +6,12 @@ import (
 	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 // ExtractToken extracts JWT token from Echo context based on TokenLookup configuration
 // Supports multiple lookup strategies: header, query, cookie
-func ExtractToken(c echo.Context, config JWTConfig) (string, error) {
+func ExtractToken(c *echo.Context, config JWTConfig) (string, error) {
 	// Parse TokenLookup string (e.g., "header:Authorization,query:token,cookie:jwt")
 	lookups := parseTokenLookup(config.TokenLookup)
 

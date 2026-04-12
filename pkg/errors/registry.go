@@ -3,7 +3,7 @@ package errors
 import (
 	"ichi-go/pkg/logger"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 //func Setup(e *echo.Echo) {
