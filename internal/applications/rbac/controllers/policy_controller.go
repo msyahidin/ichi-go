@@ -75,7 +75,7 @@ func (c *PolicyController) GetPolicies(ctx *echo.Context) error {
 				Action:   p.V3,
 			})
 		}
-	} else if req.Role != nil {
+	} else if req.Role != nil && req.TenantID != nil {
 		casbinPolicies, err := c.policyService.GetPoliciesByRole(ctx.Request().Context(), *req.Role, *req.TenantID)
 		if err != nil {
 			return response.Error(ctx, http.StatusInternalServerError, err)

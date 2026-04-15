@@ -3,6 +3,7 @@ package server
 import (
 	"html/template"
 	"ichi-go/config"
+	"io"
 	"net/http"
 
 	"github.com/labstack/echo/v5"
@@ -12,8 +13,8 @@ type TemplateRenderer struct {
 	templates *template.Template
 }
 
-func (t *TemplateRenderer) Render(w http.ResponseWriter, name string, data interface{}, c *echo.Context) error {
-	return t.templates.ExecuteTemplate(w, name, data)
+func (t *TemplateRenderer) Render(c *echo.Context, w io.Writer, templateName string, data any) error {
+	return t.templates.ExecuteTemplate(w, templateName, data)
 }
 
 func SetupWebRoutes(e *echo.Echo, config *config.Schema) {

@@ -21,15 +21,17 @@ func (h *BunErrorHandler) Handle(err error, ctx *echo.Context) error {
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
 		logger.Debugf("BunErrorHandler: record not found")
-		if resp != nil {
-			resp.Status = 404
+		if resp == nil {
+			return err
 		}
+		resp.Status = 404
 		return nil
 
 	case errors.Is(err, sql.ErrTxDone):
-		if resp != nil {
-			resp.Status = 500
+		if resp == nil {
+			return err
 		}
+		resp.Status = 500
 		return nil
 	}
 	return err

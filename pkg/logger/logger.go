@@ -143,10 +143,7 @@ func WithContext(ctx context.Context) *Logger {
 
 func WithRequestStamp(eCtx *echo.Context) *Logger {
 	baseInstance := GetInstance()
-	var statusCode int
-	if resp, err := echo.UnwrapResponse(eCtx.Response()); err == nil {
-		statusCode = resp.Status
-	}
+	_, statusCode := echo.ResolveResponseStatus(eCtx.Response(), nil)
 	contextualLogger := baseInstance.With().
 		Str("method", eCtx.Request().Method).
 		Str("path", eCtx.Request().URL.Path).

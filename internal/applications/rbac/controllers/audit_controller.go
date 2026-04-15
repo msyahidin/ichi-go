@@ -109,8 +109,8 @@ func (c *AuditController) QueryAuditLogs(ctx *echo.Context) error {
 			TenantID:       log.TenantID,
 			Decision:       log.Decision,
 			DecisionReason: log.DecisionReason,
-			PolicyBefore:   log.PolicyBefore.(map[string]interface{}),
-			PolicyAfter:    log.PolicyAfter.(map[string]interface{}),
+			PolicyBefore:   toMapOrEmpty(log.PolicyBefore),
+			PolicyAfter:    toMapOrEmpty(log.PolicyAfter),
 			Reason:         log.Reason,
 			LatencyMs:      log.LatencyMs,
 		})
@@ -122,6 +122,14 @@ func (c *AuditController) QueryAuditLogs(ctx *echo.Context) error {
 	}
 
 	return response.Success(ctx, resp)
+}
+
+// toMapOrEmpty safely casts v to map[string]interface{}; returns an empty map on nil or type mismatch.
+func toMapOrEmpty(v interface{}) map[string]interface{} {
+	if m, ok := v.(map[string]interface{}); ok {
+		return m
+	}
+	return map[string]interface{}{}
 }
 
 // GetAuditStats godoc

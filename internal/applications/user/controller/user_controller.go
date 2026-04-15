@@ -32,8 +32,11 @@ func (c *UserController) GetUser(eCtx *echo.Context) error {
 		return response.Error(eCtx, http.StatusBadRequest, err)
 	}
 
-	idString, err := strconv.Atoi(userGetReq.ID)
-	user, err := c.service.GetById(eCtx.Request().Context(), uint32(idString))
+	idInt, err := strconv.Atoi(userGetReq.ID)
+	if err != nil {
+		return response.Error(eCtx, http.StatusBadRequest, err)
+	}
+	user, err := c.service.GetById(eCtx.Request().Context(), uint32(idInt))
 	if err != nil {
 		return response.Error(eCtx, http.StatusBadRequest, err)
 	}
@@ -98,6 +101,8 @@ func (c *UserController) GetPokemon(eCtx *echo.Context) error {
 	if err != nil {
 		return response.Error(eCtx, http.StatusInternalServerError, err)
 	}
-	err = dtoMapper.Map(&pokemonGetResponseDto, result)
+	if err = dtoMapper.Map(&pokemonGetResponseDto, result); err != nil {
+		return response.Error(eCtx, http.StatusInternalServerError, err)
+	}
 	return response.Success(eCtx, pokemonGetResponseDto)
 }

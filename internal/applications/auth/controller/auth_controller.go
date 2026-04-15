@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"fmt"
 	authDto "ichi-go/internal/applications/auth/dto"
 	authService "ichi-go/internal/applications/auth/service"
 	"ichi-go/pkg/authenticator"
@@ -149,7 +148,6 @@ func (c *AuthController) Logout(eCtx *echo.Context) error {
 //	@Failure		500	{object}	response.ErrorResponse							"Internal server error"
 //	@Router			/auth/me [get]
 func (c *AuthController) Me(eCtx *echo.Context) error {
-	fmt.Println("AuthController.Me called")
 	// Get auth context from middleware
 	authCtx, ok := eCtx.Get("auth").(*authenticator.AuthContext)
 	logger.Debugf("AuthController.Me: authCtx=%+v, ok=%v", authCtx, ok)

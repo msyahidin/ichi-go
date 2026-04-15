@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -43,9 +44,6 @@ func RBACAuditMiddleware(auditRepo *repositories.AuditRepository, config AuditCo
 				requestBody = captureRequestBody(c)
 			}
 
-			// Capture echo Response to read status code after the request
-			echoResp, _ := echo.UnwrapResponse(c.Response())
-
 			// Execute request
 			err := next(c)
 
@@ -77,18 +75,7 @@ func RBACAuditMiddleware(auditRepo *repositories.AuditRepository, config AuditCo
 				}
 
 				// Add response status
-				statusCode := http.StatusOK
-				if echoResp != nil {
-					statusCode = echoResp.Status
-					if statusCode == 0 {
-						statusCode = http.StatusOK
-					}
-				}
-				if err != nil {
-					if he, ok := err.(*echo.HTTPError); ok {
-						statusCode = he.Code
-					}
-				}
+				_, statusCode := echo.ResolveResponseStatus(c.Response(), err)
 
 				// Set decision based on HTTP status
 				if statusCode >= 200 && statusCode < 300 {
@@ -103,9 +90,12 @@ func RBACAuditMiddleware(auditRepo *repositories.AuditRepository, config AuditCo
 					}
 				}
 
-				// Save audit log asynchronously
+				// Save audit log asynchronously with a detached context to avoid
+				// cancellation when the request context is done.
 				go func() {
-					if err := auditRepo.Create(ctx, log); err != nil {
+					auditCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+					defer cancel()
+					if err := auditRepo.Create(auditCtx, log); err != nil {
 						logger.Errorf("Failed to save audit log: %v", err)
 					}
 				}()
