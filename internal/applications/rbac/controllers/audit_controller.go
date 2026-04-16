@@ -12,7 +12,7 @@ import (
 	"ichi-go/internal/applications/rbac/dto"
 	"ichi-go/internal/applications/rbac/repositories"
 	"ichi-go/internal/applications/rbac/services"
-
+	"ichi-go/pkg/logger"
 	"ichi-go/pkg/utils/response"
 
 	"github.com/labstack/echo/v5"
@@ -126,12 +126,20 @@ func (c *AuditController) QueryAuditLogs(ctx *echo.Context) error {
 	return response.Success(ctx, resp)
 }
 
-// toMapOrEmpty safely casts v to map[string]interface{}; returns an empty map on nil or type mismatch.
+// toMapOrEmpty casts v to map[string]interface{}.
+// - nil → empty map (no policy recorded is expected and normal)
+// - correct type → returned as-is
+// - unexpected non-nil type → wrapped under "__raw" so the value is
+//   preserved in the response and a warning is logged for investigation.
 func toMapOrEmpty(v interface{}) map[string]interface{} {
+	if v == nil {
+		return map[string]interface{}{}
+	}
 	if m, ok := v.(map[string]interface{}); ok {
 		return m
 	}
-	return map[string]interface{}{}
+	logger.Warnf("toMapOrEmpty: unexpected type %T for audit policy field; wrapping as __raw", v)
+	return map[string]interface{}{"__raw": v}
 }
 
 // safeFileNameRe permits only alphanumerics, dots, underscores, and hyphens.
@@ -140,8 +148,11 @@ var safeFileNameRe = regexp.MustCompile(`^[a-zA-Z0-9._-]+$`)
 // sanitizeExportFileName returns a safe filename for export files. If the
 // caller-supplied name is empty, absolute, contains path separators, "..",
 // or characters outside the allowlist, it falls back to a timestamped default.
+// The fallback includes nanosecond precision to avoid collisions between
+// concurrent exports.
 func sanitizeExportFileName(name, format string) string {
-	fallback := fmt.Sprintf("audit_logs_%s.%s", time.Now().Format("20060102_150405"), format)
+	now := time.Now()
+	fallback := fmt.Sprintf("audit_logs_%s_%09d.%s", now.Format("20060102_150405"), now.Nanosecond(), format)
 	if name == "" {
 		return fallback
 	}
