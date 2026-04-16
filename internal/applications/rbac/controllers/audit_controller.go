@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strings"
 	"time"
 
 	"ichi-go/internal/applications/rbac/dto"
@@ -132,6 +134,28 @@ func toMapOrEmpty(v interface{}) map[string]interface{} {
 	return map[string]interface{}{}
 }
 
+// safeFileNameRe permits only alphanumerics, dots, underscores, and hyphens.
+var safeFileNameRe = regexp.MustCompile(`^[a-zA-Z0-9._-]+$`)
+
+// sanitizeExportFileName returns a safe filename for export files. If the
+// caller-supplied name is empty, absolute, contains path separators, "..",
+// or characters outside the allowlist, it falls back to a timestamped default.
+func sanitizeExportFileName(name, format string) string {
+	fallback := fmt.Sprintf("audit_logs_%s.%s", time.Now().Format("20060102_150405"), format)
+	if name == "" {
+		return fallback
+	}
+	// Strip directory component; reject anything that still looks dangerous.
+	base := filepath.Base(name)
+	if filepath.IsAbs(name) ||
+		strings.Contains(name, "..") ||
+		strings.ContainsAny(name, `/\`) ||
+		!safeFileNameRe.MatchString(base) {
+		return fallback
+	}
+	return base
+}
+
 // GetAuditStats godoc
 //
 //	@Summary		Get audit statistics
@@ -227,10 +251,7 @@ func (c *AuditController) ExportAuditLogs(ctx *echo.Context) error {
 	}
 
 	// Generate filename
-	fileName := req.FileName
-	if fileName == "" {
-		fileName = fmt.Sprintf("audit_logs_%s.%s", time.Now().Format("20060102_150405"), req.Format)
-	}
+	safeFileName := sanitizeExportFileName(req.FileName, req.Format)
 
 	// Create export directory
 	exportDir := "./exports/audit"
@@ -238,7 +259,7 @@ func (c *AuditController) ExportAuditLogs(ctx *echo.Context) error {
 		return response.Error(ctx, http.StatusInternalServerError, err)
 	}
 
-	filePath := filepath.Join(exportDir, fileName)
+	filePath := filepath.Join(exportDir, safeFileName)
 
 	// Export based on format
 	var err error
@@ -312,8 +333,8 @@ func (c *AuditController) GetRecentMutations(ctx *echo.Context) error {
 			ResourceID:   log.ResourceID,
 			SubjectID:    log.SubjectID,
 			TenantID:     log.TenantID,
-			PolicyBefore: log.PolicyBefore.(map[string]interface{}),
-			PolicyAfter:  log.PolicyAfter.(map[string]interface{}),
+			PolicyBefore: toMapOrEmpty(log.PolicyBefore),
+			PolicyAfter:  toMapOrEmpty(log.PolicyAfter),
 			Reason:       log.Reason,
 		})
 	}
