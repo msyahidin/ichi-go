@@ -13,7 +13,7 @@ import (
 	"strconv"
 
 	dtoMapper "github.com/dranikpg/dto-mapper"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 type UserController struct {
@@ -24,7 +24,7 @@ func NewUserController(service *userService.ServiceImpl) *UserController {
 	return &UserController{service: service}
 }
 
-func (c *UserController) GetUser(eCtx echo.Context) error {
+func (c *UserController) GetUser(eCtx *echo.Context) error {
 	var userGetReq userDto.UserGetRequest
 	logger.Debugf("GetUser request: %+v", requestctx.FromContext(eCtx.Request().Context()))
 	err := eCtx.Bind(&userGetReq)
@@ -32,8 +32,11 @@ func (c *UserController) GetUser(eCtx echo.Context) error {
 		return response.Error(eCtx, http.StatusBadRequest, err)
 	}
 
-	idString, err := strconv.Atoi(userGetReq.ID)
-	user, err := c.service.GetById(eCtx.Request().Context(), uint32(idString))
+	idInt, err := strconv.Atoi(userGetReq.ID)
+	if err != nil {
+		return response.Error(eCtx, http.StatusBadRequest, err)
+	}
+	user, err := c.service.GetById(eCtx.Request().Context(), uint32(idInt))
 	if err != nil {
 		return response.Error(eCtx, http.StatusBadRequest, err)
 	}
@@ -47,7 +50,7 @@ func (c *UserController) GetUser(eCtx echo.Context) error {
 	return response.Success(eCtx, user)
 }
 
-func (c *UserController) CreateUser(eCtx echo.Context) error {
+func (c *UserController) CreateUser(eCtx *echo.Context) error {
 	var userCreateReq userDto.UserCreateRequest
 	err := eCtx.Bind(&userCreateReq)
 	if err != nil {
@@ -67,7 +70,7 @@ func (c *UserController) CreateUser(eCtx echo.Context) error {
 	return response.Created(eCtx, map[string]interface{}{"new_user_id": user})
 }
 
-func (c *UserController) UpdateUser(eCtx echo.Context) error {
+func (c *UserController) UpdateUser(eCtx *echo.Context) error {
 	var userUpdateReq userDto.UserUpdateRequest
 	err := eCtx.Bind(&userUpdateReq)
 	if err != nil {
@@ -87,17 +90,19 @@ func (c *UserController) UpdateUser(eCtx echo.Context) error {
 	return response.Success(eCtx, user)
 }
 
-func (c *UserController) GetUserPage(eCtx echo.Context) error {
+func (c *UserController) GetUserPage(eCtx *echo.Context) error {
 	return eCtx.HTML(http.StatusOK, "<h1>This is User Page</h1>")
 }
 
-func (c *UserController) GetPokemon(eCtx echo.Context) error {
+func (c *UserController) GetPokemon(eCtx *echo.Context) error {
 	name := eCtx.Param("name")
 	var pokemonGetResponseDto pokeDto.PokemonGetResponseDto
 	result, err := c.service.GetPokemon(eCtx.Request().Context(), name)
 	if err != nil {
 		return response.Error(eCtx, http.StatusInternalServerError, err)
 	}
-	err = dtoMapper.Map(&pokemonGetResponseDto, result)
+	if err = dtoMapper.Map(&pokemonGetResponseDto, result); err != nil {
+		return response.Error(eCtx, http.StatusInternalServerError, err)
+	}
 	return response.Success(eCtx, pokemonGetResponseDto)
 }

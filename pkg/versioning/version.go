@@ -3,7 +3,7 @@ package versioning
 import (
 	"fmt"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 // APIVersion represents an API version

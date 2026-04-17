@@ -1,12 +1,12 @@
 package middlewares
 
 import (
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
-	"github.com/labstack/gommon/log"
+	"strings"
+
+	"github.com/labstack/echo/v5"
+	"github.com/labstack/echo/v5/middleware"
 	"ichi-go/config"
 	"ichi-go/pkg/logger"
-	"strings"
 )
 
 func Init(e *echo.Echo, mainConfig *config.Config) {
@@ -28,17 +28,11 @@ func Init(e *echo.Echo, mainConfig *config.Config) {
 	}
 
 	e.Use(middleware.RecoverWithConfig(middleware.RecoverConfig{
-		LogLevel:          log.ERROR,
-		DisablePrintStack: !e.Debug,
-		LogErrorFunc: func(c echo.Context, err error, stack []byte) error {
-			logger.Errorf("PANIC RECOVER: %v, stack trace: %s", err, stack)
-			return nil
-		},
-		DisableErrorHandler: true,
+		DisablePrintStack: !mainConfig.App().Debug,
 	}))
 
 	e.Use(middleware.GzipWithConfig(middleware.GzipConfig{
-		Skipper: func(c echo.Context) bool {
+		Skipper: func(c *echo.Context) bool {
 			if strings.Contains(c.Request().URL.Path, "swagger") {
 				return true
 			}

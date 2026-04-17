@@ -4,7 +4,7 @@ import (
 	"ichi-go/internal/applications/rbac/controllers"
 	"ichi-go/pkg/authenticator"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/do/v2"
 )
 

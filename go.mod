@@ -1,8 +1,6 @@
 module ichi-go
 
-go 1.25
-
-toolchain go1.25.0
+go 1.25.0
 
 require (
 	firebase.google.com/go/v4 v4.19.0
@@ -15,8 +13,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/golang-lru/v2 v2.0.7
-	github.com/labstack/echo/v4 v4.15.0
-	github.com/labstack/gommon v0.4.2
+	github.com/labstack/echo/v5 v5.1.0
 	github.com/pierrec/lz4/v4 v4.1.23
 	github.com/pressly/goose/v3 v3.26.0
 	github.com/rabbitmq/amqp091-go v1.10.0
@@ -27,12 +24,12 @@ require (
 	github.com/samber/oops/loggers/zerolog v0.0.0-20260101195714-ee59589fe6d3
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.11.1
-	github.com/swaggo/echo-swagger v1.4.1
+	github.com/swaggo/echo-swagger/v2 v2.0.1
 	github.com/swaggo/swag v1.16.6
 	github.com/uptrace/bun v1.2.16
 	github.com/uptrace/bun/dialect/mysqldialect v1.2.16
 	github.com/vmihailenco/msgpack/v5 v5.4.1
-	golang.org/x/crypto v0.46.0
+	golang.org/x/crypto v0.47.0
 	google.golang.org/api v0.231.0
 	resty.dev/v3 v3.0.0-beta.5
 )
@@ -65,7 +62,6 @@ require (
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.12 // indirect
-	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/go-jose/go-jose/v4 v4.0.5 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
@@ -92,6 +88,7 @@ require (
 	github.com/mfridman/interpolate v0.0.2 // indirect
 	github.com/oklog/ulid/v2 v2.1.1 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/puzpuzpuz/xsync/v3 v3.5.1 // indirect
@@ -106,10 +103,10 @@ require (
 	github.com/spiffe/go-spiffe/v2 v2.5.0 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
+	github.com/sv-tools/openapi v0.2.1 // indirect
 	github.com/swaggo/files/v2 v2.0.2 // indirect
+	github.com/swaggo/swag/v2 v2.0.0-rc4 // indirect
 	github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc // indirect
-	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/zeebo/errs v1.4.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
@@ -124,11 +121,11 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/mod v0.31.0 // indirect
-	golang.org/x/net v0.48.0 // indirect
+	golang.org/x/net v0.49.0 // indirect
 	golang.org/x/oauth2 v0.30.0 // indirect
 	golang.org/x/sync v0.19.0 // indirect
 	golang.org/x/sys v0.40.0 // indirect
-	golang.org/x/text v0.32.0 // indirect
+	golang.org/x/text v0.33.0 // indirect
 	golang.org/x/time v0.14.0 // indirect
 	golang.org/x/tools v0.40.0 // indirect
 	google.golang.org/appengine/v2 v2.0.6 // indirect
@@ -139,4 +136,5 @@ require (
 	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+	sigs.k8s.io/yaml v1.3.0 // indirect
 )

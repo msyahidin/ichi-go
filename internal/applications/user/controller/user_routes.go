@@ -4,7 +4,7 @@ import (
 	"ichi-go/internal/middlewares"
 	"ichi-go/pkg/authenticator"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 var Domain = "users"

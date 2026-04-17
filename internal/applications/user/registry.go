@@ -1,7 +1,7 @@
 package user
 
 import (
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/do/v2"
 
 	user "ichi-go/internal/applications/user/controller"

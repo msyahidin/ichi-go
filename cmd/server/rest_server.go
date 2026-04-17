@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"os"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/do/v2"
-	echoSwagger "github.com/swaggo/echo-swagger"
+	echoSwagger "github.com/swaggo/echo-swagger/v2"
 
 	"ichi-go/config"
 	"ichi-go/internal/applications/auth"
@@ -28,8 +28,8 @@ func SetupRestRoutes(injector do.Injector, e *echo.Echo, cfg *config.Config) {
 	// Register application domains
 	user.Register(injector, cfg.App().Name, e, appAuth)
 	auth.Register(injector, cfg.App().Name, e, appAuth)
-	rbacapp.Register(injector, cfg.App().Name, e, appAuth)             // RBAC domain
-	notificationapp.Register(injector, cfg.App().Name, e, appAuth)     // Notification domain
+	rbacapp.Register(injector, cfg.App().Name, e, appAuth)         // RBAC domain
+	notificationapp.Register(injector, cfg.App().Name, e, appAuth) // Notification domain
 	healthapp.Register(injector, cfg.App().Name, e, cfg)
 }
 
@@ -38,7 +38,7 @@ func GetServiceName(configApp config.AppConfig) string {
 }
 
 func generateRouteList(e *echo.Echo) {
-	data, err := json.MarshalIndent(e.Routes(), "", "  ")
+	data, err := json.MarshalIndent(e.Router().Routes(), "", "  ")
 	if err != nil {
 		panic(err)
 	}
@@ -49,7 +49,6 @@ func generateRouteList(e *echo.Echo) {
 }
 
 func openOpenAPIDocs(e *echo.Echo, cfg *config.Config) {
-	// Swagger documentation endpoint
 	e.GET("/docs/*", echoSwagger.WrapHandler)
 	logger.Infof("Swagger UI available at http://localhost:%d/docs/index.html", cfg.Http().Port)
 }

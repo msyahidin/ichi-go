@@ -2,10 +2,12 @@ package middlewares
 
 import (
 	"context"
+	"fmt"
+	"math/rand"
+
 	"github.com/google/uuid"
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
-	"github.com/labstack/gommon/random"
+	"github.com/labstack/echo/v5"
+	"github.com/labstack/echo/v5/middleware"
 )
 
 func AppRequestID() echo.MiddlewareFunc {
@@ -18,13 +20,13 @@ func AppRequestID() echo.MiddlewareFunc {
 func RequestIDGenerator() string {
 	requestID, err := uuid.NewRandom()
 	if err != nil {
-		return random.String(32)
+		return fmt.Sprintf("%016x%016x", rand.Int63(), rand.Int63())
 	}
 	return requestID.String()
 }
 
 func copyRequestID(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
+	return func(c *echo.Context) error {
 		requestID := c.Request().Header.Get(echo.HeaderXRequestID)
 		if requestID == "" {
 			requestID = c.Response().Header().Get(echo.HeaderXRequestID)

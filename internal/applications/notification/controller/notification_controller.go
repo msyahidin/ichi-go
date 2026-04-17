@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 
 	"ichi-go/internal/applications/notification/dto"
 	"ichi-go/internal/applications/notification/services"
@@ -28,7 +28,7 @@ func NewNotificationController(campaignService *services.CampaignService) *Notif
 // Returns 201 Created on success with campaign_id, status, and published_at.
 // Returns 422 Unprocessable Entity when event_slug is not registered or channels are unsupported.
 // Returns 400 Bad Request for validation failures (missing fields, bad delay, etc.).
-func (c *NotificationController) Send(eCtx echo.Context) error {
+func (c *NotificationController) Send(eCtx *echo.Context) error {
 	var req dto.SendNotificationRequest
 	if err := eCtx.Bind(&req); err != nil {
 		return response.Error(eCtx, http.StatusBadRequest, err)

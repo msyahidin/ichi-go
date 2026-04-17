@@ -1,7 +1,7 @@
 package authenticator
 
 import (
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 // AuthenticateMiddleware Authenticate middleware tries all enabled auth methods
@@ -12,7 +12,7 @@ func (a *Authenticator) AuthenticateMiddleware(options ...AuthOption) echo.Middl
 	}
 
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
+		return func(c *echo.Context) error {
 
 			// Try each auth method
 			var authCtx *AuthContext

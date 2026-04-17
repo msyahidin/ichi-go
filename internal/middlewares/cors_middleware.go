@@ -4,8 +4,8 @@ import (
 	httpConfig "ichi-go/pkg/http"
 	"net/http"
 
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
+	"github.com/labstack/echo/v5"
+	"github.com/labstack/echo/v5/middleware"
 )
 
 func GetCorsConfig(configCors *httpConfig.CorsConfig) middleware.CORSConfig {
