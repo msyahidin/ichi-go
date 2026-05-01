@@ -30,12 +30,9 @@ func Setup(injector do.Injector, cfg *config.Config) {
 	// Core infrastructure
 	provideDatabases(injector, cfg)
 	do.Provide(injector, provideCache(cfg))
-	do.Provide(injector, provideMessaging(cfg))
-	do.Provide(injector, provideMessageProducer(cfg))
 
-	// Queue dispatcher (RabbitMQ or River depending on config)
-	do.Provide(injector, provideRiverClient(cfg))
-	do.Provide(injector, provideQueueDispatcher(cfg))
+	// Queue: named + unnamed providers for all enabled connections
+	provideQueueInfra(injector, cfg)
 
 	// RBAC infrastructure
 	do.Provide(injector, provideRBACConfig(cfg))
@@ -92,153 +89,142 @@ func provideCache(cfg *config.Config) func(do.Injector) (*redis.Client, error) {
 	}
 }
 
-func provideMessaging(cfg *config.Config) func(do.Injector) (*rabbitmq.Connection, error) {
-	return func(i do.Injector) (*rabbitmq.Connection, error) {
-		if !cfg.Queue().Enabled {
-			logger.Infof("Queue system disabled")
-			return nil, nil
+// provideQueueInfra registers named DI providers for every enabled queue connection,
+// then provides unnamed backward-compat aliases pointing at the default connection.
+func provideQueueInfra(injector do.Injector, cfg *config.Config) {
+	queueCfg := cfg.Queue()
+
+	for _, nc := range queueCfg.EnabledConnections() {
+		nc := nc // capture loop var
+
+		switch nc.Config.Driver {
+		case "amqp":
+			do.ProvideNamed(injector, "queue.conn."+nc.Name,
+				func(i do.Injector) (*rabbitmq.Connection, error) {
+					conn, err := rabbitmq.NewConnection(nc.Config.AMQP)
+					if err != nil {
+						logger.Warnf("amqp[%s]: connect failed: %v — starting without queue", nc.Name, err)
+						return nil, nil
+					}
+					logger.Debugf("initialized amqp connection: %s", nc.Name)
+					return conn, nil
+				})
+
+			do.ProvideNamed(injector, "queue.producer."+nc.Name,
+				func(i do.Injector) (rabbitmq.MessageProducer, error) {
+					conn, _ := do.InvokeNamed[*rabbitmq.Connection](i, "queue.conn."+nc.Name)
+					if conn == nil {
+						return nil, nil
+					}
+					if nc.Config.AMQP.Publisher.ExchangeName == "" {
+						return nil, fmt.Errorf("amqp[%s]: publisher exchange_name not configured", nc.Name)
+					}
+					p, err := rabbitmq.NewProducer(conn, nc.Config.AMQP)
+					if err != nil {
+						return nil, fmt.Errorf("amqp[%s]: producer: %w", nc.Name, err)
+					}
+					logger.Debugf("initialized amqp producer: %s (exchange=%s)", nc.Name, nc.Config.AMQP.Publisher.ExchangeName)
+					return p, nil
+				})
+
+			do.ProvideNamed(injector, "queue.dispatcher."+nc.Name,
+				func(i do.Injector) (queue.Dispatcher, error) {
+					producer, _ := do.InvokeNamed[rabbitmq.MessageProducer](i, "queue.producer."+nc.Name)
+					return queue.NewDispatcher("amqp", producer, nil)
+				})
+
+		case "database":
+			do.ProvideNamed(injector, "queue.river."+nc.Name,
+				func(i do.Injector) (*riverqueue.Client[*sql.Tx], error) {
+					dbKey := nc.Config.Database.Connection
+					bunDB, err := do.InvokeNamed[*bun.DB](i, "db."+dbKey)
+					if err != nil || bunDB == nil {
+						return nil, fmt.Errorf("queue[%s]: database %q not found: %w", nc.Name, dbKey, err)
+					}
+					registrations := queue.GetRegisteredConsumers(i)
+					client, err := buildRiverClient(bunDB, nc.Config.Database, registrations)
+					if err != nil {
+						return nil, fmt.Errorf("queue[%s]: %w", nc.Name, err)
+					}
+					logger.Debugf("initialized River client: %s (db=%s)", nc.Name, dbKey)
+					return client, nil
+				})
+
+			do.ProvideNamed(injector, "queue.dispatcher."+nc.Name,
+				func(i do.Injector) (queue.Dispatcher, error) {
+					rc, err := do.InvokeNamed[*riverqueue.Client[*sql.Tx]](i, "queue.river."+nc.Name)
+					if err != nil {
+						return nil, fmt.Errorf("queue[%s]: river client: %w", nc.Name, err)
+					}
+					return queue.NewDispatcher("database", nil, rc)
+				})
 		}
-		conn, err := rabbitmq.NewConnection(cfg.Queue().RabbitMQ)
-		if err != nil {
-			logger.Warnf("Failed to connect to RabbitMQ: %v", err)
-			logger.Warnf("Application will start without queue support")
-			return nil, nil
-		}
-		logger.Debugf("initialized messaging")
-		return conn, nil
 	}
-}
 
-// FIXED: Add detailed logging to diagnose configuration issues
-func provideMessageProducer(cfg *config.Config) func(do.Injector) (rabbitmq.MessageProducer, error) {
-	return func(i do.Injector) (rabbitmq.MessageProducer, error) {
-		if !cfg.Queue().Enabled {
-			logger.Debugf("Queue disabled - no producer")
-			return nil, nil
-		}
-
-		// DIAGNOSTIC: Log the full RabbitMQ config
-		logger.Infof("🔍 Diagnosing producer configuration...")
-		logger.Infof("   Queue Enabled: %v", cfg.Queue().Enabled)
-		logger.Infof("   RabbitMQ Enabled: %v", cfg.Queue().RabbitMQ.Enabled)
-		logger.Infof("   Publisher Exchange Name: '%s'", cfg.Queue().RabbitMQ.Publisher.ExchangeName)
-		logger.Infof("   Configured Exchanges: %d", len(cfg.Queue().RabbitMQ.Exchanges))
-
-		for i, ex := range cfg.Queue().RabbitMQ.Exchanges {
-			logger.Infof("     [%d] Name: '%s', Type: '%s'", i, ex.Name, ex.Type)
-		}
-
-		// Check if exchange name is configured
-		if cfg.Queue().RabbitMQ.Publisher.ExchangeName == "" {
-			logger.Errorf("❌ CRITICAL: Publisher exchange name is empty in config!")
-			logger.Errorf("   Check your config file has: queue.rabbitmq.producer.exchange_name")
-			return nil, fmt.Errorf("publisher exchange name not configured")
-		}
-
-		conn, err := do.Invoke[*rabbitmq.Connection](i)
-		if err != nil || conn == nil {
-			logger.Warnf("Queue connection unavailable - no producer")
-			return nil, nil
-		}
-
-		logger.Infof("🔧 Creating message producer...")
-		logger.Infof("   Will publish to exchange: '%s'", cfg.Queue().RabbitMQ.Publisher.ExchangeName)
-
-		producer, err := rabbitmq.NewProducer(conn, cfg.Queue().RabbitMQ)
-		if err != nil {
-			logger.Errorf("Failed to create producer: %v", err)
-			return nil, err
-		}
-
-		logger.Infof("✅ Message producer created successfully")
-		return producer, nil
-	}
-}
-
-func provideRiverClient(cfg *config.Config) func(do.Injector) (*riverqueue.Client[*sql.Tx], error) {
-	return func(i do.Injector) (*riverqueue.Client[*sql.Tx], error) {
-		queueCfg := cfg.Queue()
-		if !queueCfg.Enabled || queueCfg.Driver != "river" {
-			logger.Debugf("River client not needed (driver=%s)", queueCfg.Driver)
-			return nil, nil
-		}
-
-		dbKey := queueCfg.River.Database
-		bunDB, err := do.InvokeNamed[*bun.DB](i, "db."+dbKey)
-		if err != nil || bunDB == nil {
-			return nil, fmt.Errorf("river: database %q not found in DI (check databases config): %w", dbKey, err)
-		}
-
-		workers := riverqueue.NewWorkers()
-		registrations := queue.GetRegisteredConsumers(i)
-		riverimpl.RegisterBridgeWorkers(workers, registrations)
-
-		riverCfg := queueCfg.River
-		pollInterval := riverCfg.PollInterval
-		if pollInterval == 0 {
-			pollInterval = time.Second
-		}
-		rescueAfter := riverCfg.RescueStuckJobsAfter
-		if rescueAfter == 0 {
-			rescueAfter = time.Hour
-		}
-		maxWorkers := riverCfg.MaxWorkers
-		if maxWorkers == 0 {
-			maxWorkers = 50
-		}
-
-		// riverdatabasesql wraps the *sql.DB that bun already owns — poll-only mode.
-		client, err := riverqueue.NewClient(riverdatabasesql.New(bunDB.DB), &riverqueue.Config{
-			Queues: map[string]riverqueue.QueueConfig{
-				riverqueue.QueueDefault: {MaxWorkers: maxWorkers},
-				"emails":                {MaxWorkers: 10},
-				"notifications":         {MaxWorkers: 20},
-			},
-			Workers:              workers,
-			FetchPollInterval:    pollInterval,
-			RescueStuckJobsAfter: rescueAfter,
-		})
-		if err != nil {
-			return nil, fmt.Errorf("river: failed to create client: %w", err)
-		}
-
-		logger.Debugf("initialized River client (db=%s, maxWorkers=%d, poll-only)", dbKey, maxWorkers)
-		return client, nil
-	}
-}
-
-func provideQueueDispatcher(cfg *config.Config) func(do.Injector) (queue.Dispatcher, error) {
-	return func(i do.Injector) (queue.Dispatcher, error) {
-		if !cfg.Queue().Enabled {
+	// Unnamed queue.Dispatcher → default connection (existing application callsites unchanged).
+	do.Provide(injector, func(i do.Injector) (queue.Dispatcher, error) {
+		if !queueCfg.AnyEnabled() {
 			logger.Debugf("Queue disabled — no Dispatcher")
 			return nil, nil
 		}
-
-		var producer rabbitmq.MessageProducer
-		var riverClient *riverqueue.Client[*sql.Tx]
-
-		switch cfg.Queue().Driver {
-		case "rabbitmq":
-			p, err := do.Invoke[rabbitmq.MessageProducer](i)
-			if err != nil {
-				return nil, fmt.Errorf("queue dispatcher: %w", err)
-			}
-			producer = p
-		case "river":
-			rc, err := do.Invoke[*riverqueue.Client[*sql.Tx]](i)
-			if err != nil {
-				return nil, fmt.Errorf("queue dispatcher: %w", err)
-			}
-			riverClient = rc
-		}
-
-		d, err := queue.NewDispatcher(cfg.Queue().Driver, producer, riverClient)
+		def := queueCfg.Default
+		d, err := do.InvokeNamed[queue.Dispatcher](i, "queue.dispatcher."+def)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("queue dispatcher (default=%s): %w", def, err)
 		}
-		logger.Debugf("initialized queue.Dispatcher (driver=%s)", cfg.Queue().Driver)
+		logger.Debugf("initialized queue.Dispatcher (default=%s)", def)
 		return d, nil
+	})
+
+	// Unnamed *rabbitmq.Connection → default AMQP connection (registry.go uses this).
+	// Returns nil when the default connection is not AMQP or is disabled.
+	do.Provide(injector, func(i do.Injector) (*rabbitmq.Connection, error) {
+		def, ok := queueCfg.DefaultConnection()
+		if !ok || !def.Enabled || def.Driver != "amqp" {
+			return nil, nil
+		}
+		return do.InvokeNamed[*rabbitmq.Connection](i, "queue.conn."+queueCfg.Default)
+	})
+
+	// Unnamed rabbitmq.MessageProducer → default AMQP producer.
+	// Returns nil when the default connection is not AMQP or is disabled.
+	do.Provide(injector, func(i do.Injector) (rabbitmq.MessageProducer, error) {
+		def, ok := queueCfg.DefaultConnection()
+		if !ok || !def.Enabled || def.Driver != "amqp" {
+			return nil, nil
+		}
+		return do.InvokeNamed[rabbitmq.MessageProducer](i, "queue.producer."+queueCfg.Default)
+	})
+}
+
+// buildRiverClient constructs a River client in poll-only mode, sharing bun's *sql.DB.
+func buildRiverClient(bunDB *bun.DB, cfg queue.DatabaseBackendConfig, registrations []queue.ConsumerRegistration) (*riverqueue.Client[*sql.Tx], error) {
+	workers := riverqueue.NewWorkers()
+	riverimpl.RegisterBridgeWorkers(workers, registrations)
+
+	pollInterval := cfg.PollInterval
+	if pollInterval == 0 {
+		pollInterval = time.Second
 	}
+	rescueAfter := cfg.RescueStuckJobsAfter
+	if rescueAfter == 0 {
+		rescueAfter = time.Hour
+	}
+	maxWorkers := cfg.MaxWorkers
+	if maxWorkers == 0 {
+		maxWorkers = 50
+	}
+
+	return riverqueue.NewClient(riverdatabasesql.New(bunDB.DB), &riverqueue.Config{
+		Queues: map[string]riverqueue.QueueConfig{
+			riverqueue.QueueDefault: {MaxWorkers: maxWorkers},
+			"emails":                {MaxWorkers: 10},
+			"notifications":         {MaxWorkers: 20},
+		},
+		Workers:              workers,
+		FetchPollInterval:    pollInterval,
+		RescueStuckJobsAfter: rescueAfter,
+	})
 }
 
 // RBAC Infrastructure Providers

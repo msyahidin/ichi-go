@@ -14,55 +14,64 @@ import (
 	"ichi-go/pkg/logger"
 )
 
-// StartQueueWorkers starts all queue consumers for the configured driver.
-// Blocks until ctx is cancelled.
-func StartQueueWorkers(ctx context.Context, queueConfig *queue.Config, injector do.Injector) {
-	if !queueConfig.Enabled {
+// StartQueueWorkers starts workers for every enabled queue connection concurrently.
+// Blocks until ctx is cancelled and all workers have shut down.
+func StartQueueWorkers(ctx context.Context, queueCfg *queue.QueueSchema, injector do.Injector) {
+	enabled := queueCfg.EnabledConnections()
+	if len(enabled) == 0 {
 		logger.Warnf("Queue system disabled — skipping worker startup")
 		return
 	}
 
-	switch queueConfig.Driver {
-	case "rabbitmq":
-		startRabbitMQWorkers(ctx, &queueConfig.RabbitMQ, injector)
-	case "river":
-		startRiverWorkers(ctx, injector)
-	default:
-		logger.Errorf("unknown queue driver %q — set queue.driver to \"rabbitmq\" or \"river\"", queueConfig.Driver)
-		return
+	var wg sync.WaitGroup
+	for _, nc := range enabled {
+		nc := nc
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			switch nc.Config.Driver {
+			case "amqp":
+				startAMQPWorkers(ctx, nc.Name, &nc.Config.AMQP, injector)
+			case "database":
+				startRiverWorkers(ctx, nc.Name, injector)
+			default:
+				logger.Errorf("unknown queue driver %q for connection %q", nc.Config.Driver, nc.Name)
+			}
+		}()
 	}
+	wg.Wait()
 }
 
-func startRiverWorkers(ctx context.Context, injector do.Injector) {
-	client, err := do.Invoke[*riverqueue.Client[*sql.Tx]](injector)
+func startRiverWorkers(ctx context.Context, connName string, injector do.Injector) {
+	client, err := do.InvokeNamed[*riverqueue.Client[*sql.Tx]](injector, "queue.river."+connName)
 	if err != nil || client == nil {
-		logger.Errorf("River client unavailable — cannot start queue workers: %v", err)
+		logger.Errorf("River client unavailable for %q — cannot start queue workers: %v", connName, err)
 		return
 	}
 
-	logger.Infof("🚀 Starting River queue workers...")
+	logger.Infof("🚀 Starting River queue workers [%s]...", connName)
 	if err := client.Start(ctx); err != nil {
-		logger.Errorf("River client start error: %v", err)
+		logger.Errorf("River client start error [%s]: %v", connName, err)
 		return
 	}
 
 	<-ctx.Done()
 
-	logger.Infof("🛑 Stopping River queue workers...")
+	logger.Infof("🛑 Stopping River queue workers [%s]...", connName)
 	if err := client.Stop(context.Background()); err != nil {
-		logger.Errorf("River client stop error: %v", err)
+		logger.Errorf("River client stop error [%s]: %v", connName, err)
 	}
-	logger.Infof("👋 River workers stopped")
+	logger.Infof("👋 River workers stopped [%s]", connName)
 }
 
-func startRabbitMQWorkers(ctx context.Context, rabbitCfg *rabbitmq.Config, injector do.Injector) {
-	conn, err := do.Invoke[*rabbitmq.Connection](injector)
+func startAMQPWorkers(ctx context.Context, connName string, rabbitCfg *rabbitmq.Config, injector do.Injector) {
+	conn, err := do.InvokeNamed[*rabbitmq.Connection](injector, "queue.conn."+connName)
 	if conn == nil || err != nil {
-		logger.Warnf("RabbitMQ connection unavailable — skipping worker startup")
+		logger.Warnf("RabbitMQ connection unavailable for %q — skipping worker startup", connName)
 		return
 	}
 
-	logger.Infof("🚀 Starting RabbitMQ queue workers...")
+	logger.Infof("🚀 Starting RabbitMQ queue workers [%s]...", connName)
 
 	// Declare all exchanges, queues, and bindings with exponential backoff retry.
 	{
@@ -72,11 +81,11 @@ func startRabbitMQWorkers(ctx context.Context, rabbitCfg *rabbitmq.Config, injec
 			if err := rabbitmq.SetupTopology(conn, *rabbitCfg); err == nil {
 				break
 			} else {
-				logger.Errorf("❌ Topology setup failed (retrying in %v): %v", backoff, err)
+				logger.Errorf("❌ Topology setup failed [%s] (retrying in %v): %v", connName, backoff, err)
 			}
 			select {
 			case <-ctx.Done():
-				logger.Warnf("🛑 Context cancelled during topology setup — aborting")
+				logger.Warnf("🛑 Context cancelled during topology setup [%s] — aborting", connName)
 				return
 			case <-time.After(backoff):
 				backoff = min(backoff*2, maxBackoff)
@@ -119,9 +128,9 @@ func startRabbitMQWorkers(ctx context.Context, rabbitCfg *rabbitmq.Config, injec
 		}(registration.Name, consumer, registration.ConsumeFunc, registration.Description)
 	}
 
-	logger.Infof("✅ All RabbitMQ workers started")
+	logger.Infof("✅ All RabbitMQ workers started [%s]", connName)
 	<-ctx.Done()
-	logger.Infof("🛑 Shutting down RabbitMQ workers...")
+	logger.Infof("🛑 Shutting down RabbitMQ workers [%s]...", connName)
 	wg.Wait()
-	logger.Infof("👋 All RabbitMQ workers stopped")
+	logger.Infof("👋 All RabbitMQ workers stopped [%s]", connName)
 }

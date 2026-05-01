@@ -51,9 +51,10 @@ func ProvideUserService(i do.Injector) (*userService.ServiceImpl, error) {
 	var producer rabbitmq.MessageProducer
 	if conn, err := do.Invoke[*rabbitmq.Connection](i); err == nil && conn != nil {
 		cfg := do.MustInvoke[*config.Config](i)
-		// Create producer from connection
-		if p, err := rabbitmq.NewProducer(conn, cfg.Queue().RabbitMQ); err == nil {
-			producer = p
+		if amqpCfg, ok := cfg.Queue().DefaultAMQPConfig(); ok {
+			if p, err := rabbitmq.NewProducer(conn, amqpCfg); err == nil {
+				producer = p
+			}
 		}
 	}
 

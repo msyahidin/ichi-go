@@ -24,7 +24,7 @@ func Register(injector do.Injector, serviceName string, e *echo.Echo, cfg *confi
 	// RabbitMQ checker (optional - may be nil if queue is disabled)
 	checkers := []health.Checker{dbChecker, redisChecker}
 
-	if cfg.Queue().Enabled {
+	if cfg.Queue().AnyEnabled() {
 		mqConn, err := do.Invoke[*rabbitmq.Connection](injector)
 		if err == nil && mqConn != nil {
 			mqChecker := health.NewRabbitMQChecker(mqConn)

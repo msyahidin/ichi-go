@@ -82,8 +82,8 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 
-	// Setup messaging if enabled
-	if cfg.Queue().Enabled {
+	// Start workers for all enabled queue connections
+	if cfg.Queue().AnyEnabled() {
 		go server.StartQueueWorkers(ctx, cfg.Queue(), injector)
 	}
 

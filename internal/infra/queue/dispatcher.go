@@ -15,20 +15,20 @@ import (
 // Pass nil for unused arguments (e.g. nil riverClient when driver is "rabbitmq").
 func NewDispatcher(driver string, producer rabbitmq.MessageProducer, riverClient *riverqueue.Client[*sql.Tx]) (Dispatcher, error) {
 	switch driver {
-	case "rabbitmq":
+	case "amqp":
 		if producer == nil {
-			return nil, fmt.Errorf("rabbitmq dispatcher: producer is nil (queue connection unavailable)")
+			return nil, fmt.Errorf("amqp dispatcher: producer is nil (queue connection unavailable)")
 		}
 		return &rabbitMQDispatcher{producer: producer}, nil
 
-	case "river":
+	case "database":
 		if riverClient == nil {
-			return nil, fmt.Errorf("river dispatcher: client is nil (postgres connection unavailable)")
+			return nil, fmt.Errorf("database dispatcher: client is nil (postgres connection unavailable)")
 		}
 		return &riverDispatcher{client: riverClient}, nil
 
 	default:
-		return nil, fmt.Errorf("unknown queue driver: %q (valid: rabbitmq, river)", driver)
+		return nil, fmt.Errorf("unknown queue driver: %q (valid: amqp, database)", driver)
 	}
 }
 

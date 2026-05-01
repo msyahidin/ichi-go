@@ -25,17 +25,17 @@ func TestNewDispatcher_UnknownDriver(t *testing.T) {
 	assert.ErrorContains(t, err, "unknown queue driver")
 }
 
-func TestNewDispatcher_RabbitMQ_NilProducer(t *testing.T) {
-	_, err := queue.NewDispatcher("rabbitmq", nil, nil)
+func TestNewDispatcher_AMQP_NilProducer(t *testing.T) {
+	_, err := queue.NewDispatcher("amqp", nil, nil)
 	assert.ErrorContains(t, err, "producer is nil")
 }
 
-func TestNewDispatcher_River_NilClient(t *testing.T) {
-	_, err := queue.NewDispatcher("river", nil, nil)
+func TestNewDispatcher_Database_NilClient(t *testing.T) {
+	_, err := queue.NewDispatcher("database", nil, nil)
 	assert.ErrorContains(t, err, "client is nil")
 }
 
-func TestRabbitMQDispatcher_Dispatch(t *testing.T) {
+func TestAMQPDispatcher_Dispatch(t *testing.T) {
 	producer := mocks.NewMockMessageProducer(t)
 
 	expectedPayload, _ := json.Marshal(emailJob{UserID: 1, Email: "a@b.com"})
@@ -46,7 +46,7 @@ func TestRabbitMQDispatcher_Dispatch(t *testing.T) {
 		mock.AnythingOfType("rabbitmq.PublishOptions"),
 	).Return(nil)
 
-	d, err := queue.NewDispatcher("rabbitmq", producer, nil)
+	d, err := queue.NewDispatcher("amqp", producer, nil)
 	assert.NoError(t, err)
 
 	err = d.Dispatch(context.Background(), emailJob{UserID: 1, Email: "a@b.com"})
@@ -54,7 +54,7 @@ func TestRabbitMQDispatcher_Dispatch(t *testing.T) {
 	producer.AssertExpectations(t)
 }
 
-func TestRabbitMQDispatcher_Dispatch_WithDelay(t *testing.T) {
+func TestAMQPDispatcher_Dispatch_WithDelay(t *testing.T) {
 	producer := mocks.NewMockMessageProducer(t)
 
 	producer.On("Publish",
@@ -66,7 +66,7 @@ func TestRabbitMQDispatcher_Dispatch_WithDelay(t *testing.T) {
 		}),
 	).Return(nil)
 
-	d, err := queue.NewDispatcher("rabbitmq", producer, nil)
+	d, err := queue.NewDispatcher("amqp", producer, nil)
 	assert.NoError(t, err)
 
 	err = d.Dispatch(context.Background(), emailJob{UserID: 1, Email: "a@b.com"},
