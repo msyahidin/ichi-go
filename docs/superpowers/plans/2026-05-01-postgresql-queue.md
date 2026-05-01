@@ -6,7 +6,7 @@
 
 **Architecture:** The `databases:` YAML map replaces the single `database:` key; each entry becomes a named `*bun.DB` in the DI container. A driver-agnostic `queue.Dispatcher` interface routes `Dispatch(ctx, job, opts...)` calls to either the RabbitMQ producer or a River client based on `queue.driver` config. Existing consumers are bridged to River via a single `GenericJobWorker` that dispatches by consumer name.
 
-**Tech Stack:** Go 1.25, uptrace/bun + pgdialect, jackc/pgx/v5, riverqueue/river, riverpgxv5, rivermigrate, samber/do/v2
+**Tech Stack:** Go 1.25, uptrace/bun + pgdialect, jackc/pgx/v5/stdlib, riverqueue/river, riverdatabasesql (poll-only, shares bun's `*sql.DB`), rivermigrate, samber/do/v2
 
 ---
 
@@ -47,12 +47,13 @@
 go get github.com/uptrace/bun/dialect/pgdialect
 go get github.com/jackc/pgx/v5
 go get github.com/jackc/pgx/v5/stdlib
-go get github.com/jackc/pgx/v5/pgxpool
 go get github.com/riverqueue/river
-go get github.com/riverqueue/river/riverdriver/riverpgxv5
+go get github.com/riverqueue/river/riverdriver/riverdatabasesql
 go get github.com/riverqueue/river/rivermigrate
 go mod tidy
 ```
+
+> **Note:** We use `riverdatabasesql` (not `riverpgxv5`) because bun uses `database/sql`. River and bun share the same `*sql.DB`. Trade-off: poll-only mode (no LISTEN/NOTIFY), but zero extra connection pool.
 
 - [ ] **Step 2: Verify build still passes**
 
@@ -1115,14 +1116,15 @@ package river_test
 
 import (
 	"context"
+	"database/sql"
 	"testing"
 	"time"
 
-	"github.com/jackc/pgx/v5/pgxpool"
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	riverqueue "github.com/riverqueue/river"
-	"github.com/riverqueue/river/riverdriver/riverpgxv5"
+	"github.com/riverqueue/river/riverdriver/riverdatabasesql"
 	riverworker "ichi-go/internal/infra/queue/river"
 	"ichi-go/internal/infra/queue"
 )
@@ -1133,8 +1135,6 @@ type NopJob struct{ ID int }
 func (NopJob) Kind() string { return "nop_job" }
 
 func TestRiverDispatcher_AppliesOptions(t *testing.T) {
-	// Unit test: verify options are applied without a real DB.
-	// We test the option application in isolation via ApplyOptions.
 	o := queue.ApplyOptions(
 		queue.OnQueue("emails"),
 		queue.Delay(10*time.Minute),
@@ -1146,22 +1146,24 @@ func TestRiverDispatcher_AppliesOptions(t *testing.T) {
 }
 
 // Integration test — requires a real PostgreSQL instance.
-// Run with: go test ./internal/infra/queue/river/... -run TestRiverDispatcher_Integration -tags integration
+// Run with: go test ./internal/infra/queue/river/... -run TestRiverDispatcher_Integration -short=false
 func TestRiverDispatcher_Integration(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
 
-	pool, err := pgxpool.New(context.Background(), "postgres://postgres:postgres@localhost:5432/ichi_queue?sslmode=disable")
+	// River shares the same *sql.DB as bun — open via pgx stdlib driver
+	sqlDB, err := sql.Open("pgx", "postgres://postgres:postgres@localhost:5432/ichi_queue?sslmode=disable")
 	require.NoError(t, err, "requires local postgres running")
-	defer pool.Close()
+	defer sqlDB.Close()
 
 	workers := riverqueue.NewWorkers()
 	riverqueue.AddWorker(workers, riverworker.NewGenericJobWorker(func(ctx context.Context, payload []byte) error {
 		return nil
 	}))
 
-	client, err := riverqueue.NewClient(riverpgxv5.New(pool), &riverqueue.Config{
+	// riverdatabasesql shares sqlDB — same connection pool as bun, poll-only mode
+	client, err := riverqueue.NewClient(riverdatabasesql.New(sqlDB), &riverqueue.Config{
 		Queues:  map[string]riverqueue.QueueConfig{riverqueue.QueueDefault: {MaxWorkers: 1}},
 		Workers: workers,
 	})
@@ -1188,21 +1190,22 @@ package river
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
-	"ichi-go/internal/infra/queue"
 	"time"
 
 	riverqueue "github.com/riverqueue/river"
-	"github.com/jackc/pgx/v5"
+	"ichi-go/internal/infra/queue"
 )
 
-// RiverDispatcher implements queue.Dispatcher using riverqueue/river.
+// RiverDispatcher implements queue.Dispatcher using riverqueue/river + riverdatabasesql.
+// Uses poll-only mode (no LISTEN/NOTIFY) since it shares bun's *sql.DB.
 type RiverDispatcher struct {
-	client *riverqueue.Client[pgx.Tx]
+	client *riverqueue.Client[*sql.Tx]
 }
 
 // NewDispatcher returns a queue.Dispatcher backed by River.
-func NewDispatcher(client *riverqueue.Client[pgx.Tx]) queue.Dispatcher {
+func NewDispatcher(client *riverqueue.Client[*sql.Tx]) queue.Dispatcher {
 	return &RiverDispatcher{client: client}
 }
 
@@ -1348,17 +1351,17 @@ func TestNewDispatcher_UnknownDriver(t *testing.T) {
 package queue
 
 import (
+	"database/sql"
 	"fmt"
 	"ichi-go/internal/infra/queue/rabbitmq"
 	riverimpl "ichi-go/internal/infra/queue/river"
 
 	riverqueue "github.com/riverqueue/river"
-	"github.com/jackc/pgx/v5"
 )
 
 // NewDispatcher builds the active Dispatcher based on the configured driver name.
 // Pass nil for unused arguments (e.g. nil riverClient when driver is "rabbitmq").
-func NewDispatcher(driver string, producer rabbitmq.MessageProducer, riverClient *riverqueue.Client[pgx.Tx]) (Dispatcher, error) {
+func NewDispatcher(driver string, producer rabbitmq.MessageProducer, riverClient *riverqueue.Client[*sql.Tx]) (Dispatcher, error) {
 	switch driver {
 	case "rabbitmq":
 		if producer == nil {
@@ -1410,7 +1413,7 @@ git commit -m "feat(queue): NewDispatcher factory selects RabbitMQ or River back
 
 - [ ] **Step 1: Add `provideRiverClient` and `provideQueueDispatcher` to `providers.go`**
 
-Add imports: `"github.com/jackc/pgx/v5"`, `"github.com/jackc/pgx/v5/pgxpool"`, `riverqueue "github.com/riverqueue/river"`, `"github.com/riverqueue/river/riverdriver/riverpgxv5"`, and `riverimpl "ichi-go/internal/infra/queue/river"`.
+Add imports: `"database/sql"`, `riverqueue "github.com/riverqueue/river"`, `"github.com/riverqueue/river/riverdriver/riverdatabasesql"`, and `riverimpl "ichi-go/internal/infra/queue/river"`.
 
 Add to `Setup`:
 
@@ -1423,27 +1426,21 @@ do.Provide(injector, provideQueueDispatcher(cfg))
 Add the two provider functions:
 
 ```go
-func provideRiverClient(cfg *config.Config) func(do.Injector) (*riverqueue.Client[pgx.Tx], error) {
-	return func(i do.Injector) (*riverqueue.Client[pgx.Tx], error) {
+func provideRiverClient(cfg *config.Config) func(do.Injector) (*riverqueue.Client[*sql.Tx], error) {
+	return func(i do.Injector) (*riverqueue.Client[*sql.Tx], error) {
 		queueCfg := cfg.Queue()
 		if !queueCfg.Enabled || queueCfg.Driver != "river" {
 			logger.Debugf("River client not needed (driver=%s)", queueCfg.Driver)
 			return nil, nil
 		}
 
+		// Reuse the named *bun.DB — River shares the same *sql.DB, no extra pool needed.
 		dbKey := queueCfg.River.Database
-		databases := cfg.Databases()
-		dbCfg, ok := databases[dbKey]
-		if !ok {
-			return nil, fmt.Errorf("river: database %q not found in databases config", dbKey)
+		bunDB, err := do.InvokeNamed[*bun.DB](i, "db."+dbKey)
+		if err != nil || bunDB == nil {
+			return nil, fmt.Errorf("river: database %q not found in DI (check databases config): %w", dbKey, err)
 		}
 
-		pool, err := pgxpool.New(context.Background(), database.GetPostgresDSN(&dbCfg))
-		if err != nil {
-			return nil, fmt.Errorf("river: failed to create pgxpool: %w", err)
-		}
-
-		// Register bridge workers for existing ConsumeFunc consumers
 		workers := riverqueue.NewWorkers()
 		registrations := queue.GetRegisteredConsumers(i)
 		riverimpl.RegisterBridgeWorkers(workers, registrations)
@@ -1457,13 +1454,13 @@ func provideRiverClient(cfg *config.Config) func(do.Injector) (*riverqueue.Clien
 		if rescueAfter == 0 {
 			rescueAfter = time.Hour
 		}
-
 		maxWorkers := riverCfg.MaxWorkers
 		if maxWorkers == 0 {
 			maxWorkers = 50
 		}
 
-		client, err := riverqueue.NewClient(riverpgxv5.New(pool), &riverqueue.Config{
+		// riverdatabasesql wraps the *sql.DB that bun already owns — poll-only mode.
+		client, err := riverqueue.NewClient(riverdatabasesql.New(bunDB.DB()), &riverqueue.Config{
 			Queues: map[string]riverqueue.QueueConfig{
 				riverqueue.QueueDefault: {MaxWorkers: maxWorkers},
 				"emails":                {MaxWorkers: 10},
@@ -1474,11 +1471,10 @@ func provideRiverClient(cfg *config.Config) func(do.Injector) (*riverqueue.Clien
 			RescueStuckJobsAfter: rescueAfter,
 		})
 		if err != nil {
-			pool.Close()
 			return nil, fmt.Errorf("river: failed to create client: %w", err)
 		}
 
-		logger.Debugf("initialized River client (db=%s, maxWorkers=%d)", dbKey, maxWorkers)
+		logger.Debugf("initialized River client (db=%s, maxWorkers=%d, poll-only)", dbKey, maxWorkers)
 		return client, nil
 	}
 }
@@ -1491,7 +1487,7 @@ func provideQueueDispatcher(cfg *config.Config) func(do.Injector) (queue.Dispatc
 		}
 
 		producer, _ := do.Invoke[rabbitmq.MessageProducer](i)
-		riverClient, _ := do.Invoke[*riverqueue.Client[pgx.Tx]](i)
+		riverClient, _ := do.Invoke[*riverqueue.Client[*sql.Tx]](i)
 
 		d, err := queue.NewDispatcher(cfg.Queue().Driver, producer, riverClient)
 		if err != nil {
@@ -1503,7 +1499,7 @@ func provideQueueDispatcher(cfg *config.Config) func(do.Injector) (queue.Dispatc
 }
 ```
 
-Also add `"context"` and `"time"` to imports if not already present.
+Also add `"time"` to imports if not already present.
 
 - [ ] **Step 2: Build**
 
@@ -1535,10 +1531,10 @@ package server
 
 import (
 	"context"
+	"database/sql"
 	"sync"
 	"time"
 
-	"github.com/jackc/pgx/v5"
 	riverqueue "github.com/riverqueue/river"
 	"github.com/samber/do/v2"
 
@@ -1564,7 +1560,7 @@ func StartQueueWorkers(ctx context.Context, queueConfig *queue.Config, injector 
 }
 
 func startRiverWorkers(ctx context.Context, injector do.Injector) {
-	client, err := do.Invoke[*riverqueue.Client[pgx.Tx]](injector)
+	client, err := do.Invoke[*riverqueue.Client[*sql.Tx]](injector)
 	if err != nil || client == nil {
 		logger.Errorf("River client unavailable — cannot start queue workers: %v", err)
 		return
