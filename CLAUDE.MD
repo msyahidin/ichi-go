@@ -9,12 +9,13 @@ This document provides Claude Code with essential context about the ichi-go proj
 **Tech Stack:**
 - Go 1.24+
 - Echo v4 (HTTP framework)
-- Bun ORM (MySQL dialect)
+- Bun ORM (MySQL + PostgreSQL dialects)
 - Redis (caching with LZ4 compression)
-- RabbitMQ (message queue)
+- RabbitMQ (optional — AMQP queue driver)
+- riverqueue/river (optional — Postgres-backed queue driver)
 - samber/do (dependency injection)
 - Viper (configuration management)
-- Goose (SQL migrations)
+- Goose (SQL migrations, auto-detects MySQL/Postgres dialect)
 
 ## Architecture Patterns
 
@@ -34,9 +35,14 @@ internal/
 │       ├── models/       # Domain entities
 │       └── register.go   # DI setup with samber/do
 ├── infra/                # Infrastructure layer
-│   ├── database/        # Bun ORM setup
+│   ├── database/        # Bun ORM (MySQL + Postgres)
 │   ├── cache/           # Redis client
-│   ├── queue/           # RabbitMQ integration
+│   ├── queue/           # Driver-agnostic queue layer
+│   │   ├── interfaces.go  # Dispatcher, JobArgs, ConsumeFunc
+│   │   ├── options.go     # DispatchOption helpers
+│   │   ├── dispatcher.go  # NewDispatcher factory (amqp | database)
+│   │   ├── rabbitmq/      # AMQP producer/consumer
+│   │   └── river/         # River BridgeWorker (Postgres-backed)
 │   └── authz/           # Casbin RBAC enforcer, adapter, cache, watcher
 └── middlewares/         # HTTP middlewares
 ```
@@ -122,41 +128,52 @@ if err := validator.BindAndValidate(c, &req); err != nil {
 }
 ```
 
-### 3. Message Queue (RabbitMQ)
+### 3. Message Queue
 
 Location: `internal/infra/queue/`
 
-**Consumer Registration:**
-```go
-// In internal/infra/queue/registry.go
-func init() {
-    RegisterConsumer(ConsumerRegistration{
-        Name: "handler_name",
-        Description: "Handler description",
-        ConsumeFunc: func(ctx context.Context, msg rabbitmq.Message) error {
-            // Process message
-            return nil
-        },
-    })
-}
-```
+The queue layer is driver-agnostic via `queue.Dispatcher`. Configure `queue.default` to `"amqp"` (RabbitMQ) or `"database"` (River on Postgres).
 
-**Publishing Messages:**
+**Consumer Registration (works for both drivers):**
 ```go
-producer.Publish(ctx, rabbitmq.PublishParams{
-    RoutingKey: "event.name",
-    Body: data,
+// In any domain init or register.go
+queue.RegisterConsumer(queue.ConsumerRegistration{
+    Name:        "handler_name",
+    Description: "Handler description",
+    ConsumeFunc: func(ctx context.Context, payload []byte) error {
+        // Process message
+        return nil
+    },
 })
 ```
 
+**Dispatching Jobs:**
+```go
+// Inject the driver-agnostic dispatcher
+dispatcher := do.MustInvoke[queue.Dispatcher](injector)
+
+// Dispatch with options
+dispatcher.Dispatch(ctx, myJob,
+    queue.WithDelay(5*time.Minute),         // schedule delay (both drivers)
+    queue.WithMaxAttempts(3),               // River only
+    queue.WithPriority(1),                  // River only
+)
+```
+
 **Important Notes:**
+- AMQP dispatcher validates and rejects `Queue`/`MaxAttempts`/`Priority` options — use only `Delay`
+- River dispatcher supports all options via `riverqueue.InsertOpts`
 - Always handle context cancellation for graceful shutdown
 - Return error for retryable failures, nil for permanent failures
-- Configure consumers in `config.*.yaml` under `queue.rabbitmq.consumers`
+- Consumer registrations must have **unique names** — duplicates panic at startup
 
 ### 4. Database & Bun ORM
 
 Location: `internal/infra/database/`
+
+**Named connections** — `database.connections` is a map; each entry becomes a named `*bun.DB` in DI. The `database.default` key points to the unnamed `*bun.DB` alias used by all existing repositories.
+
+**Supported drivers:** `mysql`, `postgres`
 
 **Base Repository Pattern:**
 ```go
@@ -164,7 +181,7 @@ type UserRepository struct {
     *bun.BaseRepository[models.User]
 }
 
-func NewUserRepository(db *database.DB) *UserRepository {
+func NewUserRepository(db *bun.DB) *UserRepository {
     return &UserRepository{
         BaseRepository: bun.NewBaseRepository[models.User](db),
     }
@@ -182,6 +199,7 @@ func NewUserRepository(db *database.DB) *UserRepository {
 - Schema migrations: `db/migrations/schema/`
 - Data migrations: `db/migrations/data/`
 - Seeds: `db/migrations/seeds/`
+- Migration CLI (`db/cmd/migrate.go`) auto-detects driver from config and calls the correct DSN builder and Goose dialect
 - See Makefile for all migration commands
 
 ### 5. Caching (Redis)
@@ -411,13 +429,15 @@ logger.WithContext(ctx).Info("Processing request")
 ### Entry Points
 - `cmd/main.go` - Application entry point
 - `cmd/server/rest_server.go` - HTTP server setup
-- `cmd/server/queue_server.go` - RabbitMQ workers
+- `cmd/server/queue_server.go` - Queue workers (AMQP + River, selected by driver)
 - `cmd/server/web_server.go` - Web/template routes
 
 ### Infrastructure
-- `internal/infra/database/database.go` - Database connection
+- `internal/infra/database/database.go` - MySQL + Postgres connection factories
 - `internal/infra/cache/cache.go` - Redis connection
-- `internal/infra/queue/rabbitmq/` - RabbitMQ implementation
+- `internal/infra/queue/` - Driver-agnostic queue layer
+  - `rabbitmq/` - AMQP producer/consumer implementation
+  - `river/` - River BridgeWorker for Postgres-backed jobs
 
 ### Utilities
 - `pkg/authenticator/` - JWT implementation
@@ -479,18 +499,21 @@ go test -cover ./...        # With coverage
 ## Troubleshooting
 
 ### Database Connection Issues
-- Check `database` config in config.yaml
+- Check `database.connections.<name>` config in config.yaml
 - Verify MySQL is running: `mysql -u root -p`
+- Verify Postgres is running: `psql -U postgres`
 - Run migrations: `make migration-up`
+- `config.Database()` panics with descriptive message if `database.default` key doesn't exist in `connections` — check the `default:` value matches a connection name
 
 ### Redis Connection Issues
 - Check `cache` config in config.yaml
 - Verify Redis is running: `redis-cli ping`
 
-### RabbitMQ Issues
-- Check `queue.rabbitmq` config
-- Verify RabbitMQ is running: `rabbitmqctl status`
-- Check exchange setup in config.yaml
+### RabbitMQ / Queue Issues
+- AMQP: check `queue.connections.amqp` config and verify RabbitMQ is running: `rabbitmqctl status`
+- River: check `queue.connections.database.database.connection` points to a valid Postgres connection
+- Health endpoint (`/health`) shows per-component status; RabbitMQ checker only appears when AMQP connection is active
+- Duplicate consumer names cause startup failure — check `queue.RegisterConsumer` calls
 
 ### Validation Not Working
 - Check validator registration in domain's validators/
@@ -512,10 +535,11 @@ go test -cover ./...        # With coverage
 4. Update Swagger docs if enabled
 
 ### Adding New Queue Consumer
-1. Register in `internal/infra/queue/registry.go`
-2. Add consumer config in `config.*.yaml`
-3. Implement handler function with context support
-4. Test graceful shutdown
+1. Register via `queue.RegisterConsumer` in your domain's `providers.go` or an `init()` block
+2. If using AMQP: add consumer config in `config.*.yaml` under `queue.connections.amqp.rabbitmq.consumers`
+3. If using River: no extra config needed — the `BridgeWorker` routes jobs by `ConsumerName` automatically
+4. Consumer names must be **globally unique** — duplicates are caught at startup
+5. Implement handler with context support and test graceful shutdown
 
 ### Modifying Database Schema
 1. Create migration: `make migration-create name=`
