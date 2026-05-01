@@ -64,6 +64,8 @@ INSERT INTO rbac_permissions (id, name, slug, description, module, resource, act
 (146, 'Export Audit Log', 'rbac.audit.export', 'Can export audit logs', 'rbac', 'audit', 'export', NOW())
 ON CONFLICT (id) DO NOTHING;
 
+SELECT setval(pg_get_serial_sequence('rbac_permissions', 'id'), COALESCE(MAX(id), 0), true) FROM rbac_permissions;
+
 -- =============================================================================
 -- RBAC ROLES (Application Roles)
 -- =============================================================================
@@ -79,6 +81,8 @@ INSERT INTO rbac_roles (id, name, slug, description, tenant_id, level, is_system
 (8, 'User', 'user', 'Standard registered user', NULL, 20, TRUE, NOW()),
 (9, 'Guest', 'guest', 'Limited access for non-registered users', NULL, 10, TRUE, NOW())
 ON CONFLICT (id) DO NOTHING;
+
+SELECT setval(pg_get_serial_sequence('rbac_roles', 'id'), COALESCE(MAX(id), 0), true) FROM rbac_roles;
 
 -- =============================================================================
 -- ROLE-PERMISSION MAPPINGS

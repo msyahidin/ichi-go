@@ -72,13 +72,15 @@ func determineMigrationDir(baseDir, tableSpace string) string {
 	if tableSpace == "data" {
 		return filepath.Join("./db/migrations", "data")
 	}
-	if baseDir == defaultMigrationDir || tableSpace == "schema" {
+	if baseDir == defaultMigrationDir {
 		config.MustLoad()
 		driver := config.Get().Database().Driver
-		if driver == "postgres" || driver == "mysql" {
+		switch driver {
+		case "postgres", "mysql":
 			return filepath.Join("./db/migrations/schema", driver)
+		default:
+			log.Fatalf("unsupported database driver %q: must be \"postgres\" or \"mysql\"", driver)
 		}
-		return filepath.Join("./db/migrations", "schema")
 	}
 	return baseDir
 }
@@ -146,8 +148,11 @@ func determineSeedDir(baseDir string) string {
 	}
 	config.MustLoad()
 	driver := config.Get().Database().Driver
-	if driver == "postgres" || driver == "mysql" {
+	switch driver {
+	case "postgres", "mysql":
 		return filepath.Join(defaultSeedDir, driver)
+	default:
+		log.Fatalf("unsupported database driver %q: must be \"postgres\" or \"mysql\"", driver)
 	}
 	return baseDir
 }

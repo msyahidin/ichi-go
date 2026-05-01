@@ -184,6 +184,8 @@ INSERT INTO rbac_permission_groups (id, name, slug, description, sort_order, cre
 (8, 'RBAC Management', 'rbac-management', 'Permissions for managing roles and permissions', 8, NOW())
 ON CONFLICT (id) DO UPDATE SET updated_at = NOW();
 
+SELECT setval(pg_get_serial_sequence('rbac_permission_groups', 'id'), COALESCE(MAX(id), 0), true) FROM rbac_permission_groups;
+
 -- +goose StatementEnd
 
 -- +goose Down

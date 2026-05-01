@@ -184,7 +184,7 @@ Unnamed backward-compat aliases (point to default connection):
   rabbitmq.MessageProducer  → nil when default is not amqp
 ```
 
-The unnamed `queue.Dispatcher` is not registered in DI — it is constructed on demand by `queue.NewDispatcher` when needed. All application code that dispatches jobs calls `queue.NewDispatcher` directly via the factory.
+A named `queue.Dispatcher` is registered in DI for each enabled connection: `"queue.dispatcher.<name>"` (via `do.ProvideNamed`). Application code that needs a specific driver's dispatcher resolves it by name. `queue.NewDispatcher` remains the underlying factory called inside each provider — callers can also invoke it directly when explicit factory behavior is needed outside DI.
 
 ### 3.3 Consumer usage
 

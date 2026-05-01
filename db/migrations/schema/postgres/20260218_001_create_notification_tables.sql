@@ -16,12 +16,10 @@ CREATE TABLE IF NOT EXISTS notification_template_overrides (
     locale         VARCHAR(10)     NOT NULL DEFAULT 'en',
     title_template VARCHAR(500)             DEFAULT NULL,
     body_template  TEXT                     DEFAULT NULL,
-    is_active      BOOLEAN         NOT NULL DEFAULT TRUE,
-
-    UNIQUE (event_slug, channel, locale, deleted_at)
+    is_active      BOOLEAN         NOT NULL DEFAULT TRUE
 );
 
-CREATE INDEX idx_template_lookup ON notification_template_overrides (event_slug, channel, locale, is_active, deleted_at);
+CREATE UNIQUE INDEX uniq_active_template_lookup ON notification_template_overrides (event_slug, channel, locale) WHERE deleted_at IS NULL AND is_active = TRUE;
 
 CREATE TABLE IF NOT EXISTS notification_campaigns (
     id              BIGSERIAL       NOT NULL PRIMARY KEY,
