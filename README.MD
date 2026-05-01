@@ -137,7 +137,7 @@ air  # for hot reload
      default: "amqp"           # or "database" for River/Postgres
      connections:
        amqp:
-         enabled: false        # set true if RabbitMQ is available
+         enabled: true         # set true if RabbitMQ is available
        database:
          enabled: false        # set true to use River on Postgres
 ```
@@ -557,7 +557,7 @@ queue:
   default: "amqp"               # active dispatcher; "database" for River
   connections:
     amqp:
-      enabled: false
+      enabled: true
       driver: "amqp"
       rabbitmq:
         exchanges:
