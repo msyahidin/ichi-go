@@ -16,7 +16,6 @@ import (
 	"ichi-go/config"
 	_ "ichi-go/docs" // Import generated docs
 	"ichi-go/internal/infra"
-	"ichi-go/internal/infra/queue/rabbitmq"
 	"ichi-go/internal/middlewares"
 	errors2 "ichi-go/pkg/errors"
 	"ichi-go/pkg/logger"
@@ -85,9 +84,7 @@ func main() {
 
 	// Setup messaging if enabled
 	if cfg.Queue().Enabled {
-		msgConfig := cfg.Queue()
-		msgConn := do.MustInvoke[*rabbitmq.Connection](injector)
-		go server.StartQueueWorkers(ctx, msgConfig, msgConn, injector)
+		go server.StartQueueWorkers(ctx, cfg.Queue(), injector)
 	}
 
 	// Start the server with context-based graceful shutdown

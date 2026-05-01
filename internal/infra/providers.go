@@ -1,8 +1,12 @@
 package infra
 
 import (
+	"database/sql"
 	"fmt"
+	"time"
 
+	riverqueue "github.com/riverqueue/river"
+	"github.com/riverqueue/river/riverdriver/riverdatabasesql"
 	"github.com/redis/go-redis/v9"
 	"github.com/samber/do/v2"
 	"github.com/uptrace/bun"
@@ -13,7 +17,9 @@ import (
 	"ichi-go/internal/infra/authz/enforcer"
 	infraCache "ichi-go/internal/infra/cache"
 	"ichi-go/internal/infra/database"
+	"ichi-go/internal/infra/queue"
 	"ichi-go/internal/infra/queue/rabbitmq"
+	riverimpl "ichi-go/internal/infra/queue/river"
 	"ichi-go/pkg/logger"
 	"ichi-go/pkg/rbac"
 )
@@ -26,6 +32,10 @@ func Setup(injector do.Injector, cfg *config.Config) {
 	do.Provide(injector, provideCache(cfg))
 	do.Provide(injector, provideMessaging(cfg))
 	do.Provide(injector, provideMessageProducer(cfg))
+
+	// Queue dispatcher (RabbitMQ or River depending on config)
+	do.Provide(injector, provideRiverClient(cfg))
+	do.Provide(injector, provideQueueDispatcher(cfg))
 
 	// RBAC infrastructure
 	do.Provide(injector, provideRBACConfig(cfg))
@@ -142,6 +152,77 @@ func provideMessageProducer(cfg *config.Config) func(do.Injector) (rabbitmq.Mess
 
 		logger.Infof("✅ Message producer created successfully")
 		return producer, nil
+	}
+}
+
+func provideRiverClient(cfg *config.Config) func(do.Injector) (*riverqueue.Client[*sql.Tx], error) {
+	return func(i do.Injector) (*riverqueue.Client[*sql.Tx], error) {
+		queueCfg := cfg.Queue()
+		if !queueCfg.Enabled || queueCfg.Driver != "river" {
+			logger.Debugf("River client not needed (driver=%s)", queueCfg.Driver)
+			return nil, nil
+		}
+
+		dbKey := queueCfg.River.Database
+		bunDB, err := do.InvokeNamed[*bun.DB](i, "db."+dbKey)
+		if err != nil || bunDB == nil {
+			return nil, fmt.Errorf("river: database %q not found in DI (check databases config): %w", dbKey, err)
+		}
+
+		workers := riverqueue.NewWorkers()
+		registrations := queue.GetRegisteredConsumers(i)
+		riverimpl.RegisterBridgeWorkers(workers, registrations)
+
+		riverCfg := queueCfg.River
+		pollInterval := riverCfg.PollInterval
+		if pollInterval == 0 {
+			pollInterval = time.Second
+		}
+		rescueAfter := riverCfg.RescueStuckJobsAfter
+		if rescueAfter == 0 {
+			rescueAfter = time.Hour
+		}
+		maxWorkers := riverCfg.MaxWorkers
+		if maxWorkers == 0 {
+			maxWorkers = 50
+		}
+
+		// riverdatabasesql wraps the *sql.DB that bun already owns — poll-only mode.
+		client, err := riverqueue.NewClient(riverdatabasesql.New(bunDB.DB), &riverqueue.Config{
+			Queues: map[string]riverqueue.QueueConfig{
+				riverqueue.QueueDefault: {MaxWorkers: maxWorkers},
+				"emails":                {MaxWorkers: 10},
+				"notifications":         {MaxWorkers: 20},
+			},
+			Workers:              workers,
+			FetchPollInterval:    pollInterval,
+			RescueStuckJobsAfter: rescueAfter,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("river: failed to create client: %w", err)
+		}
+
+		logger.Debugf("initialized River client (db=%s, maxWorkers=%d, poll-only)", dbKey, maxWorkers)
+		return client, nil
+	}
+}
+
+func provideQueueDispatcher(cfg *config.Config) func(do.Injector) (queue.Dispatcher, error) {
+	return func(i do.Injector) (queue.Dispatcher, error) {
+		if !cfg.Queue().Enabled {
+			logger.Debugf("Queue disabled — no Dispatcher")
+			return nil, nil
+		}
+
+		producer, _ := do.Invoke[rabbitmq.MessageProducer](i)
+		riverClient, _ := do.Invoke[*riverqueue.Client[*sql.Tx]](i)
+
+		d, err := queue.NewDispatcher(cfg.Queue().Driver, producer, riverClient)
+		if err != nil {
+			return nil, err
+		}
+		logger.Debugf("initialized queue.Dispatcher (driver=%s)", cfg.Queue().Driver)
+		return d, nil
 	}
 }
 
