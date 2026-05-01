@@ -74,12 +74,12 @@ func StartQueueWorkers(ctx context.Context, queueConfig *queue.Config, conn *rab
 		}
 
 		wg.Add(1)
-		go func(name string, consumer rabbitmq.MessageConsumer, consumeFunc rabbitmq.ConsumeFunc, desc string) {
+		go func(name string, consumer rabbitmq.MessageConsumer, consumeFunc queue.ConsumeFunc, desc string) {
 			defer wg.Done()
 
 			logger.Infof("✅ Started %s: %s", name, desc)
 
-			if err := consumer.Consume(ctx, consumeFunc); err != nil {
+			if err := consumer.Consume(ctx, rabbitmq.ConsumeFunc(consumeFunc)); err != nil {
 				logger.Errorf("❌ %s error: %v", name, err)
 			}
 
