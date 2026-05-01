@@ -11,8 +11,9 @@ A production-ready Go backend template built on clean architecture principles, d
 - **Clean Architecture**: Domain-driven design with clear separation of concerns
 - **Production Ready**: JWT auth, validation, logging, error handling out of the box
 - **Developer Experience**: CLI generators, hot reload, comprehensive examples
-- **Message Queue**: RabbitMQ integration with graceful shutdown and worker management
-- **Database**: Bun ORM with migration system and seeding support
+- **Multi-driver Queue**: RabbitMQ (AMQP) and PostgreSQL/River backends — switchable via config
+- **Multi-driver Database**: Named connection map supports MySQL and PostgreSQL via Bun ORM
+- **Migrations**: Goose with auto-detected driver (MySQL or Postgres dialect)
 - **Caching**: Redis with LZ4 compression
 - **Validation**: Multilingual support (English/Indonesian) with custom validators
 - **Observability**: Structured logging with zerolog, request tracing
@@ -36,17 +37,19 @@ A production-ready Go backend template built on clean architecture principles, d
 ### Core Framework
 - **Go 1.24+** - Primary language
 - **Echo v4** - HTTP framework
-- **Bun ORM** - Database operations with MySQL dialect
+- **Bun ORM** - Database operations (MySQL + PostgreSQL dialects)
 - **Viper** - Type-safe configuration management
 
 ### Infrastructure
 - **Redis** - Caching with LZ4 compression
-- **RabbitMQ** - Message queue with topic exchanges
-- **MySQL** - Primary database
+- **RabbitMQ** (optional) - AMQP message queue with topic exchanges
+- **MySQL** - Primary relational database
+- **PostgreSQL** (optional) - Alternate database / River queue backend
+- **riverqueue/river** (optional) - DB-backed reliable job queue on Postgres
 
 ### Developer Tools
 - **Air** - Hot reload for development
-- **Goose** - SQL migrations
+- **Goose** - SQL migrations (auto-detects MySQL / Postgres dialect)
 - **samber/do** - Runtime dependency injection
 - **Mockery** - Interface mocking for tests
 
@@ -85,9 +88,14 @@ make docker-deploy
 ```bash
 # Required
 go >= 1.24
-mysql >= 8.0
 redis >= 7.0
-rabbitmq >= 3.12 (optional, if queue.enabled = true)
+
+# At least one of:
+mysql >= 8.0          # default primary DB
+postgres >= 15        # if using Postgres DB or River queue backend
+
+# Optional
+rabbitmq >= 3.12      # if queue.connections.amqp.enabled = true
 
 # Development tools
 make
@@ -107,18 +115,31 @@ air  # for hot reload
 ```yaml
    # config.local.yaml
    database:
-     host: "localhost"
-     port: 3306
-     user: "your_user"
-     password: "your_password"
-     name: "your_database"
-   
+     default: "mysql"          # or "postgres"
+     connections:
+       mysql:
+         host: "localhost"
+         port: 3306
+         user: "your_user"
+         password: "your_password"
+         name: "your_database"
+       # postgres:             # uncomment for Postgres / River queue
+       #   host: "localhost"
+       #   port: 5432
+       #   user: "postgres"
+       #   name: "your_database"
+
    cache:
      host: "localhost"
      port: 6379
-   
+
    queue:
-     enabled: true  # Set false if RabbitMQ not needed
+     default: "amqp"           # or "database" for River/Postgres
+     connections:
+       amqp:
+         enabled: false        # set true if RabbitMQ is available
+       database:
+         enabled: false        # set true to use River on Postgres
 ```
 
 3. **Install dependencies**
@@ -153,7 +174,7 @@ ichi-go/
 │   ├── main.go                    # Application entry point
 │   ├── server/
 │   │   ├── rest_server.go        # HTTP routes setup
-│   │   ├── queue_server.go       # RabbitMQ workers
+│   │   ├── queue_server.go       # Queue workers (AMQP + River)
 │   │   └── web_server.go         # Web/template routes
 │   └── validator/
 │       └── setup.go              # Validator initialization
@@ -165,19 +186,19 @@ ichi-go/
 │   │   ├── notification/        # Notification service (blast + user-specific)
 │   │   └── rbac/                # Role-based access control (36 endpoints)
 │   ├── infra/                   # Infrastructure layer
-│   │   ├── database/           # Bun ORM setup
+│   │   ├── database/           # Bun ORM (MySQL + Postgres)
 │   │   ├── cache/              # Redis client
-│   │   ├── queue/              # RabbitMQ integration
-│   │   │   ├── rabbitmq/
-│   │   │   │   ├── connection.go
-│   │   │   │   ├── producer.go
-│   │   │   │   └── consumer.go
-│   │   │   └── registry.go     # Consumer registration
+│   │   ├── queue/              # Driver-agnostic queue layer
+│   │   │   ├── interfaces.go   # Dispatcher, JobArgs, ConsumeFunc
+│   │   │   ├── options.go      # DispatchOption helpers
+│   │   │   ├── dispatcher.go   # NewDispatcher factory (amqp | database)
+│   │   │   ├── rabbitmq/       # AMQP producer/consumer
+│   │   │   └── river/          # River worker pool (Postgres-backed)
 │   │   └── authz/              # Casbin RBAC enforcer, adapter, cache, watcher
 │   └── middlewares/            # HTTP middlewares
 ├── db/
 │   ├── cmd/
-│   │   └── migrate.go          # Migration CLI
+│   │   └── migrate.go          # Migration CLI (auto-detects MySQL/Postgres)
 │   └── migrations/
 │       ├── schema/             # Schema migrations
 │       ├── data/               # Data migrations
@@ -251,32 +272,37 @@ if err := validator.BindAndValidate(c, &req); err != nil {
 - `Accept-Language` header
 - Falls back to configured default
 
-### 3. Message Queue (RabbitMQ)
+### 3. Message Queue
 
-Producer/Consumer pattern with graceful shutdown:
+Driver-agnostic `queue.Dispatcher` interface — configure AMQP (RabbitMQ) or database (River on Postgres) via `queue.default`:
+
 ```go
-// Register consumer
+// Register consumer (works for both drivers)
 queue.RegisterConsumer(queue.ConsumerRegistration{
-    Name: "payment_handler",
+    Name:        "payment_handler",
     Description: "Processes payment events",
-    ConsumeFunc: func(ctx context.Context, msg rabbitmq.Message) error {
+    ConsumeFunc: func(ctx context.Context, payload []byte) error {
         // Process message
         return nil
     },
 })
 
-// Publish message
-producer.Publish(ctx, rabbitmq.PublishParams{
-    RoutingKey: "payment.completed",
-    Body: paymentData,
-})
+// Dispatch a job (driver-agnostic)
+dispatcher.Dispatch(ctx, myJob,
+    queue.WithDelay(5*time.Minute),  // schedule delay
+)
 ```
 
-**Features:**
+**AMQP (RabbitMQ) backend:**
 - Topic-based routing with delayed message support
 - Configurable worker pools per consumer
 - Automatic reconnection handling
-- Context-based lifecycle management
+
+**Database (River) backend:**
+- Postgres-backed reliable job queue
+- Poll-based worker with configurable concurrency
+- Supports `Queue`, `MaxAttempts`, `Priority` insert options
+- Shares the existing Bun `*sql.DB` connection — no extra pool needed
 
 ### 4. Dependency Injection with samber/do
 
@@ -499,12 +525,23 @@ http:
   cors:
     allow_origins: ["*"]
 
+# Named connection map — add as many drivers as needed
 database:
-  driver: "mysql"
-  host: "localhost"
-  port: 3306
-  max_idle_conns: 10
-  max_open_conns: 100
+  default: "mysql"              # which connection is the primary *bun.DB
+  connections:
+    mysql:
+      driver: "mysql"
+      host: "localhost"
+      port: 3306
+      name: "ichi_app"
+      max_idle_conns: 10
+      max_open_conns: 100
+    # postgres:                 # uncomment for Postgres / River
+    #   driver: "postgres"
+    #   host: "localhost"
+    #   port: 5432
+    #   name: "ichi_app"
+    #   ssl_mode: "disable"
 
 cache:
   driver: "redis"
@@ -515,20 +552,32 @@ validator:
   default_language: "en"
   supported_languages: ["en", "id"]
 
+# Multi-driver queue — enable one or both backends
 queue:
-  enabled: true
-  rabbitmq:
-    exchanges:
-      - name: "app.events"
-        type: "x-delayed-message"
-    consumers:
-      - name: "payment_handler"
-        queue:
-          name: "order.payment.events"
-        routing_keys:
-          - "payment.completed"
-        prefetch_count: 50
-        worker_pool_size: 10
+  default: "amqp"               # active dispatcher; "database" for River
+  connections:
+    amqp:
+      enabled: false
+      driver: "amqp"
+      rabbitmq:
+        exchanges:
+          - name: "app.events"
+            type: "x-delayed-message"
+        consumers:
+          - name: "payment_handler"
+            queue:
+              name: "order.payment.events"
+            routing_keys:
+              - "payment.completed"
+            prefetch_count: 50
+            worker_pool_size: 10
+    database:
+      enabled: false
+      driver: "database"
+      database:
+        connection: "postgres"   # must match a key in database.connections
+        max_workers: 50
+        poll_interval: 1s
 ```
 
 ## 🧪 Testing
