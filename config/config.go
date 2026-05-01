@@ -21,18 +21,19 @@ import (
 )
 
 type Schema struct {
-	App        AppConfig
-	Database   database.Config
-	Cache      cache.Config
-	Log        logger.LogConfig
-	Http       httpConfig.Config
-	HttpClient httpConfig.ClientConfig
-	PkgClient  pkgClientConfig.PkgClient
-	Queue      queue.Config
-	Auth       authenticator.Config
-	Validator  validator.Config
-	Versioning versioning.Config
-	RBAC       rbac.Config
+	App             AppConfig
+	PrimaryDatabase string                     `mapstructure:"primary_database"`
+	Databases       map[string]database.Config `mapstructure:"databases"`
+	Cache           cache.Config
+	Log             logger.LogConfig
+	Http            httpConfig.Config
+	HttpClient      httpConfig.ClientConfig
+	PkgClient       pkgClientConfig.PkgClient
+	Queue           queue.Config
+	Auth            authenticator.Config
+	Validator       validator.Config
+	Versioning      versioning.Config
+	RBAC            rbac.Config
 }
 
 type Config struct {
@@ -104,9 +105,31 @@ func (c *Config) App() *AppConfig {
 	return &c.schema.App
 }
 
+// Databases returns all named database configs.
+func (c *Config) Databases() map[string]database.Config {
+	c.ensureLoaded()
+	return c.schema.Databases
+}
+
+// PrimaryDatabase returns the key name of the primary database connection.
+// Defaults to "mysql" when not set.
+func (c *Config) PrimaryDatabase() string {
+	c.ensureLoaded()
+	if c.schema.PrimaryDatabase == "" {
+		return "mysql"
+	}
+	return c.schema.PrimaryDatabase
+}
+
+// Database returns the primary database config for backward compatibility.
 func (c *Config) Database() *database.Config {
 	c.ensureLoaded()
-	return &c.schema.Database
+	primary := c.PrimaryDatabase()
+	cfg, ok := c.schema.Databases[primary]
+	if !ok {
+		return &database.Config{}
+	}
+	return &cfg
 }
 
 func (c *Config) Cache() *cache.Config {

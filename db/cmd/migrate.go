@@ -83,10 +83,7 @@ func connectDatabase(environment string) *sql.DB {
 	// TODO: Integrate with your config system
 	config.MustLoad()
 	dbConfig := config.Get().Database()
-	dsn := database.GetDsn(dbConfig)
-	if dsn == "" {
-		dsn = "root:password@tcp(localhost:3306)/ichigo_db?parseTime=true"
-	}
+	dsn := database.GetMySQLDSN(dbConfig)
 
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {

@@ -16,13 +16,15 @@ type Config struct {
 }
 
 func SetDefault() {
-	viper.SetDefault("database.driver", "mysql")
-	viper.SetDefault("database.host", "localhost")
-	viper.SetDefault("database.port", 3306)
-	viper.SetDefault("database.user", "postgres")
-	viper.SetDefault("database.password", "postgres")
-	viper.SetDefault("database.maxIdleConns", 10)
-	viper.SetDefault("database.maxOpenConns", 100)
-	viper.SetDefault("database.maxLifetime", 3600)
-	viper.SetDefault("database.debug", false)
+	viper.SetDefault("primary_database", "mysql")
+	viper.SetDefault("databases.mysql.driver", "mysql")
+	viper.SetDefault("databases.mysql.host", "localhost")
+	viper.SetDefault("databases.mysql.port", 3306)
+	viper.SetDefault("databases.mysql.user", "root")
+	viper.SetDefault("databases.mysql.password", "password")
+	viper.SetDefault("databases.mysql.name", "ichi_app")
+	viper.SetDefault("databases.mysql.max_idle_conns", 10)
+	viper.SetDefault("databases.mysql.max_open_conns", 100)
+	viper.SetDefault("databases.mysql.max_conn_life_time", 3600)
+	viper.SetDefault("databases.mysql.debug", false)
 }
