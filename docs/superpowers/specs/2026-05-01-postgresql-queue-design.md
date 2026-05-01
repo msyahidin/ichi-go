@@ -129,7 +129,9 @@ func NewPostgresClient(cfg *Config) (*bun.DB, error) {
     if err != nil {
         return nil, fmt.Errorf("failed to open postgres connection: %w", err)
     }
-    if err := sqldb.Ping(); err != nil {
+    ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+    defer cancel()
+    if err := sqldb.PingContext(ctx); err != nil {
         sqldb.Close()
         return nil, fmt.Errorf("failed to ping postgres: %w", err)
     }
@@ -143,9 +145,21 @@ func NewPostgresClient(cfg *Config) (*bun.DB, error) {
     return db, nil
 }
 
+// GetPostgresDSN builds a postgres:// URL with properly percent-encoded credentials.
+// SSLMode defaults to "disable" when cfg.SSLMode is empty.
 func GetPostgresDSN(cfg *Config) string {
-    return fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable",
-        cfg.User, cfg.Password, cfg.Host, cfg.Port, cfg.Name)
+    sslMode := cfg.SSLMode
+    if sslMode == "" {
+        sslMode = "disable"
+    }
+    u := &url.URL{
+        Scheme:   "postgres",
+        User:     url.UserPassword(cfg.User, cfg.Password),
+        Host:     fmt.Sprintf("%s:%d", cfg.Host, cfg.Port),
+        Path:     "/" + cfg.Name,
+        RawQuery: "sslmode=" + sslMode,
+    }
+    return u.String()
 }
 ```
 
@@ -445,8 +459,9 @@ This is equivalent to Laravel's `jobs` + `failed_jobs` tables combined. The Rive
 River manages its own schema via `rivermigrate`. Called on application startup before serving traffic:
 
 ```go
-// cmd/server/rest_server.go (or a dedicated migration step)
-migrator := rivermigrate.New(riverpgxv5.New(pool), nil)
+// River manages its own schema independently via rivermigrate.
+// Uses riverdatabasesql (shares bun's *sql.DB — poll-only, no LISTEN/NOTIFY).
+migrator := rivermigrate.New(riverdatabasesql.New(sqlDB), nil)
 _, err := migrator.Migrate(ctx, rivermigrate.DirectionUp, nil)
 ```
 
@@ -460,16 +475,22 @@ Goose manages application schema migrations (unchanged). River manages its own t
 
 ```go
 // internal/infra/queue/dispatcher.go
-func NewDispatcher(cfg *Config, injector do.Injector) (Dispatcher, error) {
-    switch cfg.Driver {
-    case "river":
-        client := do.MustInvoke[*river.Client[pgx.Tx]](injector)
-        return river.NewDispatcher(client), nil
-    case "rabbitmq":
-        producer := do.MustInvoke[rabbitmq.MessageProducer](injector)
-        return rabbitmq.NewDispatcher(producer), nil
+// NewDispatcher builds the active Dispatcher based on the driver name.
+// Driver "amqp" uses RabbitMQ; driver "database" uses River (poll-only via riverdatabasesql).
+func NewDispatcher(driver string, producer rabbitmq.MessageProducer, riverClient *river.Client[*sql.Tx]) (Dispatcher, error) {
+    switch driver {
+    case "amqp":
+        if producer == nil {
+            return nil, fmt.Errorf("amqp dispatcher: producer is nil")
+        }
+        return &rabbitMQDispatcher{producer: producer}, nil
+    case "database":
+        if riverClient == nil {
+            return nil, fmt.Errorf("database dispatcher: client is nil")
+        }
+        return &riverDispatcher{client: riverClient}, nil
     default:
-        return nil, fmt.Errorf("unknown queue driver: %s", cfg.Driver)
+        return nil, fmt.Errorf("unknown queue driver: %q (valid: amqp, database)", driver)
     }
 }
 ```

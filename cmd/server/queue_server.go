@@ -58,7 +58,9 @@ func startRiverWorkers(ctx context.Context, connName string, injector do.Injecto
 	<-ctx.Done()
 
 	logger.Infof("🛑 Stopping River queue workers [%s]...", connName)
-	if err := client.Stop(context.Background()); err != nil {
+	stopCtx, stopCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer stopCancel()
+	if err := client.Stop(stopCtx); err != nil {
 		logger.Errorf("River client stop error [%s]: %v", connName, err)
 	}
 	logger.Infof("👋 River workers stopped [%s]", connName)

@@ -112,7 +112,10 @@ func provideQueueInfra(injector do.Injector, cfg *config.Config) {
 
 			do.ProvideNamed(injector, "queue.producer."+nc.Name,
 				func(i do.Injector) (rabbitmq.MessageProducer, error) {
-					conn, _ := do.InvokeNamed[*rabbitmq.Connection](i, "queue.conn."+nc.Name)
+					conn, err := do.InvokeNamed[*rabbitmq.Connection](i, "queue.conn."+nc.Name)
+					if err != nil {
+						return nil, fmt.Errorf("amqp[%s]: failed to resolve connection: %w", nc.Name, err)
+					}
 					if conn == nil {
 						return nil, nil
 					}
@@ -129,7 +132,10 @@ func provideQueueInfra(injector do.Injector, cfg *config.Config) {
 
 			do.ProvideNamed(injector, "queue.dispatcher."+nc.Name,
 				func(i do.Injector) (queue.Dispatcher, error) {
-					producer, _ := do.InvokeNamed[rabbitmq.MessageProducer](i, "queue.producer."+nc.Name)
+					producer, err := do.InvokeNamed[rabbitmq.MessageProducer](i, "queue.producer."+nc.Name)
+					if err != nil {
+						return nil, fmt.Errorf("amqp[%s]: failed to resolve producer: %w", nc.Name, err)
+					}
 					return queue.NewDispatcher("amqp", producer, nil)
 				})
 
@@ -200,7 +206,9 @@ func provideQueueInfra(injector do.Injector, cfg *config.Config) {
 // buildRiverClient constructs a River client in poll-only mode, sharing bun's *sql.DB.
 func buildRiverClient(bunDB *bun.DB, cfg queue.DatabaseBackendConfig, registrations []queue.ConsumerRegistration) (*riverqueue.Client[*sql.Tx], error) {
 	workers := riverqueue.NewWorkers()
-	riverimpl.RegisterBridgeWorkers(workers, registrations)
+	if err := riverimpl.RegisterBridgeWorkers(workers, registrations); err != nil {
+		return nil, fmt.Errorf("river: %w", err)
+	}
 
 	pollInterval := cfg.PollInterval
 	if pollInterval == 0 {

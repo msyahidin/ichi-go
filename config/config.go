@@ -127,12 +127,18 @@ func (c *Config) PrimaryDatabase() string {
 }
 
 // Database returns the primary database config for backward compatibility.
+// Panics with a descriptive message when the primary connection key is not found,
+// so misconfiguration is caught at startup rather than silently returning an empty config.
 func (c *Config) Database() *database.Config {
 	c.ensureLoaded()
 	primary := c.PrimaryDatabase()
 	cfg, ok := c.schema.Database.Connections[primary]
 	if !ok {
-		return &database.Config{}
+		keys := make([]string, 0, len(c.schema.Database.Connections))
+		for k := range c.schema.Database.Connections {
+			keys = append(keys, k)
+		}
+		panic(fmt.Sprintf("database: primary connection %q not found in connections map (available: %v)", primary, keys))
 	}
 	return &cfg
 }

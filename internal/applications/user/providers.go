@@ -1,6 +1,8 @@
 package user
 
 import (
+	"fmt"
+
 	"ichi-go/config"
 	user "ichi-go/internal/applications/user/controller"
 	userRepo "ichi-go/internal/applications/user/repository"
@@ -47,14 +49,21 @@ func ProvideUserService(i do.Injector) (*userService.ServiceImpl, error) {
 	cacheClient := do.MustInvoke[*redis.Client](i)
 	cacheImpl := cache.NewCache(cacheClient)
 	pokeClient := do.MustInvoke[pokemonapi.PokemonClient](i)
-	// Queue producer is optional
+	// Queue producer is optional — only wired when AMQP is configured and reachable.
+	// Any infrastructure error (bad connection, producer init) is propagated so startup fails fast.
 	var producer rabbitmq.MessageProducer
-	if conn, err := do.Invoke[*rabbitmq.Connection](i); err == nil && conn != nil {
+	conn, err := do.Invoke[*rabbitmq.Connection](i)
+	if err != nil {
+		return nil, fmt.Errorf("user: failed to resolve rabbitmq connection: %w", err)
+	}
+	if conn != nil {
 		cfg := do.MustInvoke[*config.Config](i)
 		if amqpCfg, ok := cfg.Queue().DefaultAMQPConfig(); ok {
-			if p, err := rabbitmq.NewProducer(conn, amqpCfg); err == nil {
-				producer = p
+			p, err := rabbitmq.NewProducer(conn, amqpCfg)
+			if err != nil {
+				return nil, fmt.Errorf("user: failed to create rabbitmq producer: %w", err)
 			}
+			producer = p
 		}
 	}
 

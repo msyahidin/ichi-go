@@ -35,5 +35,8 @@ func (w *BridgeWorker) Work(ctx context.Context, job *riverqueue.Job[GenericJobA
 	if !ok {
 		return fmt.Errorf("bridge worker: no handler registered for consumer %q", job.Args.ConsumerName)
 	}
+	if handler == nil {
+		return fmt.Errorf("bridge worker: handler for consumer %q is nil", job.Args.ConsumerName)
+	}
 	return handler(ctx, job.Args.Payload)
 }

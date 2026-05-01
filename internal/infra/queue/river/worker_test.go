@@ -71,6 +71,26 @@ func TestRegisterBridgeWorkers_SingleWorker(t *testing.T) {
 	}
 	// Multiple registrations must not panic (single Kind "generic_job" registered once)
 	assert.NotPanics(t, func() {
-		riverworker.RegisterBridgeWorkers(workers, registrations)
+		err := riverworker.RegisterBridgeWorkers(workers, registrations)
+		require.NoError(t, err)
 	})
+}
+
+func TestBridgeWorker_Work_NilHandler(t *testing.T) {
+	// Build a BridgeWorker with a map entry whose value is explicitly nil.
+	handlers := map[string]queue.ConsumeFunc{
+		"nil_handler": nil,
+	}
+	worker := riverworker.NewBridgeWorker(handlers)
+
+	job := &riverqueue.Job[riverworker.GenericJobArgs]{
+		Args: riverworker.GenericJobArgs{
+			ConsumerName: "nil_handler",
+			Payload:      []byte(`{}`),
+		},
+	}
+
+	err := worker.Work(context.Background(), job)
+	assert.ErrorContains(t, err, "handler for consumer",
+		"expected a descriptive error, not a panic, when the handler is nil")
 }

@@ -41,6 +41,16 @@ type rabbitMQDispatcher struct {
 func (d *rabbitMQDispatcher) Dispatch(ctx context.Context, job JobArgs, opts ...DispatchOption) error {
 	o := ApplyOptions(opts...)
 
+	// RabbitMQ does not support routing by queue name, attempt limiting, or priority
+	// via the generic Dispatch interface. Fail fast so callers see the mismatch immediately.
+	if o.Queue != "" || o.MaxAttempts != 0 || o.Priority != 0 {
+		return fmt.Errorf(
+			"rabbitmq dispatcher: unsupported options for job %q (Queue=%q, MaxAttempts=%d, Priority=%d); "+
+				"AMQP dispatch only supports Delay",
+			job.Kind(), o.Queue, o.MaxAttempts, o.Priority,
+		)
+	}
+
 	payload, err := json.Marshal(job)
 	if err != nil {
 		return fmt.Errorf("rabbitmq dispatcher: failed to marshal job %q: %w", job.Kind(), err)

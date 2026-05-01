@@ -24,12 +24,19 @@ func Register(injector do.Injector, serviceName string, e *echo.Echo, cfg *confi
 	// RabbitMQ checker (optional - may be nil if queue is disabled)
 	checkers := []health.Checker{dbChecker, redisChecker}
 
+	// RabbitMQ checker — only when the default queue connection is actually AMQP/RabbitMQ.
+	// AnyEnabled() could also be true for database-backed (River) queues, so we inspect
+	// the resolved *rabbitmq.Connection instead.
 	if cfg.Queue().AnyEnabled() {
 		mqConn, err := do.Invoke[*rabbitmq.Connection](injector)
 		if err == nil && mqConn != nil {
+			// Default connection is AMQP — attach RabbitMQ liveness check.
 			mqChecker := health.NewRabbitMQChecker(mqConn)
 			checkers = append(checkers, mqChecker)
 		}
+		// When the default connection is database-backed (River), connectivity is
+		// already covered by the database checker above.
+		// TODO: add health.NewRiverQueueChecker once implemented.
 	}
 
 	aggregateChecker := health.NewAggregateChecker(checkers...)

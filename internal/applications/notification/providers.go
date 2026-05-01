@@ -112,7 +112,11 @@ func ProvideNotificationController(i do.Injector) (*notifController.Notification
 // Callers must guard against nil before invoking Publish.
 func ProvideBlastProducer(i do.Injector) (rabbitmq.MessageProducer, error) {
 	conn, err := do.Invoke[*rabbitmq.Connection](i)
-	if err != nil || conn == nil {
+	if err != nil {
+		return nil, fmt.Errorf("notification: blast producer: failed to resolve rabbitmq connection: %w", err)
+	}
+	if conn == nil {
+		// Queue unavailable — graceful no-op; callers must guard against nil.
 		return nil, nil
 	}
 	cfg := do.MustInvoke[*config.Config](i)
@@ -129,7 +133,11 @@ func ProvideBlastProducer(i do.Injector) (rabbitmq.MessageProducer, error) {
 // Callers must guard against nil before invoking Publish.
 func ProvideUserProducer(i do.Injector) (rabbitmq.MessageProducer, error) {
 	conn, err := do.Invoke[*rabbitmq.Connection](i)
-	if err != nil || conn == nil {
+	if err != nil {
+		return nil, fmt.Errorf("notification: user producer: failed to resolve rabbitmq connection: %w", err)
+	}
+	if conn == nil {
+		// Queue unavailable — graceful no-op; callers must guard against nil.
 		return nil, nil
 	}
 	cfg := do.MustInvoke[*config.Config](i)

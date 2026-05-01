@@ -201,7 +201,7 @@ go test ./internal/infra/database/... -v
 ```
 
 Expected:
-```
+```text
 --- PASS: TestGetMySQLDSN
 --- PASS: TestGetPostgresDSN
 PASS
@@ -723,7 +723,7 @@ go test ./internal/infra/queue/... -v -run TestDispatchOptions
 ```
 
 Expected:
-```
+```text
 --- PASS: TestDispatchOptions_Defaults
 --- PASS: TestDispatchOptions_WithOptions
 PASS
@@ -959,7 +959,7 @@ go test ./internal/infra/queue/rabbitmq/... -v -run TestRabbitMQDispatcher
 ```
 
 Expected:
-```
+```text
 --- PASS: TestRabbitMQDispatcher_Dispatch
 --- PASS: TestRabbitMQDispatcher_Dispatch_WithDelay
 PASS
@@ -1087,7 +1087,7 @@ go test ./internal/infra/queue/river/... -v -run TestGenericJobWorker
 ```
 
 Expected:
-```
+```text
 --- PASS: TestGenericJobWorker_Work_CallsHandler
 --- PASS: TestGenericJobWorker_Work_PropagatesError
 PASS
@@ -1799,7 +1799,7 @@ go run /tmp/test-config-check.go
 ```
 
 Expected output:
-```
+```text
 Primary: mysql
   mysql: driver=mysql host=localhost port=3306
   postgres: driver=postgres host=localhost port=5432
