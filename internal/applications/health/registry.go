@@ -1,7 +1,7 @@
 package health
 
 import (
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/redis/go-redis/v9"
 	"github.com/samber/do/v2"
 	"github.com/uptrace/bun"

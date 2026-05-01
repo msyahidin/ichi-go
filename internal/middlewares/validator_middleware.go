@@ -6,7 +6,7 @@ import (
 	"ichi-go/pkg/logger"
 	appValidator "ichi-go/pkg/validator"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 // ValidatorMiddleware provides Echo with our custom validator
@@ -22,7 +22,7 @@ func NewValidatorMiddleware(validator *appValidator.AppValidator) *ValidatorMidd
 }
 
 // Validate implements echo.Validator interface
-func (vm *ValidatorMiddleware) Validate(i interface{}) error {
+func (vm *ValidatorMiddleware) Validate(i any) error {
 	// Note: Echo passes the bound struct, not the context
 	// We'll use default language here, language detection happens in controller
 	validationErr := vm.validator.ValidateStruct(i)
@@ -42,7 +42,7 @@ func (vm *ValidatorMiddleware) ValidateWithLanguage(i interface{}, lang string) 
 }
 
 // ValidateWithContext validates using language from Echo context
-func (vm *ValidatorMiddleware) ValidateWithContext(c echo.Context, i interface{}) error {
+func (vm *ValidatorMiddleware) ValidateWithContext(c *echo.Context, i interface{}) error {
 	lang := appValidator.GetLanguageFromContext(c)
 	return vm.ValidateWithLanguage(i, lang)
 }

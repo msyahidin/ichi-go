@@ -8,13 +8,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 // VersionDeprecation creates a middleware that handles API version deprecation
 func VersionDeprecation() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
+		return func(c *echo.Context) error {
 			path := c.Request().URL.Path
 			version := extractVersionFromPath(path)
 
@@ -88,7 +88,7 @@ func extractVersionFromPath(path string) string {
 // VersionValidator creates a middleware that validates API versions against supported versions
 func VersionValidator(config *versioning.Config) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
+		return func(c *echo.Context) error {
 			if !config.Enabled {
 				return next(c)
 			}
@@ -122,7 +122,7 @@ func VersionValidator(config *versioning.Config) echo.MiddlewareFunc {
 // VersionLogger creates a middleware that logs API version usage
 func VersionLogger() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
+		return func(c *echo.Context) error {
 			path := c.Request().URL.Path
 			version := extractVersionFromPath(path)
 
@@ -150,7 +150,7 @@ func VersionMiddleware(config *versioning.Config) echo.MiddlewareFunc {
 	strategy, _ := config.GetStrategy()
 
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
+		return func(c *echo.Context) error {
 			if !config.Enabled {
 				return next(c)
 			}

@@ -3,7 +3,7 @@ package authenticator
 import (
 	"net/http"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 type Authenticator struct {
@@ -39,7 +39,7 @@ type AuthContext struct {
 // // RequirePermission middleware checks ACL
 // func (a *Authenticator) RequirePermission(resource, action string) echo.MiddlewareFunc {
 // 	return func(next echo.HandlerFunc) echo.HandlerFunc {
-// 		return func(c echo.Context) error {
+// 		return func(c *echo.Context) error {
 // 			authCtx := c.Get("auth").(*AuthContext)
 
 // 			allowed, err := a.aclChecker.Check(authCtx.UserID, resource, action)
@@ -74,6 +74,6 @@ func (a *Authenticator) shouldSkip(path string, skipPaths []string) bool {
 	return false
 }
 
-func handleAuthError(c echo.Context, err error) error {
-	return echo.NewHTTPError(http.StatusUnauthorized, "unauthorized", err)
+func handleAuthError(c *echo.Context, err error) error {
+	return echo.NewHTTPError(http.StatusUnauthorized, "unauthorized").Wrap(err)
 }

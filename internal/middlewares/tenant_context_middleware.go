@@ -7,7 +7,7 @@ import (
 	"ichi-go/pkg/logger"
 	"ichi-go/pkg/requestctx"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 // TenantContextMiddleware extracts and validates tenant context from requests
@@ -18,7 +18,7 @@ import (
 // 4. Query parameter (?tenant_id=...)
 func TenantContextMiddleware(config TenantConfig) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
+		return func(c *echo.Context) error {
 			// Get request context
 			rc := requestctx.FromContext(c.Request().Context())
 			if rc == nil {
@@ -96,7 +96,7 @@ func DefaultTenantConfig() TenantConfig {
 }
 
 // resolveTenantID resolves tenant ID based on configured strategy
-func resolveTenantID(c echo.Context, config TenantConfig) string {
+func resolveTenantID(c *echo.Context, config TenantConfig) string {
 	var tenantID string
 
 	switch config.Strategy {
@@ -141,7 +141,7 @@ func resolveTenantID(c echo.Context, config TenantConfig) string {
 }
 
 // resolveTenantFromHeader extracts tenant from HTTP header
-func resolveTenantFromHeader(c echo.Context, config TenantConfig) string {
+func resolveTenantFromHeader(c *echo.Context, config TenantConfig) string {
 	headerName := config.HeaderName
 	if headerName == "" {
 		headerName = "X-Tenant-Id"
@@ -151,7 +151,7 @@ func resolveTenantFromHeader(c echo.Context, config TenantConfig) string {
 
 // resolveTenantFromSubdomain extracts tenant from subdomain
 // Example: tenant1.example.com -> tenant1
-func resolveTenantFromSubdomain(c echo.Context, config TenantConfig) string {
+func resolveTenantFromSubdomain(c *echo.Context, config TenantConfig) string {
 	host := c.Request().Host
 
 	// Remove port if present
@@ -177,7 +177,7 @@ func resolveTenantFromSubdomain(c echo.Context, config TenantConfig) string {
 
 // resolveTenantFromPath extracts tenant from URL path
 // Example: /tenants/acme/users -> acme
-func resolveTenantFromPath(c echo.Context, config TenantConfig) string {
+func resolveTenantFromPath(c *echo.Context, config TenantConfig) string {
 	path := c.Request().URL.Path
 
 	if !strings.HasPrefix(path, config.PathPrefix) {
@@ -197,7 +197,7 @@ func resolveTenantFromPath(c echo.Context, config TenantConfig) string {
 }
 
 // resolveTenantFromQuery extracts tenant from query parameter
-func resolveTenantFromQuery(c echo.Context, config TenantConfig) string {
+func resolveTenantFromQuery(c *echo.Context, config TenantConfig) string {
 	paramName := config.QueryParam
 	if paramName == "" {
 		paramName = "tenant_id"

@@ -14,7 +14,7 @@ import (
 	dbModel "ichi-go/pkg/db/model"
 	pkgErrors "ichi-go/pkg/errors"
 
-	_ "github.com/labstack/echo/v4"
+	_ "github.com/labstack/echo/v5"
 	"github.com/samber/oops"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

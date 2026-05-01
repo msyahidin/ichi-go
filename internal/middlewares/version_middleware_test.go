@@ -8,7 +8,7 @@ import (
 	"ichi-go/pkg/testutil"
 	"ichi-go/pkg/versioning"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -100,7 +100,7 @@ func TestVersionMiddleware_DetectVersionFromHeader(t *testing.T) {
 			c := e.NewContext(req, rec)
 
 			handlerCalled := false
-			handler := func(c echo.Context) error {
+			handler := func(c *echo.Context) error {
 				handlerCalled = true
 
 				// Check version was set in context
@@ -165,7 +165,7 @@ func TestVersionMiddleware_VersionFromPath(t *testing.T) {
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
 
-			handler := func(c echo.Context) error {
+			handler := func(c *echo.Context) error {
 				return c.String(http.StatusOK, "OK")
 			}
 
@@ -193,7 +193,7 @@ func TestVersionMiddleware_Disabled(t *testing.T) {
 	c := e.NewContext(req, rec)
 
 	handlerCalled := false
-	handler := func(c echo.Context) error {
+	handler := func(c *echo.Context) error {
 		handlerCalled = true
 
 		// Version should not be set when middleware is disabled
@@ -243,7 +243,7 @@ func TestVersionMiddleware_DeprecationWarning(t *testing.T) {
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
 
-			handler := func(c echo.Context) error {
+			handler := func(c *echo.Context) error {
 				return c.String(http.StatusOK, "OK")
 			}
 
@@ -289,7 +289,7 @@ func BenchmarkVersionMiddleware(b *testing.B) {
 	req := httptest.NewRequest(http.MethodGet, "/api/users", nil)
 	req.Header.Set("API-Version", "202601")
 
-	handler := func(c echo.Context) error {
+	handler := func(c *echo.Context) error {
 		return c.String(http.StatusOK, "OK")
 	}
 
@@ -317,7 +317,7 @@ func BenchmarkVersionMiddleware_WithDeprecation(b *testing.B) {
 	req := httptest.NewRequest(http.MethodGet, "/api/users", nil)
 	req.Header.Set("API-Version", "202511") // Old version
 
-	handler := func(c echo.Context) error {
+	handler := func(c *echo.Context) error {
 		return c.String(http.StatusOK, "OK")
 	}
 
@@ -352,7 +352,7 @@ func TestVersionMiddleware_Integration(t *testing.T) {
 	e.Use(VersionMiddleware(config))
 
 	// Register test route
-	e.GET("/api/users", func(c echo.Context) error {
+	e.GET("/api/users", func(c *echo.Context) error {
 		version := c.Get("api_version")
 		return c.JSON(http.StatusOK, map[string]interface{}{
 			"version": version,
@@ -417,7 +417,7 @@ func TestVersionMiddleware_TableDriven(t *testing.T) {
 				rec := httptest.NewRecorder()
 				c := e.NewContext(req, rec)
 
-				handler := func(c echo.Context) error {
+				handler := func(c *echo.Context) error {
 					return c.String(http.StatusOK, "OK")
 				}
 
@@ -435,7 +435,7 @@ func TestVersionMiddleware_TableDriven(t *testing.T) {
 				rec := httptest.NewRecorder()
 				c := e.NewContext(req, rec)
 
-				handler := func(c echo.Context) error {
+				handler := func(c *echo.Context) error {
 					return c.String(http.StatusOK, "OK")
 				}
 

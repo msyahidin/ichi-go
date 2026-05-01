@@ -1,9 +1,9 @@
 package errors
 
-import "github.com/labstack/echo/v4"
+import "github.com/labstack/echo/v5"
 
 type ErrorHandler interface {
-	Handle(err error, ctx echo.Context) error
+	Handle(err error, ctx *echo.Context) error
 }
 
 type Chain []ErrorHandler
@@ -12,7 +12,7 @@ func NewChain(handlers ...ErrorHandler) Chain {
 	return handlers
 }
 
-func (c Chain) Handle(err error, ctx echo.Context) error {
+func (c Chain) Handle(err error, ctx *echo.Context) error {
 	for _, h := range c {
 		if h.Handle(err, ctx) == nil {
 			return nil
@@ -21,7 +21,7 @@ func (c Chain) Handle(err error, ctx echo.Context) error {
 	return err
 }
 
-func (c Chain) EchoHandler(err error, ctx echo.Context) {
+func (c Chain) EchoHandler(ctx *echo.Context, err error) {
 	if remaining := c.Handle(err, ctx); remaining != nil {
 		NewGenericHandler().Handle(remaining, ctx)
 	}

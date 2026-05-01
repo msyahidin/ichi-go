@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"fmt"
 	authDto "ichi-go/internal/applications/auth/dto"
 	authService "ichi-go/internal/applications/auth/service"
 	"ichi-go/pkg/authenticator"
@@ -10,7 +9,7 @@ import (
 	appValidator "ichi-go/pkg/validator"
 	"net/http"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 type AuthController struct {
@@ -35,7 +34,7 @@ func NewAuthController(service *authService.ServiceImpl) *AuthController {
 //	@Failure		401			{object}	response.ErrorResponse									"Invalid credentials"
 //	@Failure		500			{object}	response.ErrorResponse									"Internal server error"
 //	@Router			/202601/auth/login [post]
-func (c *AuthController) Login(eCtx echo.Context) error {
+func (c *AuthController) Login(eCtx *echo.Context) error {
 	var req authDto.LoginRequest
 
 	// Bind and validate with automatic language detection
@@ -66,8 +65,8 @@ func (c *AuthController) Login(eCtx echo.Context) error {
 //	@Success		201			{object}	response.SuccessResponse{data=authDto.RegisterResponse}	"User registered successfully"
 //	@Failure		400			{object}	response.ErrorResponse									"Invalid request, validation error, or user already exists"
 //	@Failure		500			{object}	response.ErrorResponse									"Internal server error"
-//	@Router			/auth/register [post]
-func (c *AuthController) Register(eCtx echo.Context) error {
+//	@Router			/202601/auth/register [post]
+func (c *AuthController) Register(eCtx *echo.Context) error {
 	var req authDto.RegisterRequest
 
 	err := appValidator.BindAndValidate(eCtx, &req)
@@ -97,8 +96,8 @@ func (c *AuthController) Register(eCtx echo.Context) error {
 //	@Failure		400			{object}	response.ErrorResponse										"Invalid request or validation error"
 //	@Failure		401			{object}	response.ErrorResponse										"Invalid or expired refresh token"
 //	@Failure		500			{object}	response.ErrorResponse										"Internal server error"
-//	@Router			/auth/refresh [post]
-func (c *AuthController) RefreshToken(eCtx echo.Context) error {
+//	@Router			/202601/auth/refresh [post]
+func (c *AuthController) RefreshToken(eCtx *echo.Context) error {
 	var req authDto.RefreshTokenRequest
 
 	// Bind and validate with automatic language detection
@@ -128,8 +127,8 @@ func (c *AuthController) RefreshToken(eCtx echo.Context) error {
 //	@Security		BearerAuth
 //	@Success		200	{object}	response.SuccessResponse{data=map[string]string}	"Logged out successfully"
 //	@Failure		401	{object}	response.ErrorResponse								"Unauthorized - invalid or missing token"
-//	@Router			/auth/logout [post]
-func (c *AuthController) Logout(eCtx echo.Context) error {
+//	@Router			/202601/auth/logout [post]
+func (c *AuthController) Logout(eCtx *echo.Context) error {
 	logger.Infof("User logged out")
 	return response.Success(eCtx, map[string]string{
 		"message": "Logged out successfully",
@@ -147,9 +146,8 @@ func (c *AuthController) Logout(eCtx echo.Context) error {
 //	@Success		200	{object}	response.SuccessResponse{data=authDto.UserInfo}	"User profile retrieved successfully"
 //	@Failure		401	{object}	response.ErrorResponse							"Unauthorized - invalid or missing token"
 //	@Failure		500	{object}	response.ErrorResponse							"Internal server error"
-//	@Router			/auth/me [get]
-func (c *AuthController) Me(eCtx echo.Context) error {
-	fmt.Println("AuthController.Me called")
+//	@Router			/202601/auth/me [get]
+func (c *AuthController) Me(eCtx *echo.Context) error {
 	// Get auth context from middleware
 	authCtx, ok := eCtx.Get("auth").(*authenticator.AuthContext)
 	logger.Debugf("AuthController.Me: authCtx=%+v, ok=%v", authCtx, ok)

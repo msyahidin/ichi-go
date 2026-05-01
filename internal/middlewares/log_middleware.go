@@ -4,8 +4,8 @@ import (
 	"ichi-go/config"
 	"ichi-go/pkg/logger"
 
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
+	"github.com/labstack/echo/v5"
+	"github.com/labstack/echo/v5/middleware"
 )
 
 func Logger(config *config.Config) echo.MiddlewareFunc {
@@ -13,7 +13,7 @@ func Logger(config *config.Config) echo.MiddlewareFunc {
 		LogRequestID: true,
 		LogURI:       true,
 		LogStatus:    true,
-		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
+		LogValuesFunc: func(c *echo.Context, v middleware.RequestLoggerValues) error {
 			logger.RequestLogging(c, "%s %s %d", v.Method, v.URI, v.Status)
 			return nil
 		},

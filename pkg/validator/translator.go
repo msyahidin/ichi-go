@@ -3,11 +3,11 @@ package validator
 import (
 	"strings"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 // GetLanguageFromContext extracts language from Accept-Language or X-Language header
-func GetLanguageFromContext(c echo.Context) string {
+func GetLanguageFromContext(c *echo.Context) string {
 	// Try X-Language custom header first (highest priority)
 	customLang := c.Request().Header.Get("X-Language")
 	if customLang == "id" || customLang == "en" {

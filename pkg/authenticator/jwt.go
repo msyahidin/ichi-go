@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 type JWTAuthenticator struct {
@@ -48,7 +48,7 @@ type JWTConfig struct {
 
 type JWTClaimsValidator func(claims jwt.MapClaims) error
 
-func (a *JWTAuthenticator) Authenticate(c echo.Context) (*AuthContext, error) {
+func (a *JWTAuthenticator) Authenticate(c *echo.Context) (*AuthContext, error) {
 	tokenString, err := ExtractToken(c, *a.config)
 	if err != nil {
 		return nil, pkgErrors.AuthService(pkgErrors.ErrCodeInvalidToken).

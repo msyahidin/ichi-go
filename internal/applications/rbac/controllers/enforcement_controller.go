@@ -8,7 +8,7 @@ import (
 	"ichi-go/pkg/requestctx"
 	"ichi-go/pkg/utils/response"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 // EnforcementController handles permission check endpoints
@@ -36,7 +36,7 @@ func NewEnforcementController(enforcementService *services.EnforcementService) *
 //	@Failure		500		{object}	response.ErrorResponse
 //	@Security		BearerAuth
 //	@Router			/v1/rbac/enforce/check [post]
-func (c *EnforcementController) CheckPermission(ctx echo.Context) error {
+func (c *EnforcementController) CheckPermission(ctx *echo.Context) error {
 	var req dto.CheckPermissionRequest
 
 	if err := ctx.Bind(&req); err != nil {
@@ -85,7 +85,7 @@ func (c *EnforcementController) CheckPermission(ctx echo.Context) error {
 //	@Failure		500		{object}	response.ErrorResponse
 //	@Security		BearerAuth
 //	@Router			/v1/rbac/enforce/batch [post]
-func (c *EnforcementController) CheckBatchPermissions(ctx echo.Context) error {
+func (c *EnforcementController) CheckBatchPermissions(ctx *echo.Context) error {
 	var req dto.BatchCheckPermissionRequest
 
 	if err := ctx.Bind(&req); err != nil {
@@ -137,7 +137,7 @@ func (c *EnforcementController) CheckBatchPermissions(ctx echo.Context) error {
 //	@Failure		500			{object}	response.ErrorResponse
 //	@Security		BearerAuth
 //	@Router			/v1/rbac/enforce/my-permissions [get]
-func (c *EnforcementController) GetMyPermissions(ctx echo.Context) error {
+func (c *EnforcementController) GetMyPermissions(ctx *echo.Context) error {
 	// Get user ID from request context
 	userID := requestctx.GetUserIDAsInt64(ctx.Request().Context())
 	if userID == 0 {
@@ -174,7 +174,7 @@ func (c *EnforcementController) GetMyPermissions(ctx echo.Context) error {
 
 // RequirePermission is a helper method for middleware/handlers
 // It checks permission and returns error if denied
-func (c *EnforcementController) RequirePermission(ctx echo.Context, resource, action string) error {
+func (c *EnforcementController) RequirePermission(ctx *echo.Context, resource, action string) error {
 	userID := requestctx.GetUserIDAsInt64(ctx.Request().Context())
 	if userID == 0 {
 		return echo.NewHTTPError(http.StatusUnauthorized, "User not authenticated")

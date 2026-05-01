@@ -7,7 +7,7 @@ import (
 	appValidator "ichi-go/pkg/validator"
 	"net/http"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/oops"
 )
 
@@ -18,8 +18,8 @@ func NewOppsHandler() *OopsErrorHandler {
 	return &OopsErrorHandler{}
 }
 
-func (h *OopsErrorHandler) Handle(err error, c echo.Context) error {
-	if c.Response().Committed {
+func (h *OopsErrorHandler) Handle(err error, c *echo.Context) error {
+	if resp, unwrapErr := echo.UnwrapResponse(c.Response()); unwrapErr == nil && resp.Committed {
 		return nil
 	}
 	code := http.StatusInternalServerError

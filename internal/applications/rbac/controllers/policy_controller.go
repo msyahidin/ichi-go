@@ -9,7 +9,7 @@ import (
 
 	"ichi-go/pkg/utils/response"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 // PolicyController handles policy management endpoints
@@ -40,7 +40,7 @@ func NewPolicyController(policyService *services.PolicyService) *PolicyControlle
 //	@Failure		500			{object}	response.ErrorResponse
 //	@Security		BearerAuth
 //	@Router			/v1/rbac/policies [get]
-func (c *PolicyController) GetPolicies(ctx echo.Context) error {
+func (c *PolicyController) GetPolicies(ctx *echo.Context) error {
 	var req dto.GetPoliciesRequest
 
 	if err := ctx.Bind(&req); err != nil {
@@ -75,7 +75,7 @@ func (c *PolicyController) GetPolicies(ctx echo.Context) error {
 				Action:   p.V3,
 			})
 		}
-	} else if req.Role != nil {
+	} else if req.Role != nil && req.TenantID != nil {
 		casbinPolicies, err := c.policyService.GetPoliciesByRole(ctx.Request().Context(), *req.Role, *req.TenantID)
 		if err != nil {
 			return response.Error(ctx, http.StatusInternalServerError, err)
@@ -127,7 +127,7 @@ func (c *PolicyController) GetPolicies(ctx echo.Context) error {
 //	@Failure		500		{object}	response.ErrorResponse
 //	@Security		BearerAuth
 //	@Router			/v1/rbac/policies [post]
-func (c *PolicyController) AddPolicy(ctx echo.Context) error {
+func (c *PolicyController) AddPolicy(ctx *echo.Context) error {
 	var req dto.AddPolicyRequest
 
 	if err := ctx.Bind(&req); err != nil {
@@ -175,7 +175,7 @@ func (c *PolicyController) AddPolicy(ctx echo.Context) error {
 //	@Failure		500		{object}	response.ErrorResponse
 //	@Security		BearerAuth
 //	@Router			/v1/rbac/policies [delete]
-func (c *PolicyController) RemovePolicy(ctx echo.Context) error {
+func (c *PolicyController) RemovePolicy(ctx *echo.Context) error {
 	var req dto.RemovePolicyRequest
 
 	if err := ctx.Bind(&req); err != nil {
@@ -221,7 +221,7 @@ func (c *PolicyController) RemovePolicy(ctx echo.Context) error {
 //	@Failure		500			{object}	response.ErrorResponse
 //	@Security		BearerAuth
 //	@Router			/v1/rbac/policies/count [get]
-func (c *PolicyController) GetPolicyCount(ctx echo.Context) error {
+func (c *PolicyController) GetPolicyCount(ctx *echo.Context) error {
 	tenantID := ctx.QueryParam("tenant_id")
 
 	var count int
@@ -262,7 +262,7 @@ func (c *PolicyController) GetPolicyCount(ctx echo.Context) error {
 //	@Failure		500	{object}	response.ErrorResponse
 //	@Security		BearerAuth
 //	@Router			/v1/rbac/policies/reload [post]
-func (c *PolicyController) ReloadPolicies(ctx echo.Context) error {
+func (c *PolicyController) ReloadPolicies(ctx *echo.Context) error {
 	// Get actor ID from context
 	actorID := requestctx.GetUserIDAsInt64(ctx.Request().Context())
 	if actorID == 0 {

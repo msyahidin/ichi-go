@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -12,7 +13,7 @@ import (
 	"ichi-go/pkg/logger"
 	"ichi-go/pkg/requestctx"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 // RBACAuditMiddleware logs RBAC-related operations to the audit log
@@ -20,7 +21,7 @@ import (
 // on RBAC resources and logs them for compliance and security auditing
 func RBACAuditMiddleware(auditRepo *repositories.AuditRepository, config AuditConfig) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
+		return func(c *echo.Context) error {
 			ctx := c.Request().Context()
 			rc := requestctx.FromContext(ctx)
 
@@ -42,13 +43,6 @@ func RBACAuditMiddleware(auditRepo *repositories.AuditRepository, config AuditCo
 			if shouldCaptureBody(c.Request().Method) {
 				requestBody = captureRequestBody(c)
 			}
-
-			// Create response writer wrapper to capture status code
-			resWrapper := &responseWrapper{
-				ResponseWriter: c.Response().Writer,
-				statusCode:     http.StatusOK,
-			}
-			c.Response().Writer = resWrapper
 
 			// Execute request
 			err := next(c)
@@ -81,12 +75,7 @@ func RBACAuditMiddleware(auditRepo *repositories.AuditRepository, config AuditCo
 				}
 
 				// Add response status
-				statusCode := resWrapper.statusCode
-				if err != nil {
-					if he, ok := err.(*echo.HTTPError); ok {
-						statusCode = he.Code
-					}
-				}
+				_, statusCode := echo.ResolveResponseStatus(c.Response(), err)
 
 				// Set decision based on HTTP status
 				if statusCode >= 200 && statusCode < 300 {
@@ -101,9 +90,12 @@ func RBACAuditMiddleware(auditRepo *repositories.AuditRepository, config AuditCo
 					}
 				}
 
-				// Save audit log asynchronously
+				// Save audit log asynchronously with a detached context to avoid
+				// cancellation when the request context is done.
 				go func() {
-					if err := auditRepo.Create(ctx, log); err != nil {
+					auditCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+					defer cancel()
+					if err := auditRepo.Create(auditCtx, log); err != nil {
 						logger.Errorf("Failed to save audit log: %v", err)
 					}
 				}()
@@ -147,32 +139,13 @@ func DefaultAuditConfig() AuditConfig {
 	}
 }
 
-// responseWrapper wraps http.ResponseWriter to capture status code
-type responseWrapper struct {
-	http.ResponseWriter
-	statusCode int
-	body       *bytes.Buffer
-}
-
-func (w *responseWrapper) WriteHeader(statusCode int) {
-	w.statusCode = statusCode
-	w.ResponseWriter.WriteHeader(statusCode)
-}
-
-func (w *responseWrapper) Write(b []byte) (int, error) {
-	if w.body != nil {
-		w.body.Write(b)
-	}
-	return w.ResponseWriter.Write(b)
-}
-
 // shouldCaptureBody determines if request body should be captured
 func shouldCaptureBody(method string) bool {
 	return method == http.MethodPost || method == http.MethodPut || method == http.MethodPatch
 }
 
 // captureRequestBody reads and captures the request body
-func captureRequestBody(c echo.Context) map[string]interface{} {
+func captureRequestBody(c *echo.Context) map[string]interface{} {
 	if c.Request().Body == nil {
 		return nil
 	}
@@ -199,7 +172,7 @@ func captureRequestBody(c echo.Context) map[string]interface{} {
 }
 
 // shouldAudit determines if a request should be audited
-func shouldAudit(c echo.Context, config AuditConfig) bool {
+func shouldAudit(c *echo.Context, config AuditConfig) bool {
 	path := c.Path()
 
 	// Check included paths first (if specified)
@@ -291,7 +264,7 @@ func extractResourceType(path string) string {
 }
 
 // extractResourceID extracts the resource ID from the URL path or params
-func extractResourceID(c echo.Context) string {
+func extractResourceID(c *echo.Context) string {
 	// Try common ID parameter names
 	params := []string{"id", "roleId", "userId", "permissionId"}
 

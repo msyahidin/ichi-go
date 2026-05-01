@@ -5,15 +5,17 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strings"
 	"time"
 
 	"ichi-go/internal/applications/rbac/dto"
 	"ichi-go/internal/applications/rbac/repositories"
 	"ichi-go/internal/applications/rbac/services"
-
+	"ichi-go/pkg/logger"
 	"ichi-go/pkg/utils/response"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 // AuditController handles audit log endpoints
@@ -51,7 +53,7 @@ func NewAuditController(auditService *services.AuditService) *AuditController {
 //	@Failure		500				{object}	response.ErrorResponse
 //	@Security		BearerAuth
 //	@Router			/v1/rbac/audit/logs [get]
-func (c *AuditController) QueryAuditLogs(ctx echo.Context) error {
+func (c *AuditController) QueryAuditLogs(ctx *echo.Context) error {
 	var req dto.AuditQueryRequest
 
 	if err := ctx.Bind(&req); err != nil {
@@ -109,8 +111,8 @@ func (c *AuditController) QueryAuditLogs(ctx echo.Context) error {
 			TenantID:       log.TenantID,
 			Decision:       log.Decision,
 			DecisionReason: log.DecisionReason,
-			PolicyBefore:   log.PolicyBefore.(map[string]interface{}),
-			PolicyAfter:    log.PolicyAfter.(map[string]interface{}),
+			PolicyBefore:   toMapOrEmpty(log.PolicyBefore),
+			PolicyAfter:    toMapOrEmpty(log.PolicyAfter),
 			Reason:         log.Reason,
 			LatencyMs:      log.LatencyMs,
 		})
@@ -122,6 +124,47 @@ func (c *AuditController) QueryAuditLogs(ctx echo.Context) error {
 	}
 
 	return response.Success(ctx, resp)
+}
+
+// toMapOrEmpty casts v to map[string]interface{}.
+// - nil → empty map (no policy recorded is expected and normal)
+// - correct type → returned as-is
+// - unexpected non-nil type → wrapped under "__raw" so the value is
+//   preserved in the response and a warning is logged for investigation.
+func toMapOrEmpty(v interface{}) map[string]interface{} {
+	if v == nil {
+		return map[string]interface{}{}
+	}
+	if m, ok := v.(map[string]interface{}); ok {
+		return m
+	}
+	logger.Warnf("toMapOrEmpty: unexpected type %T for audit policy field; wrapping as __raw", v)
+	return map[string]interface{}{"__raw": v}
+}
+
+// safeFileNameRe permits only alphanumerics, dots, underscores, and hyphens.
+var safeFileNameRe = regexp.MustCompile(`^[a-zA-Z0-9._-]+$`)
+
+// sanitizeExportFileName returns a safe filename for export files. If the
+// caller-supplied name is empty, absolute, contains path separators, "..",
+// or characters outside the allowlist, it falls back to a timestamped default.
+// The fallback includes nanosecond precision to avoid collisions between
+// concurrent exports.
+func sanitizeExportFileName(name, format string) string {
+	now := time.Now()
+	fallback := fmt.Sprintf("audit_logs_%s_%09d.%s", now.Format("20060102_150405"), now.Nanosecond(), format)
+	if name == "" {
+		return fallback
+	}
+	// Strip directory component; reject anything that still looks dangerous.
+	base := filepath.Base(name)
+	if filepath.IsAbs(name) ||
+		strings.Contains(name, "..") ||
+		strings.ContainsAny(name, `/\`) ||
+		!safeFileNameRe.MatchString(base) {
+		return fallback
+	}
+	return base
 }
 
 // GetAuditStats godoc
@@ -139,7 +182,7 @@ func (c *AuditController) QueryAuditLogs(ctx echo.Context) error {
 //	@Failure		500			{object}	response.ErrorResponse
 //	@Security		BearerAuth
 //	@Router			/v1/rbac/audit/stats [get]
-func (c *AuditController) GetAuditStats(ctx echo.Context) error {
+func (c *AuditController) GetAuditStats(ctx *echo.Context) error {
 	var req dto.AuditStatsRequest
 
 	if err := ctx.Bind(&req); err != nil {
@@ -196,7 +239,7 @@ func (c *AuditController) GetAuditStats(ctx echo.Context) error {
 //	@Failure		500		{object}	response.ErrorResponse
 //	@Security		BearerAuth
 //	@Router			/v1/rbac/audit/export [post]
-func (c *AuditController) ExportAuditLogs(ctx echo.Context) error {
+func (c *AuditController) ExportAuditLogs(ctx *echo.Context) error {
 	var req dto.ExportAuditLogsRequest
 
 	if err := ctx.Bind(&req); err != nil {
@@ -219,10 +262,7 @@ func (c *AuditController) ExportAuditLogs(ctx echo.Context) error {
 	}
 
 	// Generate filename
-	fileName := req.FileName
-	if fileName == "" {
-		fileName = fmt.Sprintf("audit_logs_%s.%s", time.Now().Format("20060102_150405"), req.Format)
-	}
+	safeFileName := sanitizeExportFileName(req.FileName, req.Format)
 
 	// Create export directory
 	exportDir := "./exports/audit"
@@ -230,7 +270,7 @@ func (c *AuditController) ExportAuditLogs(ctx echo.Context) error {
 		return response.Error(ctx, http.StatusInternalServerError, err)
 	}
 
-	filePath := filepath.Join(exportDir, fileName)
+	filePath := filepath.Join(exportDir, safeFileName)
 
 	// Export based on format
 	var err error
@@ -277,7 +317,7 @@ func (c *AuditController) ExportAuditLogs(ctx echo.Context) error {
 //	@Failure		500			{object}	response.ErrorResponse
 //	@Security		BearerAuth
 //	@Router			/v1/rbac/audit/mutations [get]
-func (c *AuditController) GetRecentMutations(ctx echo.Context) error {
+func (c *AuditController) GetRecentMutations(ctx *echo.Context) error {
 	tenantID := ctx.QueryParam("tenant_id")
 	limit := 50 // Default limit
 
@@ -304,8 +344,8 @@ func (c *AuditController) GetRecentMutations(ctx echo.Context) error {
 			ResourceID:   log.ResourceID,
 			SubjectID:    log.SubjectID,
 			TenantID:     log.TenantID,
-			PolicyBefore: log.PolicyBefore.(map[string]interface{}),
-			PolicyAfter:  log.PolicyAfter.(map[string]interface{}),
+			PolicyBefore: toMapOrEmpty(log.PolicyBefore),
+			PolicyAfter:  toMapOrEmpty(log.PolicyAfter),
 			Reason:       log.Reason,
 		})
 	}
@@ -330,7 +370,7 @@ func (c *AuditController) GetRecentMutations(ctx echo.Context) error {
 //	@Failure		500			{object}	response.ErrorResponse
 //	@Security		BearerAuth
 //	@Router			/v1/rbac/audit/decisions [get]
-func (c *AuditController) GetRecentDecisions(ctx echo.Context) error {
+func (c *AuditController) GetRecentDecisions(ctx *echo.Context) error {
 	tenantID := ctx.QueryParam("tenant_id")
 	limit := 50 // Default limit
 

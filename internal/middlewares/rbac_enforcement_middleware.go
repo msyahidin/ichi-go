@@ -7,7 +7,7 @@ import (
 	"ichi-go/pkg/logger"
 	"ichi-go/pkg/requestctx"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 // RBACEnforcementMiddleware enforces RBAC permissions on routes
@@ -15,7 +15,7 @@ import (
 // to access the requested resource/action combination
 func RBACEnforcementMiddleware(enforcementService *services.EnforcementService, config RBACConfig) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
+		return func(c *echo.Context) error {
 			// Skip enforcement for excluded paths
 			if isExcludedPath(c.Path(), config.ExcludedPaths) {
 				return next(c)
@@ -100,7 +100,7 @@ type RBACConfig struct {
 	ExcludedPaths []string
 
 	// ResourceMapper is a custom function to map routes to resources
-	ResourceMapper func(c echo.Context) (resource string, action string)
+	ResourceMapper func(c *echo.Context) (resource string, action string)
 
 	// DefaultResource is used when ResourceMapper returns empty string
 	DefaultResource string
@@ -126,7 +126,7 @@ func DefaultRBACConfig() RBACConfig {
 // This is useful for protecting individual routes with explicit permissions
 func RequirePermission(enforcementService *services.EnforcementService, resource, action string) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
+		return func(c *echo.Context) error {
 			ctx := c.Request().Context()
 
 			// Get user ID
@@ -162,7 +162,7 @@ func RequirePermission(enforcementService *services.EnforcementService, resource
 }
 
 // resolveResourceAction determines the resource and action from the request
-func resolveResourceAction(c echo.Context, config RBACConfig) (resource, action string) {
+func resolveResourceAction(c *echo.Context, config RBACConfig) (resource, action string) {
 	// Use custom mapper if provided
 	if config.ResourceMapper != nil {
 		resource, action = config.ResourceMapper(c)
@@ -181,7 +181,7 @@ func resolveResourceAction(c echo.Context, config RBACConfig) (resource, action 
 
 // defaultResourceMapper is the default resource/action mapper
 // Maps HTTP methods to RBAC actions and extracts resource from path
-func defaultResourceMapper(c echo.Context) (resource, action string) {
+func defaultResourceMapper(c *echo.Context) (resource, action string) {
 	// Map HTTP method to RBAC action
 	switch c.Request().Method {
 	case http.MethodGet:

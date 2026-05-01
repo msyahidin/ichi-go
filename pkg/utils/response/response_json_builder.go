@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 type body struct {
@@ -17,7 +17,7 @@ type body struct {
 	ServerTime string      `json:"serverTime"`
 }
 
-func Base(ctx echo.Context, httpCode int, message string, data interface{}, errorCode int, err error) error {
+func Base(ctx *echo.Context, httpCode int, message string, data interface{}, errorCode int, err error) error {
 	date := time.Now().Format(time.RFC1123)
 	bodyResponse := body{
 		Code:       httpCode,
@@ -44,7 +44,7 @@ func Base(ctx echo.Context, httpCode int, message string, data interface{}, erro
 	return ctx.JSON(httpCode, bodyResponse)
 }
 
-func Created(ctx echo.Context, data interface{}) error {
+func Created(ctx *echo.Context, data interface{}) error {
 	if data == nil {
 		panic(errors.New("success response : data on body is mandatory"))
 	}
@@ -52,7 +52,7 @@ func Created(ctx echo.Context, data interface{}) error {
 	return Base(ctx, http.StatusCreated, http.StatusText(http.StatusCreated), data, http.StatusCreated, nil)
 }
 
-func Success(ctx echo.Context, data interface{}) error {
+func Success(ctx *echo.Context, data interface{}) error {
 	if data == nil {
 		panic(errors.New("success response : data on body is mandatory"))
 	}
@@ -61,6 +61,6 @@ func Success(ctx echo.Context, data interface{}) error {
 }
 
 //goland:noinspection GoUnusedExportedFunction
-func Error(ctx echo.Context, httpCode int, err error) error {
+func Error(ctx *echo.Context, httpCode int, err error) error {
 	return Base(ctx, httpCode, http.StatusText(httpCode), nil, httpCode, err)
 }

@@ -4,6 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
+	"os"
+	"os/signal"
+	"time"
+
+	"github.com/labstack/echo/v5"
+	"github.com/samber/do/v2"
+
 	"ichi-go/cmd/server"
 	"ichi-go/config"
 	_ "ichi-go/docs" // Import generated docs
@@ -12,14 +20,6 @@ import (
 	"ichi-go/internal/middlewares"
 	errors2 "ichi-go/pkg/errors"
 	"ichi-go/pkg/logger"
-	"net/http"
-	"os"
-	"os/signal"
-	"time"
-
-	"github.com/samber/do/v2"
-
-	"github.com/labstack/echo/v4"
 )
 
 //	@title			Ichi-Go API
@@ -72,7 +72,7 @@ func main() {
 	errors2.Setup(e)
 
 	// Log all routes
-	for _, route := range e.Routes() {
+	for _, route := range e.Router().Routes() {
 		if route.Method == "" && route.Path == "" {
 			continue
 		}
@@ -90,11 +90,20 @@ func main() {
 		go server.StartQueueWorkers(ctx, msgConfig, msgConn, injector)
 	}
 
-	// Start the server
+	// Start the server with context-based graceful shutdown
+	serverDone := make(chan struct{})
 	go func() {
+		defer close(serverDone)
 		address := fmt.Sprintf(":%d", cfg.Http().Port)
 		logger.Infof("starting http server at %s", address)
-		if err := e.Start(address); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		sc := echo.StartConfig{
+			Address:         address,
+			GracefulTimeout: 10 * time.Second,
+			OnShutdownError: func(err error) {
+				logger.Errorf("error during server shutdown: %v", err)
+			},
+		}
+		if err := sc.Start(ctx, e); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			logger.Errorf("http server error: %v", err)
 		}
 	}()
@@ -104,12 +113,9 @@ func main() {
 
 	// Graceful shutdown
 	logger.Infof("Received shutdown signal...")
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
 
-	if err := e.Shutdown(shutdownCtx); err != nil {
-		logger.Fatalf("error during server shutdown: %v", err)
-	}
+	// Wait for server graceful shutdown to complete
+	<-serverDone
 
 	// Shutdown all services in reverse dependency order
 	logger.Infof("shutting down services...")
