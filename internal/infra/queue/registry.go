@@ -20,9 +20,9 @@ import (
 
 // ConsumerRegistration links consumer name to processing function.
 type ConsumerRegistration struct {
-	Name        string               // Must match config.yaml
-	ConsumeFunc rabbitmq.ConsumeFunc // Processing function
-	Description string               // What this consumer does
+	Name        string      // Must match config.yaml
+	ConsumeFunc ConsumeFunc // Processing function
+	Description string      // What this consumer does
 }
 
 // GetRegisteredConsumers returns all queue consumers.

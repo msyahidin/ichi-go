@@ -27,7 +27,6 @@ func RegisterProviders(injector do.Injector) {
 	do.Provide(injector, ProvideCampaignRepository)
 	do.Provide(injector, ProvideLogRepository)
 	do.Provide(injector, ProvideTemplateRenderer)
-	do.Provide(injector, ProvideMainProducer)
 	do.ProvideNamed(injector, "notification.blast.producer", ProvideBlastProducer)
 	do.ProvideNamed(injector, "notification.user.producer", ProvideUserProducer)
 	do.Provide(injector, ProvideFCMClient)
@@ -62,17 +61,6 @@ func ProvideTemplateRenderer(i do.Injector) (*services.TemplateRenderer, error) 
 	registry := do.MustInvoke[*notiftemplate.Registry](i)
 	overrideRepo := do.MustInvoke[*repositories.NotificationTemplateOverrideRepository](i)
 	return services.NewTemplateRenderer(registry, overrideRepo), nil
-}
-
-// ProvideMainProducer returns a producer bound to the app.events (x-delayed-message) exchange.
-// Used by CampaignService to publish with optional delay.
-func ProvideMainProducer(i do.Injector) (rabbitmq.MessageProducer, error) {
-	conn, err := do.Invoke[*rabbitmq.Connection](i)
-	if err != nil || conn == nil {
-		return nil, nil // Queue disabled — CampaignService handles nil producer gracefully
-	}
-	cfg := do.MustInvoke[*config.Config](i)
-	return rabbitmq.NewProducer(conn, cfg.Queue().RabbitMQ)
 }
 
 // ProvideFCMClient initializes the Firebase Cloud Messaging client.
@@ -124,13 +112,20 @@ func ProvideNotificationController(i do.Injector) (*notifController.Notification
 // Callers must guard against nil before invoking Publish.
 func ProvideBlastProducer(i do.Injector) (rabbitmq.MessageProducer, error) {
 	conn, err := do.Invoke[*rabbitmq.Connection](i)
-	if err != nil || conn == nil {
-		return nil, nil // Queue disabled — producer is nil; NotificationService.Blast returns an error when called
+	if err != nil {
+		return nil, fmt.Errorf("notification: blast producer: failed to resolve rabbitmq connection: %w", err)
+	}
+	if conn == nil {
+		// Queue unavailable — graceful no-op; callers must guard against nil.
+		return nil, nil
 	}
 	cfg := do.MustInvoke[*config.Config](i)
-	rmqCfg := cfg.Queue().RabbitMQ
-	rmqCfg.Publisher.ExchangeName = "notification.blast"
-	return rabbitmq.NewProducer(conn, rmqCfg)
+	amqpCfg, ok := cfg.Queue().DefaultAMQPConfig()
+	if !ok {
+		return nil, nil
+	}
+	amqpCfg.Publisher.ExchangeName = "notification.blast"
+	return rabbitmq.NewProducer(conn, amqpCfg)
 }
 
 // ProvideUserProducer returns a producer bound to the topic user exchange.
@@ -138,13 +133,20 @@ func ProvideBlastProducer(i do.Injector) (rabbitmq.MessageProducer, error) {
 // Callers must guard against nil before invoking Publish.
 func ProvideUserProducer(i do.Injector) (rabbitmq.MessageProducer, error) {
 	conn, err := do.Invoke[*rabbitmq.Connection](i)
-	if err != nil || conn == nil {
-		return nil, nil // Queue disabled — producer is nil; NotificationService.SendToUser returns an error when called
+	if err != nil {
+		return nil, fmt.Errorf("notification: user producer: failed to resolve rabbitmq connection: %w", err)
+	}
+	if conn == nil {
+		// Queue unavailable — graceful no-op; callers must guard against nil.
+		return nil, nil
 	}
 	cfg := do.MustInvoke[*config.Config](i)
-	rmqCfg := cfg.Queue().RabbitMQ
-	rmqCfg.Publisher.ExchangeName = "notification.user"
-	return rabbitmq.NewProducer(conn, rmqCfg)
+	amqpCfg, ok := cfg.Queue().DefaultAMQPConfig()
+	if !ok {
+		return nil, nil
+	}
+	amqpCfg.Publisher.ExchangeName = "notification.user"
+	return rabbitmq.NewProducer(conn, amqpCfg)
 }
 
 // ProvideNotificationService wires NotificationService with its blast and user producers.

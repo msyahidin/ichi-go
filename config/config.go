@@ -20,19 +20,25 @@ import (
 	"ichi-go/pkg/logger"
 )
 
+// DatabaseSchema mirrors the `database:` YAML block.
+type DatabaseSchema struct {
+	Default     string                     `mapstructure:"default"`
+	Connections map[string]database.Config `mapstructure:"connections"`
+}
+
 type Schema struct {
-	App        AppConfig
-	Database   database.Config
-	Cache      cache.Config
-	Log        logger.LogConfig
-	Http       httpConfig.Config
-	HttpClient httpConfig.ClientConfig
-	PkgClient  pkgClientConfig.PkgClient
-	Queue      queue.Config
-	Auth       authenticator.Config
-	Validator  validator.Config
-	Versioning versioning.Config
-	RBAC       rbac.Config
+	App      AppConfig
+	Database DatabaseSchema `mapstructure:"database"`
+	Cache    cache.Config
+	Log             logger.LogConfig
+	Http            httpConfig.Config
+	HttpClient      httpConfig.ClientConfig
+	PkgClient       pkgClientConfig.PkgClient
+	Queue           queue.QueueSchema
+	Auth            authenticator.Config
+	Validator       validator.Config
+	Versioning      versioning.Config
+	RBAC            rbac.Config
 }
 
 type Config struct {
@@ -104,9 +110,37 @@ func (c *Config) App() *AppConfig {
 	return &c.schema.App
 }
 
+// Databases returns all named database connection configs.
+func (c *Config) Databases() map[string]database.Config {
+	c.ensureLoaded()
+	return c.schema.Database.Connections
+}
+
+// PrimaryDatabase returns the name of the default database connection.
+// Defaults to "mysql" when not set.
+func (c *Config) PrimaryDatabase() string {
+	c.ensureLoaded()
+	if c.schema.Database.Default == "" {
+		return "mysql"
+	}
+	return c.schema.Database.Default
+}
+
+// Database returns the primary database config for backward compatibility.
+// Panics with a descriptive message when the primary connection key is not found,
+// so misconfiguration is caught at startup rather than silently returning an empty config.
 func (c *Config) Database() *database.Config {
 	c.ensureLoaded()
-	return &c.schema.Database
+	primary := c.PrimaryDatabase()
+	cfg, ok := c.schema.Database.Connections[primary]
+	if !ok {
+		keys := make([]string, 0, len(c.schema.Database.Connections))
+		for k := range c.schema.Database.Connections {
+			keys = append(keys, k)
+		}
+		panic(fmt.Sprintf("database: primary connection %q not found in connections map (available: %v)", primary, keys))
+	}
+	return &cfg
 }
 
 func (c *Config) Cache() *cache.Config {
@@ -134,7 +168,7 @@ func (c *Config) PkgClient() *pkgClientConfig.PkgClient {
 	return &c.schema.PkgClient
 }
 
-func (c *Config) Queue() *queue.Config {
+func (c *Config) Queue() *queue.QueueSchema {
 	c.ensureLoaded()
 	return &c.schema.Queue
 }

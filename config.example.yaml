@@ -10,7 +10,7 @@ api:
     enabled: true
     strategy: "date"
     default_version: "202601"
-    supported_versions: [ "202511", "202512", "202601" ]
+    supported_versions: ["202511", "202512", "202601"]
     deprecation:
       # Enable deprecation warning headers
       header_enabled: true
@@ -34,16 +34,31 @@ web:
   port: 8081
 
 database:
-  driver: "mysql"
-  host: "localhost"
-  port: 3306
-  user: "root"
-  password: "password"
-  name: "mydb"
-  max_idle_conns: 10
-  max_open_conns: 100
-  max_conn_life_time: 3600
-  debug: true
+  default: "mysql"
+  connections:
+    mysql:
+      driver: "mysql"
+      host: "localhost"
+      port: 3306
+      user: "root"
+      password: "password"
+      name: "ichi_app"
+      max_idle_conns: 10
+      max_open_conns: 100
+      max_conn_life_time: 3600
+      debug: true
+
+    postgres:
+      driver: "postgres"
+      host: "localhost"
+      port: 5432
+      user: "postgres"
+      password: "postgres"
+      name: "ichi_queue"
+      max_idle_conns: 5
+      max_open_conns: 20
+      max_conn_life_time: 3600
+      debug: false
 
 cache:
   driver: "redis"
@@ -86,9 +101,9 @@ auth:
     require_claims:
       - "sub"
       - "exp"
-    access_token_ttl: "1h"    # Longer for development
+    access_token_ttl: "1h" # Longer for development
     refresh_token_ttl: "720h" # 30 days for development
-    leeway_duration: "5m"     # More lenient for dev
+    leeway_duration: "5m" # More lenient for dev
     skip_paths:
       - "/health"
       - "/health/live"
@@ -196,157 +211,163 @@ pkgclient:
     retry: 3
 
 queue:
-  enabled: true
+  # Name of the connection used for dispatch when no connection is specified.
+  default: "amqp"
 
-  rabbitmq:
-    enabled: true
-
-    connection:
-      host: "localhost"
-      port: 5672
-      username: "guest"
-      password: "guest"
-      vhost: "/"
-      connection_name: "ichigo-queue"
-
-    exchanges:
-      - name: "app.events"
-        type: "x-delayed-message"
-        args:
-          x-delayed-type: "topic"
-        durable: true
-        auto_delete: false
-        internal: false
-        no_wait: false
-
-      # Blast exchange: fanout — one publish, every bound queue receives a copy.
-      # Use for system announcements, maintenance, campaigns targeting all users.
-      - name: "notification.blast"
-        type: "fanout"
-        durable: true
-        auto_delete: false
-        internal: false
-        no_wait: false
-
-      # User exchange: topic — routing_key="user.<userID>" targets one user.
-      # Topic exchange required so the consumer binding "user.#" matches
-      # per-user keys like "user.42" (wildcards need topic, not direct).
-      # Use for OTPs, order updates, account alerts, personal notifications.
-      - name: "notification.user"
-        type: "topic"
-        durable: true
-        auto_delete: false
-        internal: false
-        no_wait: false
-
-    publisher:
-      exchange_name: "app.events"
-
-    consumers:
-      - name: "payment_handler"
+  connections:
+    # -------------------------------------------------------------------------
+    # AMQP connection (RabbitMQ)
+    # -------------------------------------------------------------------------
+    amqp:
+      enabled: true
+      driver: "amqp"
+      amqp:
         enabled: true
-        queue:
-          name: "order.payment.events"
-          durable: true
-          auto_delete: false
-          exclusive: false
-          no_wait: false
-        exchange_name: "app.events"
-        routing_keys:
-          - "payment.completed"
-          - "payment.failed"
-          - "payment.refunded"
-        prefetch_count: 50
-        worker_pool_size: 10
-        auto_ack: false
-        exclusive: false
-        consumer_tag: "payment_handler_v1"
 
-      - name: "welcome_notifier"
-        enabled: true
-        queue:
-          name: "user.welcome.notifications"
-          durable: true
-          auto_delete: false
-          exclusive: false
-          no_wait: false
-        exchange_name: "app.events"
-        routing_keys:
-          - "user.welcome"
-        prefetch_count: 10
-        worker_pool_size: 3
-        auto_ack: false
-        exclusive: false
-        consumer_tag: "welcome_notifier_v1"
+        connection:
+          host: "localhost"
+          port: 5672
+          username: "guest"
+          password: "guest"
+          vhost: "/"
+          connection_name: "ichigo-queue"
 
-      # -----------------------------------------------------------------------
-      # Blast consumer
-      # Bound to the fanout exchange — routing_keys is ignored by fanout but
-      # must be present (use "#" as a placeholder).
-      # Scale worker_pool_size based on the number of channels × expected TPS.
-      # -----------------------------------------------------------------------
-      - name: "notification_blast"
-        enabled: true
-        queue:
-          name: "notification.blast.queue"
-          durable: true
-          auto_delete: false
-          exclusive: false
-          no_wait: false
-        exchange_name: "notification.blast"
-        routing_keys:
-          - "#"
-        prefetch_count: 20
-        worker_pool_size: 5
-        auto_ack: false
-        exclusive: false
-        consumer_tag: "notification_blast_v1"
+        exchanges:
+          - name: "app.events"
+            type: "x-delayed-message"
+            args:
+              x-delayed-type: "topic"
+            durable: true
+            auto_delete: false
+            internal: false
+            no_wait: false
 
-      # -----------------------------------------------------------------------
-      # User-specific consumer
-      # Bound to the topic exchange with routing_key="user.#".
-      # The topic exchange matches "user.#" against per-user routing keys
-      # like "user.42", so a single shared queue catches all user messages.
-      # The consumer uses event.UserID internally to identify the recipient.
-      # For very high-throughput workloads, consider per-user queues bound
-      # with specific keys (e.g. "user.42") and a separate consumer per user.
-      # -----------------------------------------------------------------------
-      - name: "notification_user"
-        enabled: true
-        queue:
-          name: "notification.user.queue"
-          durable: true
-          auto_delete: false
-          exclusive: false
-          no_wait: false
-        exchange_name: "notification.user"
-        routing_keys:
-          - "user.#"
-        prefetch_count: 50
-        worker_pool_size: 10
-        auto_ack: false
-        exclusive: false
-        consumer_tag: "notification_user_v1"
+          # Blast exchange: fanout — one publish, every bound queue receives a copy.
+          - name: "notification.blast"
+            type: "fanout"
+            durable: true
+            auto_delete: false
+            internal: false
+            no_wait: false
 
-      # Dispatcher: receives delayed messages from app.events and re-routes to blast/user exchanges.
-      # Bound to app.events (x-delayed-message) with routing_key="notification.dispatch".
-      # After the delay expires, messages are forwarded here, then re-published with zero delay.
-      - name: "notification_dispatcher"
-        enabled: true
-        queue:
-          name: "notification.dispatch.queue"
-          durable: true
-          auto_delete: false
-          exclusive: false
-          no_wait: false
-        exchange_name: "app.events"
-        routing_keys:
-          - "notification.dispatch"
-        prefetch_count: 100
-        worker_pool_size: 5
-        auto_ack: false
-        exclusive: false
-        consumer_tag: "notification_dispatcher_v1"
+          # User exchange: topic — routing_key="user.<userID>" targets one user.
+          - name: "notification.user"
+            type: "topic"
+            durable: true
+            auto_delete: false
+            internal: false
+            no_wait: false
+
+        publisher:
+          exchange_name: "app.events"
+
+        consumers:
+          - name: "payment_handler"
+            enabled: true
+            queue:
+              name: "order.payment.events"
+              durable: true
+              auto_delete: false
+              exclusive: false
+              no_wait: false
+            exchange_name: "app.events"
+            routing_keys:
+              - "payment.completed"
+              - "payment.failed"
+              - "payment.refunded"
+            prefetch_count: 50
+            worker_pool_size: 10
+            auto_ack: false
+            exclusive: false
+            consumer_tag: "payment_handler_v1"
+
+          - name: "welcome_notifier"
+            enabled: true
+            queue:
+              name: "user.welcome.notifications"
+              durable: true
+              auto_delete: false
+              exclusive: false
+              no_wait: false
+            exchange_name: "app.events"
+            routing_keys:
+              - "user.welcome"
+            prefetch_count: 10
+            worker_pool_size: 3
+            auto_ack: false
+            exclusive: false
+            consumer_tag: "welcome_notifier_v1"
+
+          # -------------------------------------------------------------------
+          # Blast consumer — fanout exchange, routing_keys ignored.
+          # -------------------------------------------------------------------
+          - name: "notification_blast"
+            enabled: true
+            queue:
+              name: "notification.blast.queue"
+              durable: true
+              auto_delete: false
+              exclusive: false
+              no_wait: false
+            exchange_name: "notification.blast"
+            routing_keys:
+              - "#"
+            prefetch_count: 20
+            worker_pool_size: 5
+            auto_ack: false
+            exclusive: false
+            consumer_tag: "notification_blast_v1"
+
+          # -------------------------------------------------------------------
+          # User-specific consumer — topic exchange, routing_key="user.#".
+          # -------------------------------------------------------------------
+          - name: "notification_user"
+            enabled: true
+            queue:
+              name: "notification.user.queue"
+              durable: true
+              auto_delete: false
+              exclusive: false
+              no_wait: false
+            exchange_name: "notification.user"
+            routing_keys:
+              - "user.#"
+            prefetch_count: 50
+            worker_pool_size: 10
+            auto_ack: false
+            exclusive: false
+            consumer_tag: "notification_user_v1"
+
+          # Dispatcher: receives delayed messages and re-routes to blast/user exchanges.
+          - name: "notification_dispatcher"
+            enabled: true
+            queue:
+              name: "notification.dispatch.queue"
+              durable: true
+              auto_delete: false
+              exclusive: false
+              no_wait: false
+            exchange_name: "app.events"
+            routing_keys:
+              - "notification.dispatch"
+            prefetch_count: 100
+            worker_pool_size: 5
+            auto_ack: false
+            exclusive: false
+            consumer_tag: "notification_dispatcher_v1"
+
+    # -------------------------------------------------------------------------
+    # Database connection (River queue backed by PostgreSQL)
+    # -------------------------------------------------------------------------
+    database:
+      enabled: false
+      driver: "database"
+      database:
+        # Must match a key in database.connections — shares that pool, no extra connections.
+        connection: "postgres"
+        max_workers: 50
+        poll_interval: "1s"
+        rescue_stuck_jobs_after: "1h"
 
 # Notification domain configuration
 notification:
@@ -357,4 +378,3 @@ notification:
     # Path to Firebase service account JSON key file.
     # NEVER commit this file to source control. Use environment variables or secrets manager.
     credentials_file: ""
-
