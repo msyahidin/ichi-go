@@ -22,7 +22,7 @@ func Setup(injector do.Injector, cfg *config.Config) {
 	do.ProvideValue(injector, cfg)
 
 	// Core infrastructure
-	do.Provide(injector, provideDatabase(cfg))
+	provideDatabases(injector, cfg)
 	do.Provide(injector, provideCache(cfg))
 	do.Provide(injector, provideMessaging(cfg))
 	do.Provide(injector, provideMessageProducer(cfg))
@@ -34,15 +34,41 @@ func Setup(injector do.Injector, cfg *config.Config) {
 	do.Provide(injector, provideEnforcer(cfg))
 }
 
-func provideDatabase(cfg *config.Config) func(do.Injector) (*bun.DB, error) {
-	return func(i do.Injector) (*bun.DB, error) {
-		db, err := database.NewBunClient(cfg.Database())
-		if err != nil {
-			return nil, fmt.Errorf("failed to create database: %w", err)
+func provideDatabases(injector do.Injector, cfg *config.Config) {
+	for name, dbCfg := range cfg.Databases() {
+		name, dbCfg := name, dbCfg // capture loop vars
+
+		switch dbCfg.Driver {
+		case "mysql":
+			do.ProvideNamed(injector, "db."+name, func(i do.Injector) (*bun.DB, error) {
+				db, err := database.NewMySQLClient(&dbCfg)
+				if err != nil {
+					return nil, fmt.Errorf("mysql[%s]: %w", name, err)
+				}
+				logger.Debugf("initialized database connection: %s (mysql)", name)
+				return db, nil
+			})
+
+		case "postgres":
+			do.ProvideNamed(injector, "db."+name, func(i do.Injector) (*bun.DB, error) {
+				db, err := database.NewPostgresClient(&dbCfg)
+				if err != nil {
+					return nil, fmt.Errorf("postgres[%s]: %w", name, err)
+				}
+				logger.Debugf("initialized database connection: %s (postgres)", name)
+				return db, nil
+			})
+
+		default:
+			logger.Warnf("unknown database driver %q for connection %q — skipping", dbCfg.Driver, name)
 		}
-		logger.Debugf("initialized database")
-		return db, nil
 	}
+
+	// Unnamed *bun.DB → primary connection (keeps all existing repos working unchanged)
+	primary := cfg.PrimaryDatabase()
+	do.Provide(injector, func(i do.Injector) (*bun.DB, error) {
+		return do.InvokeNamed[*bun.DB](i, "db."+primary)
+	})
 }
 
 func provideCache(cfg *config.Config) func(do.Injector) (*redis.Client, error) {
