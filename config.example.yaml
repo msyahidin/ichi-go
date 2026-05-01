@@ -34,7 +34,7 @@ web:
   port: 8081
 
 database:
-  default: "mysql"
+  default: "postgres"
   connections:
     mysql:
       driver: "mysql"
@@ -58,7 +58,7 @@ database:
       max_idle_conns: 5
       max_open_conns: 20
       max_conn_life_time: 3600
-      debug: false
+      debug: true
 
 cache:
   driver: "redis"
