@@ -20,11 +20,16 @@ import (
 	"ichi-go/pkg/logger"
 )
 
+// DatabaseSchema mirrors the `database:` YAML block.
+type DatabaseSchema struct {
+	Default     string                     `mapstructure:"default"`
+	Connections map[string]database.Config `mapstructure:"connections"`
+}
+
 type Schema struct {
-	App             AppConfig
-	PrimaryDatabase string                     `mapstructure:"primary_database"`
-	Databases       map[string]database.Config `mapstructure:"databases"`
-	Cache           cache.Config
+	App      AppConfig
+	Database DatabaseSchema `mapstructure:"database"`
+	Cache    cache.Config
 	Log             logger.LogConfig
 	Http            httpConfig.Config
 	HttpClient      httpConfig.ClientConfig
@@ -105,27 +110,27 @@ func (c *Config) App() *AppConfig {
 	return &c.schema.App
 }
 
-// Databases returns all named database configs.
+// Databases returns all named database connection configs.
 func (c *Config) Databases() map[string]database.Config {
 	c.ensureLoaded()
-	return c.schema.Databases
+	return c.schema.Database.Connections
 }
 
-// PrimaryDatabase returns the key name of the primary database connection.
+// PrimaryDatabase returns the name of the default database connection.
 // Defaults to "mysql" when not set.
 func (c *Config) PrimaryDatabase() string {
 	c.ensureLoaded()
-	if c.schema.PrimaryDatabase == "" {
+	if c.schema.Database.Default == "" {
 		return "mysql"
 	}
-	return c.schema.PrimaryDatabase
+	return c.schema.Database.Default
 }
 
 // Database returns the primary database config for backward compatibility.
 func (c *Config) Database() *database.Config {
 	c.ensureLoaded()
 	primary := c.PrimaryDatabase()
-	cfg, ok := c.schema.Databases[primary]
+	cfg, ok := c.schema.Database.Connections[primary]
 	if !ok {
 		return &database.Config{}
 	}

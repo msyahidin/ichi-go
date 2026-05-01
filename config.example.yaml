@@ -33,31 +33,31 @@ http-client:
 web:
   port: 8081
 
-primary_database: "mysql"
+database:
+  default: "mysql"
+  connections:
+    mysql:
+      driver: "mysql"
+      host: "localhost"
+      port: 3306
+      user: "root"
+      password: "password"
+      name: "ichi_app"
+      max_idle_conns: 10
+      max_open_conns: 100
+      max_conn_life_time: 3600
+      debug: true
 
-databases:
-  mysql:
-    driver: "mysql"
-    host: "localhost"
-    port: 3306
-    user: "root"
-    password: "password"
-    name: "ichi_app"
-    max_idle_conns: 10
-    max_open_conns: 100
-    max_conn_life_time: 3600
-    debug: true
-
-  postgres:
-    driver: "postgres"
-    host: "localhost"
-    port: 5432
-    user: "postgres"
-    password: "postgres"
-    name: "ichi_queue"
-    max_idle_conns: 5
-    max_open_conns: 20
-    max_conn_life_time: 3600
+    postgres:
+      driver: "postgres"
+      host: "localhost"
+      port: 5432
+      user: "postgres"
+      password: "postgres"
+      name: "ichi_queue"
+      max_idle_conns: 5
+      max_open_conns: 20
+      max_conn_life_time: 3600
     debug: false
 
 cache:
