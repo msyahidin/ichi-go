@@ -73,6 +73,11 @@ func determineMigrationDir(baseDir, tableSpace string) string {
 		return filepath.Join("./db/migrations", "data")
 	}
 	if baseDir == defaultMigrationDir || tableSpace == "schema" {
+		config.MustLoad()
+		driver := config.Get().Database().Driver
+		if driver == "postgres" || driver == "mysql" {
+			return filepath.Join("./db/migrations/schema", driver)
+		}
 		return filepath.Join("./db/migrations", "schema")
 	}
 	return baseDir
@@ -135,6 +140,18 @@ func handleCreateCommand(args []string) {
 	log.Printf("✅ Migration created successfully in %s", targetDir)
 }
 
+func determineSeedDir(baseDir string) string {
+	if baseDir != defaultSeedDir {
+		return baseDir
+	}
+	config.MustLoad()
+	driver := config.Get().Database().Driver
+	if driver == "postgres" || driver == "mysql" {
+		return filepath.Join(defaultSeedDir, driver)
+	}
+	return baseDir
+}
+
 func handleSeedCommand(ctx context.Context, args []string) {
 	if len(args) < 1 {
 		log.Println("Available seed commands:")
@@ -143,6 +160,7 @@ func handleSeedCommand(ctx context.Context, args []string) {
 		return
 	}
 
+	resolvedSeedDir := determineSeedDir(*seedDir)
 	subCmd := args[0]
 	db := connectDatabase(*env)
 	defer db.Close()
@@ -150,24 +168,24 @@ func handleSeedCommand(ctx context.Context, args []string) {
 	switch subCmd {
 	case "run":
 		if len(args) > 1 {
-			runSpecificSeed(ctx, db, args[1])
+			runSpecificSeed(ctx, db, resolvedSeedDir, args[1])
 		} else {
-			runAllSeeds(ctx, db)
+			runAllSeeds(ctx, db, resolvedSeedDir)
 		}
 	case "list":
-		listSeeds()
+		listSeeds(resolvedSeedDir)
 	default:
 		log.Fatalf("unknown seed command: %s", subCmd)
 	}
 }
 
-func runAllSeeds(ctx context.Context, db *sql.DB) {
-	files, err := filepath.Glob(filepath.Join(*seedDir, "*.sql"))
+func runAllSeeds(ctx context.Context, db *sql.DB, dir string) {
+	files, err := filepath.Glob(filepath.Join(dir, "*.sql"))
 	if err != nil {
 		log.Fatalf("failed to read seed directory: %v", err)
 	}
 
-	log.Printf("🌱 Running %d seed files...", len(files))
+	log.Printf("🌱 Running %d seed files from %s...", len(files), dir)
 	for _, file := range files {
 		if err := executeSeedFile(ctx, db, file); err != nil {
 			log.Fatalf("❌ seed failed %s: %v", filepath.Base(file), err)
@@ -177,8 +195,8 @@ func runAllSeeds(ctx context.Context, db *sql.DB) {
 	log.Println("🎉 All seeds completed successfully")
 }
 
-func runSpecificSeed(ctx context.Context, db *sql.DB, filename string) {
-	file := filepath.Join(*seedDir, filename)
+func runSpecificSeed(ctx context.Context, db *sql.DB, dir, filename string) {
+	file := filepath.Join(dir, filename)
 	if !strings.HasSuffix(file, ".sql") {
 		file = file + ".sql"
 	}
@@ -209,13 +227,13 @@ func executeSeedFile(ctx context.Context, db *sql.DB, filepath string) error {
 	return tx.Commit()
 }
 
-func listSeeds() {
-	files, err := filepath.Glob(filepath.Join(*seedDir, "*.sql"))
+func listSeeds(dir string) {
+	files, err := filepath.Glob(filepath.Join(dir, "*.sql"))
 	if err != nil {
 		log.Fatalf("failed to read seed directory: %v", err)
 	}
 
-	log.Println("Available seed files:")
+	log.Printf("Available seed files in %s:", dir)
 	for _, file := range files {
 		log.Printf("  - %s", filepath.Base(file))
 	}
