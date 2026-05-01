@@ -23,10 +23,13 @@ func StartQueueWorkers(ctx context.Context, queueConfig *queue.Config, injector 
 	}
 
 	switch queueConfig.Driver {
+	case "rabbitmq":
+		startRabbitMQWorkers(ctx, &queueConfig.RabbitMQ, injector)
 	case "river":
 		startRiverWorkers(ctx, injector)
 	default:
-		startRabbitMQWorkers(ctx, &queueConfig.RabbitMQ, injector)
+		logger.Errorf("unknown queue driver %q — set queue.driver to \"rabbitmq\" or \"river\"", queueConfig.Driver)
+		return
 	}
 }
 

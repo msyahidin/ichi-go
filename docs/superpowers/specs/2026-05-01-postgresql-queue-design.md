@@ -75,22 +75,33 @@ queue:
 **`config/config.go`:**
 
 ```go
+// DatabaseSchema mirrors the `database:` YAML block.
+type DatabaseSchema struct {
+    Default     string                     `mapstructure:"default"`
+    Connections map[string]database.Config `mapstructure:"connections"`
+}
+
 type Schema struct {
-    App        AppConfig
-    Databases  map[string]database.Config  `mapstructure:"databases"` // renamed from Database
-    Cache      cache.Config
-    Queue      queue.Config
+    App      AppConfig
+    Database DatabaseSchema `mapstructure:"database"`
+    Cache    cache.Config
+    Queue    queue.Config
     // ... rest unchanged
 }
 ```
 
-A `databases.primary` field (optional, defaults to `"mysql"`) selects which named connection is exposed as the unnamed `*bun.DB` for backward compatibility:
+`database.default` (optional, defaults to `"mysql"`) names which connection is exposed as the unnamed `*bun.DB` for backward compatibility. The value is always a **connection name** (key in `connections`), not a driver name:
 
 ```yaml
-databases:
-  primary: "mysql"   # optional — which key is the default *bun.DB
-  mysql:
-    ...
+database:
+  default: "mysql"   # optional — which connection is the default *bun.DB
+  connections:
+    mysql:
+      driver: "mysql"
+      ...
+    postgres:
+      driver: "postgres"
+      ...
 ```
 
 ---
@@ -138,10 +149,10 @@ func GetPostgresDSN(cfg *Config) string {
 }
 ```
 
-**Why pgx stdlib mode for bun, but native pgxpool for River?**
+**Why `riverdatabasesql` (poll-only) instead of `riverpgxv5`?**
 
-- bun wraps `database/sql` — pgx stdlib mode is the correct bridge.
-- River needs pgx native pool (`pgxpool.Pool`) for its LISTEN/NOTIFY and advisory lock features. The two connection objects share the same PostgreSQL server but are independent pools. River's pool is private — never registered in DI.
+- bun wraps `database/sql`; pgx stdlib mode is the correct bridge for bun.
+- River is wired via `riverdatabasesql`, which shares the same `*sql.DB` that bun already owns — no separate connection pool. This means LISTEN/NOTIFY is not used; River polls for new jobs on `FetchPollInterval`. The trade-off is slightly higher latency vs. zero extra connections at startup.
 
 ### 2.2 DSN helpers
 
@@ -161,10 +172,10 @@ func GetMySQLDSN(cfg *Config) string {
 
 `internal/infra/providers.go` — `provideDatabase` is replaced by `provideDatabases`.
 
-```
+```text
 Named providers registered:
-  "db.<name>" → *bun.DB     for each key in databases map
-  unnamed     → *bun.DB     alias to the primary connection (backward compat)
+  "db.<name>" → *bun.DB     for each key in database.connections map
+  unnamed     → *bun.DB     alias to the default connection (backward compat)
 ```
 
 ```go
@@ -292,7 +303,7 @@ type RiverConfig struct {
 
 ### 4.4 Directory layout
 
-```
+```text
 internal/infra/queue/
 ├── interfaces.go        # Dispatcher, JobArgs, ConsumeFunc
 ├── options.go           # DispatchOption helpers
@@ -366,33 +377,28 @@ func (w *BridgeWorker) Work(ctx context.Context, job *river.Job[BridgeArgs]) err
 }
 ```
 
-### 5.4 River provider (pgxpool is private)
+### 5.4 River provider (shares bun's *sql.DB, poll-only)
 
 ```go
 // internal/infra/providers.go
-func provideRiverClient(cfg *config.Config) func(do.Injector) (*river.Client[pgx.Tx], error) {
-    return func(i do.Injector) (*river.Client[pgx.Tx], error) {
+func provideRiverClient(cfg *config.Config) func(do.Injector) (*river.Client[*sql.Tx], error) {
+    return func(i do.Injector) (*river.Client[*sql.Tx], error) {
         riverCfg := cfg.Queue().River
-        dbCfg := cfg.Databases()[riverCfg.Database]  // e.g. databases["postgres"]
-
-        // pgxpool is River's private connection — not registered in DI
-        pool, err := pgxpool.New(context.Background(), database.GetPostgresDSN(&dbCfg))
-        if err != nil {
-            return nil, fmt.Errorf("river: failed to create pgxpool: %w", err)
-        }
+        // Reuse the named *bun.DB — riverdatabasesql wraps its *sql.DB.
+        // No extra connection pool; poll-only mode (no LISTEN/NOTIFY).
+        bunDB, _ := do.InvokeNamed[*bun.DB](i, "db."+riverCfg.Database)
 
         workers := river.NewWorkers()
-        // typed workers registered here (see worker_pool.go)
-        // bridge workers for existing ConsumeFunc consumers registered here
+        riverimpl.RegisterBridgeWorkers(workers, queue.GetRegisteredConsumers(i))
 
-        return river.NewClient(riverpgxv5.New(pool), &river.Config{
+        return river.NewClient(riverdatabasesql.New(bunDB.DB), &river.Config{
             Queues: map[string]river.QueueConfig{
                 river.QueueDefault: {MaxWorkers: riverCfg.MaxWorkers},
                 "emails":           {MaxWorkers: 10},
                 "notifications":    {MaxWorkers: 20},
             },
             Workers:              workers,
-            PollInterval:         riverCfg.PollInterval,
+            FetchPollInterval:    riverCfg.PollInterval,
             RescueStuckJobsAfter: riverCfg.RescueStuckJobsAfter,
         })
     }
@@ -478,9 +484,8 @@ The `Dispatcher` is registered in DI, and all application code that publishes jo
 |---|---|
 | `github.com/uptrace/bun/dialect/pgdialect` | bun PostgreSQL dialect |
 | `github.com/jackc/pgx/v5/stdlib` | pgx as database/sql driver (for bun) |
-| `github.com/jackc/pgx/v5/pgxpool` | pgx native pool (for River, internal) |
 | `github.com/riverqueue/river` | River job queue core |
-| `github.com/riverqueue/river/riverdriver/riverpgxv5` | River pgx driver |
+| `github.com/riverqueue/river/riverdriver/riverdatabasesql` | River driver sharing bun's `*sql.DB` (poll-only) |
 | `github.com/riverqueue/river/rivermigrate` | River schema migrations |
 
 ---
@@ -489,8 +494,8 @@ The `Dispatcher` is registered in DI, and all application code that publishes jo
 
 When queue and config are stable, Phase B promotes PostgreSQL to primary:
 
-1. Rename `databases.postgres` to whatever name makes sense (e.g. keep as `postgres`)
-2. Update `databases.primary: "postgres"` — the unnamed `*bun.DB` now points to Postgres
+1. Rename `database.connections.postgres` to whatever name makes sense (e.g. keep as `postgres`)
+2. Update `database.default: "postgres"` — the unnamed `*bun.DB` now points to Postgres
 3. Run domain migrations against Postgres (new goose migration files)
 4. Switch each domain's `register.go` from `do.MustInvoke[*bun.DB]` to `do.MustInvokeNamed[*bun.DB](i, "db.postgres")` — or just rely on the updated unnamed alias
 5. MySQL connection stays in config for read-only legacy access until fully decommissioned

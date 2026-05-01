@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
 )
 
@@ -78,14 +79,22 @@ func determineMigrationDir(baseDir, tableSpace string) string {
 }
 
 func connectDatabase(environment string) *sql.DB {
-	// Load config based on environment
-	// For now, using default connection
-	// TODO: Integrate with your config system
 	config.MustLoad()
 	dbConfig := config.Get().Database()
-	dsn := database.GetMySQLDSN(dbConfig)
 
-	db, err := sql.Open("mysql", dsn)
+	var driverName, dsn, dialect string
+	switch dbConfig.Driver {
+	case "postgres":
+		driverName = "pgx"
+		dsn = database.GetPostgresDSN(dbConfig)
+		dialect = "postgres"
+	default:
+		driverName = "mysql"
+		dsn = database.GetMySQLDSN(dbConfig)
+		dialect = "mysql"
+	}
+
+	db, err := sql.Open(driverName, dsn)
 	if err != nil {
 		log.Fatalf("failed to connect to database: %v", err)
 	}
@@ -94,7 +103,7 @@ func connectDatabase(environment string) *sql.DB {
 		log.Fatalf("failed to ping database: %v", err)
 	}
 
-	if err := goose.SetDialect("mysql"); err != nil {
+	if err := goose.SetDialect(dialect); err != nil {
 		log.Fatalf("failed to set dialect: %v", err)
 	}
 

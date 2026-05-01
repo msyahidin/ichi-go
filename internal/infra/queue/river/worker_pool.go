@@ -5,10 +5,13 @@ import (
 	"ichi-go/internal/infra/queue"
 )
 
-// RegisterBridgeWorkers adds a GenericJobWorker for each ConsumerRegistration.
-// Called during River client setup so existing consumers work unchanged with the River driver.
+// RegisterBridgeWorkers builds a single BridgeWorker from all ConsumerRegistrations
+// and adds it once. Adding one worker per registration would panic because they all
+// share the same Kind() == "generic_job".
 func RegisterBridgeWorkers(workers *riverqueue.Workers, registrations []queue.ConsumerRegistration) {
+	handlers := make(map[string]queue.ConsumeFunc, len(registrations))
 	for _, reg := range registrations {
-		riverqueue.AddWorker(workers, NewGenericJobWorker(reg.ConsumeFunc))
+		handlers[reg.Name] = reg.ConsumeFunc
 	}
+	riverqueue.AddWorker(workers, NewBridgeWorker(handlers))
 }

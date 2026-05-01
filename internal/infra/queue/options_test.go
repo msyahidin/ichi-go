@@ -22,11 +22,9 @@ func TestDispatchOptions_WithOptions(t *testing.T) {
 		queue.Delay(5*time.Minute),
 		queue.MaxAttempts(5),
 		queue.Priority(2),
-		queue.UniqueKey("send-email-user-42"),
 	)
 	assert.Equal(t, "emails", o.Queue)
 	assert.Equal(t, 5*time.Minute, o.Delay)
 	assert.Equal(t, 5, o.MaxAttempts)
 	assert.Equal(t, 2, o.Priority)
-	assert.Equal(t, "send-email-user-42", o.UniqueKey)
 }

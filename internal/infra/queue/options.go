@@ -8,7 +8,6 @@ type DispatchOptions struct {
 	Delay       time.Duration
 	MaxAttempts int
 	Priority    int
-	UniqueKey   string
 }
 
 // DispatchOption mutates DispatchOptions.
@@ -43,6 +42,3 @@ func Priority(p int) DispatchOption {
 	return func(o *DispatchOptions) { o.Priority = p }
 }
 
-func UniqueKey(k string) DispatchOption {
-	return func(o *DispatchOptions) { o.UniqueKey = k }
-}

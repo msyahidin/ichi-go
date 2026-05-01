@@ -17,7 +17,7 @@ func TestGetMySQLDSN(t *testing.T) {
 		Name:     "testdb",
 	}
 	dsn := database.GetMySQLDSN(cfg)
-	assert.Equal(t, "root:secret@tcp(localhost:3306)/testdb?parseTime=true&multiStatements=true", dsn)
+	assert.Equal(t, "root:secret@tcp(localhost:3306)/testdb?multiStatements=true&parseTime=true", dsn)
 }
 
 func TestGetPostgresDSN(t *testing.T) {

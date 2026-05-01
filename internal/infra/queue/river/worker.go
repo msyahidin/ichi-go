@@ -2,13 +2,14 @@ package river
 
 import (
 	"context"
+	"fmt"
 
 	riverqueue "github.com/riverqueue/river"
 	"ichi-go/internal/infra/queue"
 )
 
 // GenericJobArgs carries a raw payload for existing ConsumeFunc-based consumers.
-// ConsumerName discriminates which handler processes the job.
+// ConsumerName routes the job to the correct handler in BridgeWorker.
 type GenericJobArgs struct {
 	ConsumerName string `json:"consumer_name"`
 	Payload      []byte `json:"payload"`
@@ -16,17 +17,23 @@ type GenericJobArgs struct {
 
 func (GenericJobArgs) Kind() string { return "generic_job" }
 
-// GenericJobWorker bridges a single river.Worker to any queue.ConsumeFunc handler.
-type GenericJobWorker struct {
+// BridgeWorker is a single River worker that dispatches to any number of
+// ConsumeFunc handlers by ConsumerName. Only one instance is registered so
+// "generic_job" is never added twice (which would panic).
+type BridgeWorker struct {
 	riverqueue.WorkerDefaults[GenericJobArgs]
-	handler queue.ConsumeFunc
+	handlers map[string]queue.ConsumeFunc
 }
 
-// NewGenericJobWorker creates a GenericJobWorker wrapping the given ConsumeFunc.
-func NewGenericJobWorker(handler queue.ConsumeFunc) *GenericJobWorker {
-	return &GenericJobWorker{handler: handler}
+// NewBridgeWorker builds a BridgeWorker from a map of consumerName → handler.
+func NewBridgeWorker(handlers map[string]queue.ConsumeFunc) *BridgeWorker {
+	return &BridgeWorker{handlers: handlers}
 }
 
-func (w *GenericJobWorker) Work(ctx context.Context, job *riverqueue.Job[GenericJobArgs]) error {
-	return w.handler(ctx, job.Args.Payload)
+func (w *BridgeWorker) Work(ctx context.Context, job *riverqueue.Job[GenericJobArgs]) error {
+	handler, ok := w.handlers[job.Args.ConsumerName]
+	if !ok {
+		return fmt.Errorf("bridge worker: no handler registered for consumer %q", job.Args.ConsumerName)
+	}
+	return handler(ctx, job.Args.Payload)
 }

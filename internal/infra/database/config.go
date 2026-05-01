@@ -9,6 +9,7 @@ type Config struct {
 	User            string `mapstructure:"user"`
 	Password        string `mapstructure:"password"`
 	Name            string `mapstructure:"name"`
+	SSLMode         string `mapstructure:"ssl_mode"` // postgres only; defaults to "disable"
 	MaxIdleConns    int    `mapstructure:"max_idle_conns"`
 	MaxOpenConns    int    `mapstructure:"max_open_conns"`
 	MaxConnLifeTime int    `mapstructure:"max_conn_life_time"`

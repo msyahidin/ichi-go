@@ -12,14 +12,16 @@ import (
 	riverworker "ichi-go/internal/infra/queue/river"
 )
 
-func TestGenericJobWorker_Work_CallsHandler(t *testing.T) {
+func TestBridgeWorker_Work_CallsHandler(t *testing.T) {
 	called := false
 	var receivedPayload []byte
 
-	worker := riverworker.NewGenericJobWorker(func(ctx context.Context, payload []byte) error {
-		called = true
-		receivedPayload = payload
-		return nil
+	worker := riverworker.NewBridgeWorker(map[string]queue.ConsumeFunc{
+		"payment_handler": func(ctx context.Context, payload []byte) error {
+			called = true
+			receivedPayload = payload
+			return nil
+		},
 	})
 
 	job := &riverqueue.Job[riverworker.GenericJobArgs]{
@@ -35,9 +37,11 @@ func TestGenericJobWorker_Work_CallsHandler(t *testing.T) {
 	assert.Equal(t, []byte(`{"amount":100}`), receivedPayload)
 }
 
-func TestGenericJobWorker_Work_PropagatesError(t *testing.T) {
-	worker := riverworker.NewGenericJobWorker(func(ctx context.Context, payload []byte) error {
-		return errors.New("transient db error")
+func TestBridgeWorker_Work_PropagatesError(t *testing.T) {
+	worker := riverworker.NewBridgeWorker(map[string]queue.ConsumeFunc{
+		"payment_handler": func(ctx context.Context, payload []byte) error {
+			return errors.New("transient db error")
+		},
 	})
 
 	job := &riverqueue.Job[riverworker.GenericJobArgs]{
@@ -48,15 +52,24 @@ func TestGenericJobWorker_Work_PropagatesError(t *testing.T) {
 	assert.EqualError(t, err, "transient db error")
 }
 
-func TestRegisterBridgeWorkers_NoError(t *testing.T) {
+func TestBridgeWorker_Work_UnknownConsumer(t *testing.T) {
+	worker := riverworker.NewBridgeWorker(map[string]queue.ConsumeFunc{})
+
+	job := &riverqueue.Job[riverworker.GenericJobArgs]{
+		Args: riverworker.GenericJobArgs{ConsumerName: "missing_handler", Payload: []byte(`{}`)},
+	}
+
+	err := worker.Work(context.Background(), job)
+	assert.ErrorContains(t, err, "no handler registered for consumer")
+}
+
+func TestRegisterBridgeWorkers_SingleWorker(t *testing.T) {
 	workers := riverqueue.NewWorkers()
 	registrations := []queue.ConsumerRegistration{
-		{
-			Name:        "payment_handler",
-			Description: "test",
-			ConsumeFunc: func(ctx context.Context, payload []byte) error { return nil },
-		},
+		{Name: "payment_handler", ConsumeFunc: func(ctx context.Context, payload []byte) error { return nil }},
+		{Name: "email_handler", ConsumeFunc: func(ctx context.Context, payload []byte) error { return nil }},
 	}
+	// Multiple registrations must not panic (single Kind "generic_job" registered once)
 	assert.NotPanics(t, func() {
 		riverworker.RegisterBridgeWorkers(workers, registrations)
 	})

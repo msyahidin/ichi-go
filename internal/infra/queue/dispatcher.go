@@ -68,9 +68,6 @@ func (d *riverDispatcher) Dispatch(ctx context.Context, job JobArgs, opts ...Dis
 	if o.Delay > 0 {
 		insertOpts.ScheduledAt = time.Now().Add(o.Delay)
 	}
-	if o.UniqueKey != "" {
-		insertOpts.UniqueOpts = riverqueue.UniqueOpts{ByArgs: true}
-	}
 
 	// river.JobArgs requires Kind() string — queue.JobArgs has the same method,
 	// so any job that satisfies queue.JobArgs also satisfies river.JobArgs.

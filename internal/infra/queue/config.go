@@ -18,7 +18,8 @@ type Config struct {
 
 // RiverConfig holds riverqueue-specific settings.
 type RiverConfig struct {
-	// Database is the key from the databases map to use for River's pgx pool.
+	// Database is the connection name from database.connections to use for River.
+	// riverdatabasesql shares that connection's *sql.DB (bun) — no extra pool.
 	Database             string        `mapstructure:"database"`
 	MaxWorkers           int           `mapstructure:"max_workers"`
 	PollInterval         time.Duration `mapstructure:"poll_interval"`

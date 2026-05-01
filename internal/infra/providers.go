@@ -214,8 +214,23 @@ func provideQueueDispatcher(cfg *config.Config) func(do.Injector) (queue.Dispatc
 			return nil, nil
 		}
 
-		producer, _ := do.Invoke[rabbitmq.MessageProducer](i)
-		riverClient, _ := do.Invoke[*riverqueue.Client[*sql.Tx]](i)
+		var producer rabbitmq.MessageProducer
+		var riverClient *riverqueue.Client[*sql.Tx]
+
+		switch cfg.Queue().Driver {
+		case "rabbitmq":
+			p, err := do.Invoke[rabbitmq.MessageProducer](i)
+			if err != nil {
+				return nil, fmt.Errorf("queue dispatcher: %w", err)
+			}
+			producer = p
+		case "river":
+			rc, err := do.Invoke[*riverqueue.Client[*sql.Tx]](i)
+			if err != nil {
+				return nil, fmt.Errorf("queue dispatcher: %w", err)
+			}
+			riverClient = rc
+		}
 
 		d, err := queue.NewDispatcher(cfg.Queue().Driver, producer, riverClient)
 		if err != nil {
