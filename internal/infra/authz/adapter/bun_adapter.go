@@ -7,8 +7,10 @@ import (
 
 	"github.com/casbin/casbin/v3/model"
 	"github.com/casbin/casbin/v3/persist"
-
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/uptrace/bun"
+
+	"ichi-go/pkg/logger"
 )
 
 // CasbinRule represents a Casbin policy/grouping rule stored in database
@@ -58,7 +60,7 @@ func (a *BunAdapter) LoadPolicy(model model.Model) error {
 }
 
 // LoadFilteredPolicy loads filtered policies based on Filter criteria
-func (a *BunAdapter) LoadFilteredPolicy(model model.Model, filter interface{}) error {
+func (a *BunAdapter) LoadFilteredPolicy(model model.Model, filter any) error {
 	if filter == nil {
 		return a.LoadPolicy(model)
 	}
@@ -77,6 +79,14 @@ func (a *BunAdapter) IsFiltered() bool {
 	return a.filter != nil
 }
 
+// isUndefinedTableError returns true when the database error indicates the
+// casbin_rule table has not been created yet (migrations not run).
+// PostgreSQL SQLSTATE 42P01 = undefined_table.
+func isUndefinedTableError(err error) bool {
+	var pgErr *pgconn.PgError
+	return errors.As(err, &pgErr) && pgErr.Code == "42P01"
+}
+
 // loadPolicyWithFilter implements the actual policy loading logic
 func (a *BunAdapter) loadPolicyWithFilter(model model.Model, filter *Filter) error {
 	var rules []CasbinRule
@@ -91,10 +101,16 @@ func (a *BunAdapter) loadPolicyWithFilter(model model.Model, filter *Filter) err
 
 	// Apply ptype filter
 	if filter != nil && len(filter.Ptypes) > 0 {
-		query = query.Where("ptype IN (?)", bun.In(filter.Ptypes))
+		query = query.Where("ptype IN (?)", bun.List(filter.Ptypes))
 	}
 
 	if err := query.Scan(a.ctx); err != nil {
+		// casbin_rule table doesn't exist yet — migrations haven't been run.
+		// Start with empty policies (deny-by-default) so the app can boot.
+		if isUndefinedTableError(err) {
+			logger.Warnf("casbin_rule table not found — RBAC running with empty policies until migrations are applied")
+			return nil
+		}
 		return fmt.Errorf("failed to load policies: %w", err)
 	}
 
@@ -340,6 +356,9 @@ func (a *BunAdapter) RemovePolicies(sec string, ptype string, rules [][]string) 
 func (a *BunAdapter) CountPolicies() (int, error) {
 	count, err := a.db.NewSelect().Model((*CasbinRule)(nil)).Count(a.ctx)
 	if err != nil {
+		if isUndefinedTableError(err) {
+			return 0, nil
+		}
 		return 0, fmt.Errorf("failed to count policies: %w", err)
 	}
 
@@ -354,6 +373,9 @@ func (a *BunAdapter) CountPoliciesByTenant(tenantID string) (int, error) {
 		Count(a.ctx)
 
 	if err != nil {
+		if isUndefinedTableError(err) {
+			return 0, nil
+		}
 		return 0, fmt.Errorf("failed to count policies for tenant: %w", err)
 	}
 
