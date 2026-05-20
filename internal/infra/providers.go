@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/redis/go-redis/v9"
 	riverqueue "github.com/riverqueue/river"
 	"github.com/riverqueue/river/riverdriver/riverdatabasesql"
-	"github.com/redis/go-redis/v9"
 	"github.com/samber/do/v2"
 	"github.com/uptrace/bun"
 
@@ -222,8 +222,8 @@ func buildRiverClient(bunDB *bun.DB, cfg queue.DatabaseBackendConfig, registrati
 	if maxWorkers == 0 {
 		maxWorkers = 50
 	}
-
-	return riverqueue.NewClient(riverdatabasesql.New(bunDB.DB), &riverqueue.Config{
+	rivdb := riverdatabasesql.New(bunDB.DB)
+	riverClient, err := riverqueue.NewClient[*sql.Tx](rivdb, &riverqueue.Config{
 		Queues: map[string]riverqueue.QueueConfig{
 			riverqueue.QueueDefault: {MaxWorkers: maxWorkers},
 			"emails":                {MaxWorkers: 10},
@@ -233,6 +233,10 @@ func buildRiverClient(bunDB *bun.DB, cfg queue.DatabaseBackendConfig, registrati
 		FetchPollInterval:    pollInterval,
 		RescueStuckJobsAfter: rescueAfter,
 	})
+	if err != nil {
+		return nil, err
+	}
+	return riverClient, nil
 }
 
 // RBAC Infrastructure Providers
