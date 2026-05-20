@@ -13,34 +13,43 @@ func (a *Authenticator) AuthenticateMiddleware(options ...AuthOption) echo.Middl
 
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c *echo.Context) error {
-
-			// Try each auth method
-			var authCtx *AuthContext
-			var err error
-
-			// Priority: JWT > API Key > Basic Auth > OAuth2
-			if a.jwtAuth != nil {
-				if a.shouldSkip(c.Path(), a.jwtAuth.config.SkipPaths) {
-					return next(c)
-				}
-				authCtx, err = a.jwtAuth.Authenticate(c)
+			// Check skip paths and per-route public endpoints first.
+			if a.jwtAuth != nil && a.shouldSkip(c.Path(), a.jwtAuth.config.SkipPaths) {
+				return next(c)
 			}
-			// if authCtx == nil && a.apiKeyAuth != nil {
-			// 	authCtx, err = a.apiKeyAuth.Authenticate(c)
-			// }
-			// if authCtx == nil && a.basicAuth != nil {
-			// 	authCtx, err = a.basicAuth.Authenticate(c)
-			// }
+			if a.publicEndpoints[c.Request().Method+":"+c.Path()] {
+				return next(c)
+			}
 
-			// Handle authentication failure
+			// Layer 1: API key — validates the calling client application.
+			// Must pass before JWT is evaluated.
+			if a.apiKeyAuth != nil && !a.shouldSkip(c.Path(), a.apiKeyAuth.config.SkipPaths) {
+				if _, err := a.apiKeyAuth.Authenticate(c); err != nil {
+					if opts.guestAllowed {
+						return next(c)
+					}
+					return err
+				}
+			}
+
+			// Layer 2: JWT — validates the user identity.
+			var authCtx *AuthContext
+			var authErr error
+			if a.jwtAuth != nil {
+				authCtx, authErr = a.jwtAuth.Authenticate(c)
+			}
+
 			if authCtx == nil {
 				if opts.guestAllowed {
 					return next(c)
 				}
-				return err
+				if authErr != nil {
+					return authErr
+				}
+				return handleAuthError(c, nil)
 			}
 
-			// Store auth context
+			// Store auth context for downstream handlers.
 			c.Set("auth", authCtx)
 
 			return next(c)

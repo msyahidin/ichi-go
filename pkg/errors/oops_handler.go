@@ -1,6 +1,7 @@
 package errors
 
 import (
+	"errors"
 	"fmt"
 	"ichi-go/pkg/logger"
 	"ichi-go/pkg/utils/response"
@@ -24,12 +25,12 @@ func (h *OopsErrorHandler) Handle(err error, c *echo.Context) error {
 	}
 	code := http.StatusInternalServerError
 
-	//// Handle Echo HTTP errors
-	//var he *echo.HTTPError
-	//if errors.As(err, &he) {
-	//	code = he.Code
-	//	message := fmt.Sprintf("%v", he.Message)
-	//}
+	// Handle Echo HTTP errors
+	var he *echo.HTTPError
+	if errors.As(err, &he) {
+		logger.Warnf("HTTP error: %v", err)
+		return response.Error(c, he.Code, fmt.Errorf("%v", he.Message))
+	}
 
 	// Handle validation errors
 	if validationErr := appValidator.GetValidationError(err); validationErr != nil {

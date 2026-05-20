@@ -2,19 +2,25 @@ package authenticator
 
 import (
 	"net/http"
+	"strings"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v5"
 )
 
 type Authenticator struct {
-	config     *Config
-	jwtAuth    *JWTAuthenticator
-	basicAuth  *BasicAuthenticator
-	apiKeyAuth *APIKeyAuthenticator
+	config          *Config
+	jwtAuth         *JWTAuthenticator
+	basicAuth       *BasicAuthenticator
+	apiKeyAuth      *APIKeyAuthenticator
+	publicEndpoints map[string]bool // "METHOD:full-path" -> true; written at startup only
 }
 
 func New(config *Config) *Authenticator {
-	a := &Authenticator{config: config}
+	a := &Authenticator{
+		config:          config,
+		publicEndpoints: make(map[string]bool),
+	}
 
 	if config.JWT != nil && config.JWT.Enabled {
 		a.jwtAuth = NewJWTAuthenticator(config.JWT)
@@ -34,6 +40,7 @@ func New(config *Config) *Authenticator {
 
 type AuthContext struct {
 	UserID UserSubject
+	Claims jwt.MapClaims // populated during Authenticate; nil for non-JWT auth
 }
 
 // // RequirePermission middleware checks ACL
@@ -65,9 +72,19 @@ func WithGuestAllowed() AuthOption {
 	}
 }
 
+// RegisterPublicEndpoint marks a specific method+path combination as public.
+// Must be called during server setup before the server starts accepting requests.
+func (a *Authenticator) RegisterPublicEndpoint(method, path string) {
+	a.publicEndpoints[strings.ToUpper(method)+":"+path] = true
+}
+
 func (a *Authenticator) shouldSkip(path string, skipPaths []string) bool {
-	for _, skipPath := range skipPaths {
-		if path == skipPath {
+	for _, p := range skipPaths {
+		if strings.HasSuffix(p, "/*") {
+			if strings.HasPrefix(path, strings.TrimSuffix(p, "*")) {
+				return true
+			}
+		} else if path == p {
 			return true
 		}
 	}

@@ -116,6 +116,20 @@ auth:
     private_key: "path to private key"
     public_key: "path to public key"
 
+  # API Key authentication — enforced BEFORE JWT (client identity layer).
+  # Both API key and JWT must be valid for a request to proceed.
+  # The API key identifies the calling application; the JWT identifies the user.
+  # Set enabled: true and provide at least one key (or wire a custom Validator
+  # programmatically in rest_server.go via appAuth's APIKeyConfig.Validator).
+  api_key:
+    enabled: false
+    header: "X-API-Key"        # HTTP header name carrying the key
+    keys:                       # Static list of accepted keys (use long random strings)
+      - "replace-with-a-secure-random-api-key"
+    skip_paths:                 # Paths exempt from API key check (same as jwt.skip_paths)
+      - "/health"
+      - "/docs/*"
+
 # =============================================================================
 # RBAC Configuration (Role-Based Access Control)
 # =============================================================================

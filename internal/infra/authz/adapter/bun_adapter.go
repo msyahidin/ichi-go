@@ -277,29 +277,17 @@ func (a *BunAdapter) UpdateFilteredPolicies(sec string, ptype string, newRules [
 
 // loadPolicyLine loads a single policy line into Casbin model
 func loadPolicyLine(line *CasbinRule, model model.Model) error {
-	var p = []string{line.Ptype}
+	// Build policy array including ptype and all potential fields
+	p := []string{line.Ptype, line.V0, line.V1, line.V2, line.V3, line.V4, line.V5}
 
-	if line.V0 != "" {
-		p = append(p, line.V0)
-	}
-	if line.V1 != "" {
-		p = append(p, line.V1)
-	}
-	if line.V2 != "" {
-		p = append(p, line.V2)
-	}
-	if line.V3 != "" {
-		p = append(p, line.V3)
-	}
-	if line.V4 != "" {
-		p = append(p, line.V4)
-	}
-	if line.V5 != "" {
-		p = append(p, line.V5)
+	// Trim trailing empty strings (Casbin only needs as many as defined in model)
+	end := len(p)
+	for end > 1 && p[end-1] == "" {
+		end--
 	}
 
-	// Add to model (LoadPolicyArray expects the rule without ptype)
-	return persist.LoadPolicyArray(p[1:], model)
+	// Add to model (LoadPolicyArray expects the full rule including ptype)
+	return persist.LoadPolicyArray(p[:end], model)
 }
 
 // savePolicyLine converts a policy rule to CasbinRule struct
